@@ -4,16 +4,17 @@ import androidx.room.Embedded
 import androidx.room.Relation
 
 data class ExpenseWithDetails(
-    @Embedded(prefix = "expense_") val expense: Expense,
+    @Embedded val expense: Expense, // Removed prefix to match query columns
     @Relation(
-        parentColumn = "expense_productId", // <<< CHANGE THIS! Was "productId"
+        parentColumn = "productId", // Match column from Expense entity
         entityColumn = "id",
         entity = Product::class
     )
     val productWithCategory: ProductWithCategory,
     @Relation(
-        parentColumn = "expense_supplierId", // <<< CHANGE THIS! Was "supplierId"
-        entityColumn = "id"
+        parentColumn = "supplierId", // Match column from Expense entity
+        entityColumn = "id",
+        entity = Supplier::class
     )
     val supplier: Supplier
 )

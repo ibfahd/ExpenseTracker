@@ -153,7 +153,7 @@ fun AddExpenseForm(
         OutlinedTextField(
             value = amount,
             onValueChange = { newValue ->
-                if (newValue.matches(Regex("""^\d*\.?\d*$"""))) { // Fixed regex warning
+                if (newValue.matches(Regex("""^\d*\.?\d{0,2}$"""))) { // Fixed regex warning
                     amount = newValue
                 }
             },
@@ -297,7 +297,9 @@ fun AddExpenseForm(
                     onSaveSuccess() // Navigate back to the main screen
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
         ) {
             Text("Save Expense")
         }

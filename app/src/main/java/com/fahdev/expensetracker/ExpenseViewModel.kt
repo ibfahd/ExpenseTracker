@@ -3,17 +3,18 @@ package com.fahdev.expensetracker
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.combine // Import combine
-import java.util.Calendar // Import Calendar for date calculations
-import java.util.concurrent.TimeUnit // Import TimeUnit for date calculations
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.launch
+import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
 class ExpenseViewModel(application: Application) : AndroidViewModel(application) {
-
     private val expenseDao: ExpenseDao
     private val productDao: ProductDao
     private val supplierDao: SupplierDao
@@ -23,9 +24,9 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     val allProducts: Flow<List<Product>>
     val allSuppliers: Flow<List<Supplier>>
     val allCategories: Flow<List<Category>>
-    val totalMonthlyExpenses: Flow<Double?> // Still useful for a quick monthly summary
+    val totalMonthlyExpenses: Flow<Double?>
 
-    // --- NEW: Filter States ---
+    // Filter States
     private val _selectedStartDate = MutableStateFlow<Long?>(null)
     val selectedStartDate: Flow<Long?> = _selectedStartDate.asStateFlow()
 
@@ -38,18 +39,36 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     private val _selectedSupplierId = MutableStateFlow<Int?>(null)
     val selectedSupplierId: Flow<Int?> = _selectedSupplierId.asStateFlow()
 
-    // NEW: Combined Flow for filtered expenses
-    // This flow will react to changes in any of the filter states
+    // Refresh trigger for expense list
+    private val _refreshTrigger = MutableStateFlow(0)
+
+    // Combined Flow for filtered expenses
+    @OptIn(ExperimentalCoroutinesApi::class) // Added for flatMapLatest
     val filteredExpenses: Flow<List<ExpenseWithDetails>> = combine(
         _selectedStartDate,
         _selectedEndDate,
         _selectedCategoryId,
-        _selectedSupplierId
-    ) { startDate, endDate, categoryId, supplierId ->
-        // When any filter state changes, this block is re-executed
-        expenseDao.getFilteredExpensesWithDetails(startDate, endDate, categoryId, supplierId).first()
+        _selectedSupplierId,
+        _refreshTrigger
+    ) { startDate, endDate, categoryId, supplierId, _ ->
+        // Return a data class or tuple to avoid intersection type
+        FilterParams(startDate, endDate, categoryId, supplierId)
+    }.flatMapLatest { params ->
+        expenseDao.getFilteredExpensesWithDetails(
+            params.startDate,
+            params.endDate,
+            params.categoryId,
+            params.supplierId
+        )
     }
-    // --- END NEW: Filter States ---
+
+    // Helper data class for filter parameters
+    private data class FilterParams(
+        val startDate: Long?,
+        val endDate: Long?,
+        val categoryId: Int?,
+        val supplierId: Int?
+    )
 
     init {
         val database = AppDatabase.getDatabase(application)
@@ -64,7 +83,7 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         allCategories = categoryDao.getAllCategories()
         totalMonthlyExpenses = expenseDao.getTotalMonthlyExpenses(System.currentTimeMillis())
 
-        // Pre-populate some common categories if the database is new/empty
+        // Pre-populate categories if empty
         viewModelScope.launch {
             if (categoryDao.getAllCategories().first().isEmpty()) {
                 val initialCategories = listOf(
@@ -79,22 +98,25 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // --- CRUD operations for Expenses ---
+    // CRUD operations for Expenses
     fun addExpense(expense: Expense) {
         viewModelScope.launch {
             expenseDao.insertExpense(expense)
+            _refreshTrigger.value++ // Trigger list refresh
         }
     }
 
     fun updateExpense(expense: Expense) {
         viewModelScope.launch {
             expenseDao.updateExpense(expense)
+            _refreshTrigger.value++ // Trigger list refresh
         }
     }
 
     fun deleteExpense(expense: Expense) {
         viewModelScope.launch {
             expenseDao.deleteExpense(expense)
+            _refreshTrigger.value++ // Trigger list refresh
         }
     }
 
@@ -102,7 +124,7 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         return expenseDao.getExpenseWithDetailsById(id)
     }
 
-    // --- CRUD operations for Products ---
+    // CRUD operations for Products
     suspend fun addProduct(product: Product): Long {
         return productDao.insertProduct(product)
     }
@@ -111,7 +133,7 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         return productDao.getProductByName(name)
     }
 
-    // --- CRUD operations for Suppliers ---
+    // CRUD operations for Suppliers
     suspend fun addSupplier(supplier: Supplier): Long {
         return supplierDao.insertSupplier(supplier)
     }
@@ -120,7 +142,7 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         return supplierDao.getSupplierByName(name)
     }
 
-    // --- CRUD operations for Categories ---
+    // CRUD operations for Categories
     suspend fun addCategory(category: Category): Long {
         return categoryDao.insertCategory(category)
     }
@@ -145,7 +167,7 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         return categoryDao.getCategoryById(id)
     }
 
-    // --- CRUD operations for Suppliers (continued) ---
+    // CRUD operations for Suppliers (continued)
     fun updateSupplier(supplier: Supplier) {
         viewModelScope.launch {
             supplierDao.updateSupplier(supplier)
@@ -162,42 +184,27 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         return supplierDao.getSupplierById(id)
     }
 
-    // --- NEW: Filter Control Functions ---
-
-    /**
-     * Sets the category filter. Pass null to clear the category filter.
-     */
+    // Filter Control Functions
     fun setCategoryFilter(categoryId: Int?) {
         _selectedCategoryId.value = categoryId
     }
 
-    /**
-     * Sets the supplier filter. Pass null to clear the supplier filter.
-     */
     fun setSupplierFilter(supplierId: Int?) {
         _selectedSupplierId.value = supplierId
     }
 
-    /**
-     * Sets a custom date range filter. Pass null for both to clear the date filter.
-     */
     fun setCustomDateRangeFilter(startDate: Long?, endDate: Long?) {
         _selectedStartDate.value = startDate
         _selectedEndDate.value = endDate
     }
 
-    /**
-     * Sets predefined date range filters.
-     * @param rangeType "ThisMonth", "Last7Days", "LastMonth", "ThisYear", "All"
-     */
     fun setDateRangeFilter(rangeType: String) {
         val calendar = Calendar.getInstance()
         var startDate: Long? = null
-        var endDate: Long? = System.currentTimeMillis() // Default end date to now
+        var endDate: Long? = System.currentTimeMillis()
 
         when (rangeType) {
             "ThisMonth" -> {
-                calendar.timeInMillis = System.currentTimeMillis()
                 calendar.set(Calendar.DAY_OF_MONTH, 1)
                 calendar.set(Calendar.HOUR_OF_DAY, 0)
                 calendar.set(Calendar.MINUTE, 0)
@@ -209,9 +216,8 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
                 startDate = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)
             }
             "LastMonth" -> {
-                calendar.timeInMillis = System.currentTimeMillis()
-                calendar.add(Calendar.MONTH, -1) // Go back one month
-                calendar.set(Calendar.DAY_OF_MONTH, 1) // Set to the 1st of last month
+                calendar.add(Calendar.MONTH, -1)
+                calendar.set(Calendar.DAY_OF_MONTH, 1)
                 calendar.set(Calendar.HOUR_OF_DAY, 0)
                 calendar.set(Calendar.MINUTE, 0)
                 calendar.set(Calendar.SECOND, 0)
@@ -219,9 +225,8 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
                 startDate = calendar.timeInMillis
 
                 val endOfLastMonth = Calendar.getInstance()
-                endOfLastMonth.timeInMillis = System.currentTimeMillis()
-                endOfLastMonth.set(Calendar.DAY_OF_MONTH, 1) // Set to 1st of current month
-                endOfLastMonth.add(Calendar.DAY_OF_MONTH, -1) // Go back one day to get end of last month
+                endOfLastMonth.set(Calendar.DAY_OF_MONTH, 1)
+                endOfLastMonth.add(Calendar.DAY_OF_MONTH, -1)
                 endOfLastMonth.set(Calendar.HOUR_OF_DAY, 23)
                 endOfLastMonth.set(Calendar.MINUTE, 59)
                 endOfLastMonth.set(Calendar.SECOND, 59)
@@ -229,7 +234,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
                 endDate = endOfLastMonth.timeInMillis
             }
             "ThisYear" -> {
-                calendar.timeInMillis = System.currentTimeMillis()
                 calendar.set(Calendar.MONTH, Calendar.JANUARY)
                 calendar.set(Calendar.DAY_OF_MONTH, 1)
                 calendar.set(Calendar.HOUR_OF_DAY, 0)
@@ -239,7 +243,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
                 startDate = calendar.timeInMillis
             }
             "All" -> {
-                // Set both to null to get all expenses
                 startDate = null
                 endDate = null
             }
@@ -248,15 +251,11 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         _selectedEndDate.value = endDate
     }
 
-    /**
-     * Clears all active filters.
-     */
     fun resetFilters() {
         _selectedStartDate.value = null
         _selectedEndDate.value = null
         _selectedCategoryId.value = null
         _selectedSupplierId.value = null
+        _refreshTrigger.value++ // Trigger list refresh
     }
-
-    // --- END NEW: Filter Control Functions ---
 }

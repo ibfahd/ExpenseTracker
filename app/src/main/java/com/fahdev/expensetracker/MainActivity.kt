@@ -437,7 +437,9 @@ fun FilterDialog(
                 }
                 Button(
                     onClick = { showDatePicker = true },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
                 ) {
                     Text("Select Custom Date Range")
                 }
@@ -468,10 +470,12 @@ fun FilterDialog(
                         expenseViewModel.resetFilters()
                         onDismiss()
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Reset All Filters")
+                    Text("Clear All Filters")
                 }
             }
         },

@@ -5,9 +5,10 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import androidx.room.Delete
-import kotlinx.coroutines.flow.Flow
 import androidx.room.Transaction
 import androidx.room.RewriteQueriesToDropUnusedColumns
+import androidx.room.RoomWarnings
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ExpenseDao {
@@ -22,66 +23,24 @@ interface ExpenseDao {
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("""
-        SELECT
-            e.id AS expense_id,
-            e.amount AS expense_amount,
-            e.productId AS expense_productId,
-            e.supplierId AS expense_supplierId,
-            e.timestamp AS expense_timestamp,
-            p.id AS product_id,
-            p.name AS product_name,
-            p.categoryId AS product_categoryId,
-            s.id AS supplier_id,
-            s.name AS supplier_name
-        FROM expenses e
-        INNER JOIN products p ON e.productId = p.id
-        INNER JOIN suppliers s ON e.supplierId = s.id
-        ORDER BY e.timestamp DESC
-    """)
+    @Query("SELECT * FROM expenses ORDER BY timestamp DESC")
     fun getAllExpensesWithDetails(): Flow<List<ExpenseWithDetails>>
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("""
-        SELECT
-            e.id AS expense_id,
-            e.amount AS expense_amount,
-            e.productId AS expense_productId,
-            e.supplierId AS expense_supplierId,
-            e.timestamp AS expense_timestamp,
-            p.id AS product_id,
-            p.name AS product_name,
-            p.categoryId AS product_categoryId,
-            s.id AS supplier_id,
-            s.name AS supplier_name
-        FROM expenses e
-        INNER JOIN products p ON e.productId = p.id
-        INNER JOIN suppliers s ON e.supplierId = s.id
-        WHERE e.id = :id
-    """)
+    @Query("SELECT * FROM expenses WHERE id = :id")
     fun getExpenseWithDetailsById(id: Int): Flow<ExpenseWithDetails?>
 
     @Query("SELECT SUM(amount) FROM expenses WHERE strftime('%Y-%m', datetime(timestamp / 1000, 'unixepoch')) = strftime('%Y-%m', datetime(:currentTimestamp / 1000, 'unixepoch'))")
     fun getTotalMonthlyExpenses(currentTimestamp: Long): Flow<Double?>
 
+    @SuppressWarnings(RoomWarnings.QUERY_MISMATCH) // Suppress warning for unmapped columns
     @Transaction
-    @RewriteQueriesToDropUnusedColumns // Keep this for consistency
+    @RewriteQueriesToDropUnusedColumns
     @Query("""
-        SELECT
-            e.id AS expense_id,
-            e.amount AS expense_amount,
-            e.productId AS expense_productId,
-            e.supplierId AS expense_supplierId,
-            e.timestamp AS expense_timestamp,
-            p.id AS product_id,
-            p.name AS product_name,
-            p.categoryId AS product_categoryId,
-            s.id AS supplier_id,
-            s.name AS supplier_name
-        FROM expenses e
+        SELECT * FROM expenses e
         INNER JOIN products p ON e.productId = p.id
-        INNER JOIN categories c ON p.categoryId = c.id -- Need categories for filtering by categoryName
+        INNER JOIN categories c ON p.categoryId = c.id
         INNER JOIN suppliers s ON e.supplierId = s.id
         WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
           AND (:endDate IS NULL OR e.timestamp <= :endDate)
