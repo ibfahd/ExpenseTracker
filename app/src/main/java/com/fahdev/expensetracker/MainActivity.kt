@@ -1,57 +1,18 @@
 package com.fahdev.expensetracker
 
-import android.app.Application
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DateRangePicker
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDateRangePickerState
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -59,12 +20,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
+import java.util.*
+import android.app.Application
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.DateRangePicker
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberDateRangePickerState
+import androidx.compose.material3.MenuAnchorType
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,7 +59,7 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
     val context = LocalContext.current
 
     val filteredExpenses by expenseViewModel.filteredExpenses.collectAsState(initial = emptyList())
-    val totalFilteredExpenses by expenseViewModel.totalFilteredExpenses.collectAsState(initial = 0.0) // Changed from totalMonthlyExpenses
+    val totalFilteredExpenses by expenseViewModel.totalFilteredExpenses.collectAsState(initial = 0.0)
 
     val selectedStartDate by expenseViewModel.selectedStartDate.collectAsState(initial = null)
     val selectedEndDate by expenseViewModel.selectedEndDate.collectAsState(initial = null)
@@ -162,7 +136,7 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            ExpenseSummaryCard(totalAmount = totalFilteredExpenses) // Updated to use totalFilteredExpenses
+            ExpenseSummaryCard(totalAmount = totalFilteredExpenses)
 
             Spacer(Modifier.height(8.dp))
 
@@ -230,7 +204,7 @@ fun ExpenseSummaryCard(totalAmount: Double) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Total Expenses", // Updated label
+                text = "Total Filtered Expenses",
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
             )
@@ -506,8 +480,25 @@ fun FilterDialog(
                 TextButton(
                     onClick = {
                         dateRangePickerState.selectedStartDateMillis?.let { startDate ->
+                            val calendar = Calendar.getInstance()
+                            // Normalize start date to beginning of the day
+                            calendar.timeInMillis = startDate
+                            calendar.set(Calendar.HOUR_OF_DAY, 0)
+                            calendar.set(Calendar.MINUTE, 0)
+                            calendar.set(Calendar.SECOND, 0)
+                            calendar.set(Calendar.MILLISECOND, 0)
+                            val normalizedStartDate = calendar.timeInMillis
+
+                            // Normalize end date to end of the day
                             val endDate = dateRangePickerState.selectedEndDateMillis ?: startDate
-                            expenseViewModel.setCustomDateRangeFilter(startDate, endDate)
+                            calendar.timeInMillis = endDate
+                            calendar.set(Calendar.HOUR_OF_DAY, 23)
+                            calendar.set(Calendar.MINUTE, 59)
+                            calendar.set(Calendar.SECOND, 59)
+                            calendar.set(Calendar.MILLISECOND, 999)
+                            val normalizedEndDate = calendar.timeInMillis
+
+                            expenseViewModel.setCustomDateRangeFilter(normalizedStartDate, normalizedEndDate)
                         } ?: run {
                             expenseViewModel.setCustomDateRangeFilter(null, null)
                         }
