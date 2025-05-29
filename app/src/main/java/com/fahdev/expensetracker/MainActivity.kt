@@ -204,7 +204,7 @@ fun ExpenseSummaryCard(totalAmount: Double) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Total Filtered Expenses",
+                text = "Total Expenses", // Changed to "Total Expenses"
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
             )
@@ -381,47 +381,18 @@ fun FilterDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text("Filter by Date:", style = MaterialTheme.typography.titleSmall)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    val dateOptions = listOf("ThisMonth", "Last7Days", "LastMonth", "ThisYear", "All")
-                    dateOptions.forEach { option ->
-                        Button(
-                            onClick = {
-                                if (option == "All") {
-                                    expenseViewModel.resetFilters()
-                                } else {
-                                    expenseViewModel.setDateRangeFilter(option)
-                                }
-                                onDismiss()
-                            },
-                            enabled = when (option) {
-                                "ThisMonth" -> {
-                                    val start = getStartOfMonth(System.currentTimeMillis())
-                                    !(selectedStartDate == start && selectedEndDate == System.currentTimeMillis())
-                                }
-                                "Last7Days" -> {
-                                    val start = System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L
-                                    !(selectedStartDate == start && selectedEndDate == System.currentTimeMillis())
-                                }
-                                "LastMonth" -> {
-                                    val start = getStartOfLastMonth()
-                                    val end = getEndOfLastMonth()
-                                    !(selectedStartDate == start && selectedEndDate == end)
-                                }
-                                "ThisYear" -> {
-                                    val start = getStartOfYear()
-                                    !(selectedStartDate == start && selectedEndDate == System.currentTimeMillis())
-                                }
-                                "All" -> selectedStartDate != null || selectedEndDate != null || selectedCategoryId != null || selectedSupplierId != null
-                                else -> true
-                            }
-                        ) {
-                            Text(option.replace("This", "This ").replace("Last", "Last ").replace("All", "All Time"))
+                DateFilterDropdown(
+                    selectedStartDate = selectedStartDate,
+                    selectedEndDate = selectedEndDate,
+                    onDateOptionSelected = { option ->
+                        if (option == "All") {
+                            expenseViewModel.resetFilters()
+                        } else {
+                            expenseViewModel.setDateRangeFilter(option)
                         }
+                        onDismiss()
                     }
-                }
+                )
                 Button(
                     onClick = { showDatePicker = true },
                     modifier = Modifier
@@ -481,7 +452,6 @@ fun FilterDialog(
                     onClick = {
                         dateRangePickerState.selectedStartDateMillis?.let { startDate ->
                             val calendar = Calendar.getInstance()
-                            // Normalize start date to beginning of the day
                             calendar.timeInMillis = startDate
                             calendar.set(Calendar.HOUR_OF_DAY, 0)
                             calendar.set(Calendar.MINUTE, 0)
@@ -489,7 +459,6 @@ fun FilterDialog(
                             calendar.set(Calendar.MILLISECOND, 0)
                             val normalizedStartDate = calendar.timeInMillis
 
-                            // Normalize end date to end of the day
                             val endDate = dateRangePickerState.selectedEndDateMillis ?: startDate
                             calendar.timeInMillis = endDate
                             calendar.set(Calendar.HOUR_OF_DAY, 23)
@@ -516,6 +485,64 @@ fun FilterDialog(
             }
         ) {
             DateRangePicker(state = dateRangePickerState, modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DateFilterDropdown(
+    selectedStartDate: Long?,
+    selectedEndDate: Long?,
+    onDateOptionSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val dateOptions = listOf(
+        "ThisMonth" to "This Month",
+        "Last7Days" to "Last 7 Days",
+        "LastMonth" to "Last Month",
+        "ThisYear" to "This Year",
+        "All" to "All Time"
+    )
+    val currentOption = dateOptions.find { (key, _) ->
+        when (key) {
+            "ThisMonth" -> selectedStartDate == getStartOfMonth(System.currentTimeMillis()) && selectedEndDate == System.currentTimeMillis()
+            "Last7Days" -> selectedStartDate == (System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L) && selectedEndDate == System.currentTimeMillis()
+            "LastMonth" -> selectedStartDate == getStartOfLastMonth() && selectedEndDate == getEndOfLastMonth()
+            "ThisYear" -> selectedStartDate == getStartOfYear() && selectedEndDate == System.currentTimeMillis()
+            "All" -> selectedStartDate == null && selectedEndDate == null
+            else -> false
+        }
+    }?.second ?: "Select Date Range"
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        TextField(
+            value = currentOption,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Date Range") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                .fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            dateOptions.forEach { (key, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    onClick = {
+                        onDateOptionSelected(key)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }
