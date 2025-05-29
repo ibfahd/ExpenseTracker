@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map // Added import for map
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
@@ -20,13 +21,10 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     private val supplierDao: SupplierDao
     private val categoryDao: CategoryDao
 
-    // Exposed properties for UI to observe
     val allProducts: Flow<List<Product>>
     val allSuppliers: Flow<List<Supplier>>
     val allCategories: Flow<List<Category>>
-    val totalMonthlyExpenses: Flow<Double?>
 
-    // Filter States
     private val _selectedStartDate = MutableStateFlow<Long?>(null)
     val selectedStartDate: Flow<Long?> = _selectedStartDate.asStateFlow()
 
@@ -39,11 +37,9 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     private val _selectedSupplierId = MutableStateFlow<Int?>(null)
     val selectedSupplierId: Flow<Int?> = _selectedSupplierId.asStateFlow()
 
-    // Refresh trigger for expense list
     private val _refreshTrigger = MutableStateFlow(0)
 
-    // Combined Flow for filtered expenses
-    @OptIn(ExperimentalCoroutinesApi::class) // Added for flatMapLatest
+    @OptIn(ExperimentalCoroutinesApi::class)
     val filteredExpenses: Flow<List<ExpenseWithDetails>> = combine(
         _selectedStartDate,
         _selectedEndDate,
@@ -51,7 +47,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         _selectedSupplierId,
         _refreshTrigger
     ) { startDate, endDate, categoryId, supplierId, _ ->
-        // Return a data class or tuple to avoid intersection type
         FilterParams(startDate, endDate, categoryId, supplierId)
     }.flatMapLatest { params ->
         expenseDao.getFilteredExpensesWithDetails(
@@ -62,7 +57,24 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         )
     }
 
-    // Helper data class for filter parameters
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val totalFilteredExpenses: Flow<Double> = combine(
+        _selectedStartDate,
+        _selectedEndDate,
+        _selectedCategoryId,
+        _selectedSupplierId,
+        _refreshTrigger
+    ) { startDate, endDate, categoryId, supplierId, _ ->
+        FilterParams(startDate, endDate, categoryId, supplierId)
+    }.flatMapLatest { params ->
+        expenseDao.getTotalFilteredExpenses(
+            params.startDate,
+            params.endDate,
+            params.categoryId,
+            params.supplierId
+        )
+    }.map { it ?: 0.0 } // Map null to 0.0 for consistent UI
+
     private data class FilterParams(
         val startDate: Long?,
         val endDate: Long?,
@@ -77,13 +89,10 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         supplierDao = database.supplierDao()
         categoryDao = database.categoryDao()
 
-        // Initialize Flow properties
         allProducts = productDao.getAllProducts()
         allSuppliers = supplierDao.getAllSuppliers()
         allCategories = categoryDao.getAllCategories()
-        totalMonthlyExpenses = expenseDao.getTotalMonthlyExpenses(System.currentTimeMillis())
 
-        // Pre-populate categories if empty
         viewModelScope.launch {
             if (categoryDao.getAllCategories().first().isEmpty()) {
                 val initialCategories = listOf(
@@ -98,25 +107,24 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // CRUD operations for Expenses
     fun addExpense(expense: Expense) {
         viewModelScope.launch {
             expenseDao.insertExpense(expense)
-            _refreshTrigger.value++ // Trigger list refresh
+            _refreshTrigger.value++
         }
     }
 
     fun updateExpense(expense: Expense) {
         viewModelScope.launch {
             expenseDao.updateExpense(expense)
-            _refreshTrigger.value++ // Trigger list refresh
+            _refreshTrigger.value++
         }
     }
 
     fun deleteExpense(expense: Expense) {
         viewModelScope.launch {
             expenseDao.deleteExpense(expense)
-            _refreshTrigger.value++ // Trigger list refresh
+            _refreshTrigger.value++
         }
     }
 
@@ -124,7 +132,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         return expenseDao.getExpenseWithDetailsById(id)
     }
 
-    // CRUD operations for Products
     suspend fun addProduct(product: Product): Long {
         return productDao.insertProduct(product)
     }
@@ -133,7 +140,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         return productDao.getProductByName(name)
     }
 
-    // CRUD operations for Suppliers
     suspend fun addSupplier(supplier: Supplier): Long {
         return supplierDao.insertSupplier(supplier)
     }
@@ -142,7 +148,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         return supplierDao.getSupplierByName(name)
     }
 
-    // CRUD operations for Categories
     suspend fun addCategory(category: Category): Long {
         return categoryDao.insertCategory(category)
     }
@@ -167,7 +172,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         return categoryDao.getCategoryById(id)
     }
 
-    // CRUD operations for Suppliers (continued)
     fun updateSupplier(supplier: Supplier) {
         viewModelScope.launch {
             supplierDao.updateSupplier(supplier)
@@ -184,7 +188,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         return supplierDao.getSupplierById(id)
     }
 
-    // Filter Control Functions
     fun setCategoryFilter(categoryId: Int?) {
         _selectedCategoryId.value = categoryId
     }
@@ -256,6 +259,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         _selectedEndDate.value = null
         _selectedCategoryId.value = null
         _selectedSupplierId.value = null
-        _refreshTrigger.value++ // Trigger list refresh
+        _refreshTrigger.value++
     }
 }
