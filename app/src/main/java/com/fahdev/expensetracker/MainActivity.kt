@@ -74,7 +74,7 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Expense Tracker") },
+                title = { Text(context.getString(R.string.app_name)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
@@ -88,7 +88,7 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
                     ) {
                         Icon(
                             imageVector = Icons.Default.Category,
-                            contentDescription = "Manage Categories",
+                            contentDescription = context.getString(R.string.manage_categories),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
@@ -100,14 +100,14 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
                     ) {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
-                            contentDescription = "Manage Suppliers",
+                            contentDescription = context.getString(R.string.manage_suppliers),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                     IconButton(onClick = { showFilterDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.FilterList,
-                            contentDescription = "Filter Expenses",
+                            contentDescription = context.getString(R.string.filter_expenses),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
@@ -123,7 +123,7 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
                 containerColor = MaterialTheme.colorScheme.tertiary,
                 contentColor = MaterialTheme.colorScheme.onTertiary
             ) {
-                Icon(Icons.Filled.Add, "Add new expense")
+                Icon(Icons.Filled.Add, context.getString(R.string.add_new_expense))
             }
         },
         modifier = Modifier.fillMaxSize()
@@ -152,7 +152,7 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
 
             if (filteredExpenses.isEmpty()) {
                 Text(
-                    text = "No expenses recorded yet, or no expenses match current filters.",
+                    text = context.getString(R.string.no_expenses),
                     modifier = Modifier.padding(top = 16.dp),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -204,7 +204,7 @@ fun ExpenseSummaryCard(totalAmount: Double) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Total Expenses", // Changed to "Total Expenses"
+                text = LocalContext.current.getString(R.string.total_expenses),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
             )
@@ -267,7 +267,7 @@ fun ExpenseItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
                 Text(
-                    text = "from ${expenseWithDetails.supplier.name}",
+                    text = LocalContext.current.getString(R.string.from_supplier, expenseWithDetails.supplier.name),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
@@ -290,6 +290,7 @@ fun FilterStatusRow(
     selectedSupplier: Supplier?,
     onResetFilters: () -> Unit
 ) {
+    val context = LocalContext.current
     val filtersActive = selectedStartDate != null || selectedEndDate != null || selectedCategory != null || selectedSupplier != null
 
     if (filtersActive) {
@@ -311,30 +312,30 @@ fun FilterStatusRow(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Active Filters:",
+                        text = context.getString(R.string.active_filters),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Spacer(Modifier.height(4.dp))
-                    if (selectedStartDate != null || selectedEndDate != null) {
-                        val start = selectedStartDate?.let { SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(it)) } ?: "Start"
-                        val end = selectedEndDate?.let { SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(it)) } ?: "End"
+                    if (selectedStartDate != null && selectedEndDate != null) {
+                        val start = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(selectedStartDate))
+                        val end = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(selectedEndDate))
                         Text(
-                            text = "Date: $start - $end",
+                            text = context.getString(R.string.date_range, start, end),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                         )
                     }
                     if (selectedCategory != null) {
                         Text(
-                            text = "Category: ${selectedCategory.name}",
+                            text = context.getString(R.string.category_filter, selectedCategory.name),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                         )
                     }
                     if (selectedSupplier != null) {
                         Text(
-                            text = "Supplier: ${selectedSupplier.name}",
+                            text = context.getString(R.string.supplier_filter, selectedSupplier.name),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                         )
@@ -343,7 +344,7 @@ fun FilterStatusRow(
                 IconButton(onClick = onResetFilters) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Clear Filters",
+                        contentDescription = context.getString(R.string.clear_filters),
                         tint = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
@@ -371,16 +372,17 @@ fun FilterDialog(
         initialSelectedStartDateMillis = selectedStartDate,
         initialSelectedEndDateMillis = selectedEndDate
     )
+    val context = LocalContext.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Filter Expenses") },
+        title = { Text(context.getString(R.string.filter_expenses)) },
         text = {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text("Filter by Date:", style = MaterialTheme.typography.titleSmall)
+                Text(context.getString(R.string.filter_by_date), style = MaterialTheme.typography.titleSmall)
                 DateFilterDropdown(
                     selectedStartDate = selectedStartDate,
                     selectedEndDate = selectedEndDate,
@@ -399,11 +401,11 @@ fun FilterDialog(
                         .fillMaxWidth()
                         .height(48.dp),
                 ) {
-                    Text("Select Custom Date Range")
+                    Text(context.getString(R.string.select_custom_date_range))
                 }
                 Spacer(Modifier.height(8.dp))
 
-                Text("Filter by Category:", style = MaterialTheme.typography.titleSmall)
+                Text(context.getString(R.string.filter_by_category), style = MaterialTheme.typography.titleSmall)
                 CategoryFilterDropdown(
                     allCategories = allCategories,
                     selectedCategoryId = selectedCategoryId,
@@ -413,7 +415,7 @@ fun FilterDialog(
                 )
                 Spacer(Modifier.height(8.dp))
 
-                Text("Filter by Supplier:", style = MaterialTheme.typography.titleSmall)
+                Text(context.getString(R.string.filter_by_supplier), style = MaterialTheme.typography.titleSmall)
                 SupplierFilterDropdown(
                     allSuppliers = allSuppliers,
                     selectedSupplierId = selectedSupplierId,
@@ -433,13 +435,13 @@ fun FilterDialog(
                         .height(48.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Clear All Filters")
+                    Text(context.getString(R.string.clear_all_filters))
                 }
             }
         },
         confirmButton = {
             Button(onClick = onDismiss) {
-                Text("Close")
+                Text(context.getString(R.string.close))
             }
         }
     )
@@ -475,12 +477,12 @@ fun FilterDialog(
                         onDismiss()
                     }
                 ) {
-                    Text("OK")
+                    Text(context.getString(R.string.ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
+                    Text(context.getString(R.string.cancel))
                 }
             }
         ) {
@@ -497,12 +499,13 @@ fun DateFilterDropdown(
     onDateOptionSelected: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val dateOptions = listOf(
-        "ThisMonth" to "This Month",
-        "Last7Days" to "Last 7 Days",
-        "LastMonth" to "Last Month",
-        "ThisYear" to "This Year",
-        "All" to "All Time"
+        "ThisMonth" to context.getString(R.string.this_month),
+        "Last7Days" to context.getString(R.string.last_7_days),
+        "LastMonth" to context.getString(R.string.last_month),
+        "ThisYear" to context.getString(R.string.this_year),
+        "All" to context.getString(R.string.all_time)
     )
     val currentOption = dateOptions.find { (key, _) ->
         when (key) {
@@ -513,7 +516,7 @@ fun DateFilterDropdown(
             "All" -> selectedStartDate == null && selectedEndDate == null
             else -> false
         }
-    }?.second ?: "Select Date Range"
+    }?.second ?: context.getString(R.string.select_date_range)
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -524,7 +527,7 @@ fun DateFilterDropdown(
             value = currentOption,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Date Range") },
+            label = { Text(context.getString(R.string.date_range_label)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
@@ -555,7 +558,8 @@ fun CategoryFilterDropdown(
     onCategorySelected: (Int?) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val selectedCategoryName = allCategories.find { it.id == selectedCategoryId }?.name ?: "All Categories"
+    val context = LocalContext.current
+    val selectedCategoryName = allCategories.find { it.id == selectedCategoryId }?.name ?: context.getString(R.string.all_categories)
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -566,7 +570,7 @@ fun CategoryFilterDropdown(
             value = selectedCategoryName,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Category") },
+            label = { Text(context.getString(R.string.category)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
@@ -577,7 +581,7 @@ fun CategoryFilterDropdown(
             onDismissRequest = { expanded = false }
         ) {
             DropdownMenuItem(
-                text = { Text("All Categories") },
+                text = { Text(context.getString(R.string.all_categories)) },
                 onClick = {
                     onCategorySelected(null)
                     expanded = false
@@ -604,7 +608,8 @@ fun SupplierFilterDropdown(
     onSupplierSelected: (Int?) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val selectedSupplierName = allSuppliers.find { it.id == selectedSupplierId }?.name ?: "All Suppliers"
+    val context = LocalContext.current
+    val selectedSupplierName = allSuppliers.find { it.id == selectedSupplierId }?.name ?: context.getString(R.string.all_suppliers)
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -615,7 +620,7 @@ fun SupplierFilterDropdown(
             value = selectedSupplierName,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Supplier") },
+            label = { Text(context.getString(R.string.supplier)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
@@ -626,7 +631,7 @@ fun SupplierFilterDropdown(
             onDismissRequest = { expanded = false }
         ) {
             DropdownMenuItem(
-                text = { Text("All Suppliers") },
+                text = { Text(context.getString(R.string.all_suppliers)) },
                 onClick = {
                     onSupplierSelected(null)
                     expanded = false

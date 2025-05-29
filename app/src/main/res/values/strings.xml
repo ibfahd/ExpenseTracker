@@ -1,3 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ExpenseTracker</string>
+    <string name="app_name" translatable="false">Expense Tracker</string>
+    <string name="manage_categories">Manage Categories</string>
+    <string name="manage_suppliers">Manage Suppliers</string>
+    <string name="filter_expenses">Filter Expenses</string>
+    <string name="add_new_expense">Add new expense</string>
+    <string name="no_expenses">No expenses recorded yet, or no expenses match current filters.</string>
+    <string name="total_expenses">Total Expenses</string>
+    <string name="from_supplier">from %1$s</string>
+    <string name="active_filters">Active Filters:</string>
+    <string name="date_range">Date: %1$s - %2$s</string>
+    <string name="category_filter">Category: %1$s</string>
+    <string name="supplier_filter">Supplier: %1$s</string>
+    <string name="clear_filters">Clear Filters</string>
+    <string name="filter_by_date">Filter by Period:</string>
+    <string name="select_custom_date_range">Select Custom Date Range</string>
+    <string name="filter_by_category">Filter by Category:</string>
+    <string name="filter_by_supplier">Filter by Supplier:</string>
+    <string name="clear_all_filters">Clear All Filters</string>
+    <string name="close">Close</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="this_month">This Month</string>
+    <string name="last_7_days">Last 7 Days</string>
+    <string name="last_month">Last Month</string>
+    <string name="this_year">This Year</string>
+    <string name="all_time">All Time</string>
+    <string name="select_date_range">Select Date Range</string>
+    <string name="date_range_label">Period</string>
+    <string name="all_categories">All Categories</string>
+    <string name="category">Category</string>
+    <string name="all_suppliers">All Suppliers</string>
+    <string name="supplier">Supplier</string>
+    <string name="start">Start</string>
+    <string name="end">End</string>
+
+    <!-- Predefined Categories -->
+    <string name="category_food_drinks">Food and Drinks</string>
+    <string name="category_housing">Housing</string>
+    <string name="category_transportation">Transportation</string>
+    <string name="category_utilities">Utilities</string>
+    <string name="category_healthcare">Healthcare</string>
+    <string name="category_personal_care">Personal Care</string>
+    <string name="category_shopping">Shopping</string>
+    <string name="category_entertainment">Entertainment</string>
+    <string name="category_travel">Travel</string>
+    <string name="category_education">Education</string>
+    <string name="category_savings_investments">Savings and Investments</string>
+    <string name="category_miscellaneous">Miscellaneous</string>
 </resources>

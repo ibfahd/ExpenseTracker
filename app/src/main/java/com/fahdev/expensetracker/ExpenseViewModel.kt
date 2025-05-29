@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map // Added import for map
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
@@ -73,7 +73,7 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
             params.categoryId,
             params.supplierId
         )
-    }.map { it ?: 0.0 } // Map null to 0.0 for consistent UI
+    }.map { it ?: 0.0 }
 
     private data class FilterParams(
         val startDate: Long?,
@@ -96,9 +96,18 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             if (categoryDao.getAllCategories().first().isEmpty()) {
                 val initialCategories = listOf(
-                    "Groceries", "Dairy", "Bakery", "Meat", "Fruits", "Vegetables",
-                    "Drinks", "Snacks", "Household", "Personal Care", "Electronics",
-                    "Clothing", "Transport", "Utilities", "Entertainment", "Shopping", "Other"
+                    application.getString(R.string.category_food_drinks),
+                    application.getString(R.string.category_housing),
+                    application.getString(R.string.category_transportation),
+                    application.getString(R.string.category_utilities),
+                    application.getString(R.string.category_healthcare),
+                    application.getString(R.string.category_personal_care),
+                    application.getString(R.string.category_shopping),
+                    application.getString(R.string.category_entertainment),
+                    application.getString(R.string.category_travel),
+                    application.getString(R.string.category_education),
+                    application.getString(R.string.category_savings_investments),
+                    application.getString(R.string.category_miscellaneous)
                 )
                 initialCategories.forEach { name ->
                     categoryDao.insertCategory(Category(name = name))

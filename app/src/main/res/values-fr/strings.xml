@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Suivi des Dépenses</string>
+    <string name="manage_categories">Gérer les Catégories</string>
+    <string name="manage_suppliers">Gérer les Fournisseurs</string>
+    <string name="filter_expenses">Filtrer les Dépenses</string>
+    <string name="add_new_expense">Ajouter une nouvelle dépense</string>
+    <string name="no_expenses">Aucune dépense enregistrée pour le moment, ou aucune dépense ne correspond aux filtres actuels.</string>
+    <string name="total_expenses">Dépenses Totales</string>
+    <string name="from_supplier">de %1$s</string>
+    <string name="active_filters">Filtres Actifs :</string>
+    <string name="date_range">Date : %1$s - %2$s</string>
+    <string name="category_filter">Catégorie : %1$s</string>
+    <string name="supplier_filter">Fournisseur : %1$s</string>
+    <string name="clear_filters">Effacer les Filtres</string>
+    <string name="filter_by_date">Filtrer par Période :</string>
+    <string name="select_custom_date_range">Sélectionner une Plage de Dates Personnalisée</string>
+    <string name="filter_by_category">Filtrer par Catégorie :</string>
+    <string name="filter_by_supplier">Filtrer par Fournisseur :</string>
+    <string name="clear_all_filters">Effacer Tous les Filtres</string>
+    <string name="close">Fermer</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Annuler</string>
+    <string name="this_month">Ce Mois</string>
+    <string name="last_7_days">7 Derniers Jours</string>
+    <string name="last_month">Mois Dernier</string>
+    <string name="this_year">Cette Année</string>
+    <string name="all_time">Tout le Temps</string>
+    <string name="select_date_range">Sélectionner une Plage de Dates</string>
+    <string name="date_range_label">Période</string>
+    <string name="all_categories">Toutes les Catégories</string>
+    <string name="category">Catégorie</string>
+    <string name="all_suppliers">Tous les Fournisseurs</string>
+    <string name="supplier">Fournisseur</string>
+    <string name="start">Début</string>
+    <string name="end">Fin</string>
+
+    <!-- Predefined Categories -->
+    <string name="category_food_drinks">Nourriture et Boissons</string>
+    <string name="category_housing">Logement</string>
+    <string name="category_transportation">Transport</string>
+    <string name="category_utilities">Services Publics</string>
+    <string name="category_healthcare">Santé</string>
+    <string name="category_personal_care">Soins Personnels</string>
+    <string name="category_shopping">Achats</string>
+    <string name="category_entertainment">Divertissement</string>
+    <string name="category_travel">Voyages</string>
+    <string name="category_education">Éducation</string>
+    <string name="category_savings_investments">Épargne et Investissements</string>
+    <string name="category_miscellaneous">Divers</string>
+</resources>
