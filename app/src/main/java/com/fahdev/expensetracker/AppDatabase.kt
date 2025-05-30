@@ -7,10 +7,15 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.fahdev.expensetracker.data.Category
+import com.fahdev.expensetracker.data.CategoryDao
 import com.fahdev.expensetracker.data.Expense
+import com.fahdev.expensetracker.data.ExpenseDao
 import com.fahdev.expensetracker.data.Product
+import com.fahdev.expensetracker.data.ProductDao
 import com.fahdev.expensetracker.data.ShoppingListItem
+import com.fahdev.expensetracker.data.ShoppingListItemDao
 import com.fahdev.expensetracker.data.Supplier
+import com.fahdev.expensetracker.data.SupplierDao
 
 @Database(
     entities = [Expense::class, Product::class, Supplier::class, Category::class, ShoppingListItem::class],

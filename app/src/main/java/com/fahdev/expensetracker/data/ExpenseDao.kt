@@ -1,4 +1,4 @@
-package com.fahdev.expensetracker
+package com.fahdev.expensetracker.data
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -8,7 +8,7 @@ import androidx.room.Delete
 import androidx.room.Transaction
 import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.RoomWarnings
-import com.fahdev.expensetracker.data.Expense
+import com.fahdev.expensetracker.ExpenseWithDetails
 import kotlinx.coroutines.flow.Flow
 
 @Dao
