@@ -48,4 +48,19 @@
     <string name="category_education">Education</string>
     <string name="category_savings_investments">Savings and Investments</string>
     <string name="category_miscellaneous">Miscellaneous</string>
+
+    <string name="shopping_list_title">Shopping List</string>
+    <string name="supplier_label">Supplier:</string>
+    <string name="select_supplier">Select Supplier</string>
+    <string name="start_new_trip_button">Start New Trip / Reuse Last List</string>
+    <string name="add_new_item_title">Add New Item</string>
+    <string name="product_name_label">Product Name</string>
+    <string name="quantity_label">Planned Quantity</string> <string name="unit_label">Unit (e.g., kg, pcs)</string>
+    <string name="add_item_button">Add Item</string>
+    <string name="current_shopping_list_title">Current Shopping List</string>
+    <string name="no_items_in_list">No items in the current shopping list. Add some!</string>
+    <string name="unknown_product">Unknown Product</string>
+    <string name="planned_quantity_display">Planned</string> <string name="purchased_quantity_label">Purchased Quantity</string>
+    <string name="unit_price_label">Unit Price</string>
+    <string name="delete_item">Delete Item</string>
 </resources>
