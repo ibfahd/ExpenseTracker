@@ -2,6 +2,8 @@ package com.fahdev.expensetracker
 
 import androidx.room.Embedded
 import androidx.room.Relation
+import com.fahdev.expensetracker.data.Category
+import com.fahdev.expensetracker.data.Product
 
 data class ProductWithCategory(
     @Embedded val product: Product, // Embeds all fields from the Product entity

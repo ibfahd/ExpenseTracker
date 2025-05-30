@@ -39,6 +39,8 @@ import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.MenuAnchorType
+import com.fahdev.expensetracker.data.Category
+import com.fahdev.expensetracker.data.Supplier
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

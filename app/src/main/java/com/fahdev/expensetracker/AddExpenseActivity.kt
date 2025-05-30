@@ -44,6 +44,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import androidx.compose.runtime.collectAsState
+import com.fahdev.expensetracker.data.Category
+import com.fahdev.expensetracker.data.Expense
+import com.fahdev.expensetracker.data.Product
+import com.fahdev.expensetracker.data.Supplier
 import kotlinx.coroutines.launch
 
 // AddExpenseActivity and ExpenseViewModelFactory are unchanged.
@@ -399,10 +403,19 @@ fun AddExpenseForm(
                             coroutineScope.launch {
                                 val existingProduct = expenseViewModel.getProductByName(newProductName)
                                 if (existingProduct == null) {
-                                    val newId = expenseViewModel.addProduct(Product(name = newProductName, categoryId = newProductSelectedCategory!!.id))
+                                    val newId = expenseViewModel.addProduct(
+                                        Product(
+                                            name = newProductName,
+                                            categoryId = newProductSelectedCategory!!.id
+                                        )
+                                    )
                                     if (newId != -1L) { // Check if insertion was successful
                                         // Select the newly added product in the main form's state
-                                        selectedProduct = Product(id = newId.toInt(), name = newProductName, categoryId = newProductSelectedCategory!!.id)
+                                        selectedProduct = Product(
+                                            id = newId.toInt(),
+                                            name = newProductName,
+                                            categoryId = newProductSelectedCategory!!.id
+                                        )
                                         productSearchQuery = newProductName // Set the main product search query field
                                         android.widget.Toast.makeText(context, "Product added!", android.widget.Toast.LENGTH_SHORT).show()
                                     } else {
@@ -460,7 +473,8 @@ fun AddExpenseForm(
                                 if (existingSupplier == null) {
                                     val newId = expenseViewModel.addSupplier(Supplier(name = newSupplierName))
                                     if (newId != -1L) {
-                                        selectedSupplier = Supplier(id = newId.toInt(), name = newSupplierName)
+                                        selectedSupplier =
+                                            Supplier(id = newId.toInt(), name = newSupplierName)
                                         supplierSearchQuery = newSupplierName
                                         android.widget.Toast.makeText(context, "Supplier added!", android.widget.Toast.LENGTH_SHORT).show()
                                     } else {

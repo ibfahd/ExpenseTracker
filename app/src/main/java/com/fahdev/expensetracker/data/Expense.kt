@@ -1,8 +1,7 @@
-package com.fahdev.expensetracker
+package com.fahdev.expensetracker.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.util.Date
 
 @Entity(tableName = "expenses")
 data class Expense(

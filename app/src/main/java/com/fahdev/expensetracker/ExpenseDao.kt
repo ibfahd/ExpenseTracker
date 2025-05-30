@@ -8,6 +8,7 @@ import androidx.room.Delete
 import androidx.room.Transaction
 import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.RoomWarnings
+import com.fahdev.expensetracker.data.Expense
 import kotlinx.coroutines.flow.Flow
 
 @Dao
