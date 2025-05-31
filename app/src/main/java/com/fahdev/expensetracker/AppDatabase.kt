@@ -19,7 +19,7 @@ import com.fahdev.expensetracker.data.SupplierDao
 
 @Database(
     entities = [Expense::class, Product::class, Supplier::class, Category::class, ShoppingListItem::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

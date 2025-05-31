@@ -39,6 +39,7 @@ import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material.icons.filled.ShoppingCart // Import for the shopping cart icon
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.Supplier
 
@@ -82,6 +83,19 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 actions = {
+                    // Shopping List Button - Integrated
+                    IconButton(
+                        onClick = {
+                            val intent = Intent(context, ShoppingListActivity::class.java)
+                            context.startActivity(intent)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = context.getString(R.string.shopping_list_title), // Using existing string
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                     IconButton(
                         onClick = {
                             val intent = Intent(context, CategoryManagementActivity::class.java)
