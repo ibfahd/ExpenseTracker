@@ -55,28 +55,61 @@ import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.data.ShoppingListItem
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import kotlinx.coroutines.launch
+import android.util.Log
+import android.app.Application
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+
+// Define ShoppingListViewModelFactory here, as it was previously missing
+class ShoppingListViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ShoppingListViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ShoppingListViewModel(application) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
 
 class ShoppingListActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("ShoppingListActivity", "onCreate started")
         setContent {
-            ExpenseTrackerTheme { // Replace with your actual app theme
+            Log.d("ShoppingListActivity", "setContent started")
+            ExpenseTrackerTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Call your ShoppingListScreen composable here
-                    ShoppingListScreen()
+                    val app = application // Get the application instance from the Activity
+
+                    // Corrected: Use an if/else block for conditional composition
+                    if (app == null) {
+                        Log.e("ShoppingListActivity", "Application context is null in setContent.")
+                        Text("Error: Application not available. Please restart the app.")
+                    } else {
+                        Log.d("ShoppingListActivity", "Application context is not null. Initializing ViewModel.")
+                        val shoppingListViewModel: ShoppingListViewModel = viewModel(
+                            factory = ShoppingListViewModelFactory(app)
+                        )
+                        Log.d("ShoppingListActivity", "ViewModel initialized. Composing screen.")
+                        ShoppingListScreen(shoppingListViewModel = shoppingListViewModel)
+                        Log.d("ShoppingListActivity", "ShoppingListScreen composed.")
+                    }
                 }
             }
+            Log.d("ShoppingListActivity", "setContent finished.")
         }
+        Log.d("ShoppingListActivity", "onCreate finished.")
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShoppingListScreen(
-    shoppingListViewModel: ShoppingListViewModel = viewModel()
+    shoppingListViewModel: ShoppingListViewModel = viewModel() // Keep default for Preview
 ) {
     val currentSupplierId by shoppingListViewModel.currentSupplierId.collectAsState()
     val allSuppliers by shoppingListViewModel.allSuppliers.collectAsState(initial = emptyList())
@@ -95,14 +128,14 @@ fun ShoppingListScreen(
     // State for Product Dropdown
     var expandedProductDropdown by remember { mutableStateOf(false) }
 
-    val coroutineScope = rememberCoroutineScope() // Now it will be used
-    val snackbarHostState = remember { SnackbarHostState() } // State for Snackbar
+    val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(stringResource(R.string.shopping_list_title)) })
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) } // FIX: Add SnackbarHost
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -158,7 +191,7 @@ fun ShoppingListScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            HorizontalDivider() // Corrected from Divider
+            HorizontalDivider()
 
             Spacer(Modifier.height(16.dp))
 
@@ -226,11 +259,10 @@ fun ShoppingListScreen(
                         newQuantity = ""
                         newUnit = ""
                     } else {
-                        // FIX: Use Snackbar for user feedback
                         coroutineScope.launch {
                             snackbarHostState.showSnackbar(
                                 message = "Please select a product and enter a valid quantity.",
-                                withDismissAction = true // Allows user to dismiss
+                                withDismissAction = true
                             )
                         }
                     }
@@ -245,7 +277,7 @@ fun ShoppingListScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            HorizontalDivider() // Corrected from Divider
+            HorizontalDivider()
 
             Spacer(Modifier.height(16.dp))
 
@@ -268,7 +300,7 @@ fun ShoppingListScreen(
                             onDelete = { itemToDelete ->
                                 shoppingListViewModel.deleteShoppingItem(itemToDelete)
                             },
-                            allProducts = allProducts // Pass products to resolve names
+                            allProducts = allProducts
                         )
                         Spacer(Modifier.height(8.dp))
                     }
@@ -281,9 +313,9 @@ fun ShoppingListScreen(
 @Composable
 fun ShoppingListItemCard(
     item: ShoppingListItem,
-    onUpdate: (ShoppingListItem) -> Unit, // Callback for when item is updated
-    onDelete: (ShoppingListItem) -> Unit, // Callback for when item is deleted
-    allProducts: List<Product>, // List of all products to get product name
+    onUpdate: (ShoppingListItem) -> Unit,
+    onDelete: (ShoppingListItem) -> Unit,
+    allProducts: List<Product>,
     modifier: Modifier = Modifier
 ) {
     val productName = allProducts.find { it.id == item.productId }?.name ?: stringResource(R.string.unknown_product)
@@ -312,8 +344,6 @@ fun ShoppingListItemCard(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                // *** CORRECTED LINE HERE ***
-                // Use item.quantity for the planned/current quantity display
                 text = "${stringResource(R.string.planned_quantity_display)}: ${item.quantity} ${item.unit.orEmpty()}",
                 style = MaterialTheme.typography.bodySmall
             )
@@ -327,7 +357,7 @@ fun ShoppingListItemCard(
                     value = purchasedQuantityText,
                     onValueChange = { newValue ->
                         purchasedQuantityText = newValue
-                        val newQuantity = newValue.toDoubleOrNull() ?: 0.0 // Default to 0.0 if invalid
+                        val newQuantity = newValue.toDoubleOrNull() ?: 0.0
                         onUpdate(item.copy(quantity = newQuantity))
                     },
                     label = { Text(stringResource(R.string.purchased_quantity_label)) },
@@ -339,7 +369,7 @@ fun ShoppingListItemCard(
                     value = unitPriceText,
                     onValueChange = { newValue ->
                         unitPriceText = newValue
-                        val newPrice = newValue.toDoubleOrNull() // Null if invalid
+                        val newPrice = newValue.toDoubleOrNull()
                         onUpdate(item.copy(unitPrice = newPrice))
                     },
                     label = { Text(stringResource(R.string.unit_price_label)) },
@@ -358,12 +388,9 @@ fun ShoppingListItemCard(
     }
 }
 
-// Preview Composable (for design preview in Android Studio)
 @Preview(showBackground = true)
 @Composable
 fun PreviewShoppingListScreen() {
-    // You'd typically provide a mock ViewModel for previews
-    // For simplicity, this just shows the basic layout
     MaterialTheme {
         ShoppingListScreen()
     }

@@ -43,6 +43,11 @@
         android:label="Manage Suppliers"
         android:parentActivityName=".MainActivity"
         android:theme="@style/Theme.ExpenseTracker" />
+        <activity
+            android:name=".ShoppingListActivity"
+            android:exported="false"
+            android:label="@string/shopping_list_title"
+            android:theme="@style/Theme.ExpenseTracker" />
     </application>
 
 </manifest>
