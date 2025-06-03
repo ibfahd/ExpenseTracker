@@ -47,6 +47,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -67,52 +68,32 @@ import com.fahdev.expensetracker.data.ShoppingListItem
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import kotlinx.coroutines.launch
 
-/**
- * Activity for managing the shopping list.
- * Allows users to select a supplier, add new items to the list,
- * update quantities and prices, delete items, and validate all purchases.
- */
 class ShoppingListActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("ShoppingListActivity", "onCreate started")
         setContent {
-            Log.d("ShoppingListActivity", "setContent started")
             ExpenseTrackerTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val app = application
-
                     val shoppingListViewModel: ShoppingListViewModel = viewModel(
                         factory = ShoppingListViewModelFactory(app)
                     )
                     val expenseViewModel: ExpenseViewModel = viewModel(
                         factory = ExpenseViewModelFactory(app)
                     )
-
-                    Log.d("ShoppingListActivity", "ViewModels initialized. Composing screen.")
                     ShoppingListScreen(
                         shoppingListViewModel = shoppingListViewModel,
                         expenseViewModel = expenseViewModel
                     )
-                    Log.d("ShoppingListActivity", "ShoppingListScreen composed.")
                 }
             }
-            Log.d("ShoppingListActivity", "onCreate finished.")
         }
     }
 }
 
-/**
- * Composable function for the Shopping List screen.
- * Displays the shopping list, allows supplier selection, adding new items,
- * and managing existing items.
- *
- * @param shoppingListViewModel The ViewModel providing data and logic for the shopping list.
- * @param expenseViewModel The ViewModel providing data and logic for expenses, including product and category management.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShoppingListScreen(
@@ -123,29 +104,21 @@ fun ShoppingListScreen(
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Collect states from the ViewModels
     val currentSupplierId by shoppingListViewModel.currentSupplierId.collectAsState()
     val allSuppliers by shoppingListViewModel.allSuppliers.collectAsState(initial = emptyList())
     val shoppingListItems by shoppingListViewModel.shoppingListItems.collectAsState(initial = emptyList())
     val allProducts by shoppingListViewModel.allProducts.collectAsState(initial = emptyList())
     val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
 
-    // State for supplier dropdown
     var expandedSupplierDropdown by remember { mutableStateOf(false) }
-
-    // State for main "Add Shopping Item" dialog
     var showAddShoppingItemDialog by remember { mutableStateOf(false) }
     var newProductIdForAddItemDialog by remember { mutableStateOf<Int?>(null) }
     var newProductTextForAddItemDialog by remember { mutableStateOf("") }
-    var newQuantityForAddItemDialog by remember { mutableStateOf("") }
+    var newPlannedQuantityForAddItemDialog by remember { mutableStateOf("") } // Changed from newQuantity...
     var newUnitForAddItemDialog by remember { mutableStateOf("") }
     var expandedProductDropdownForAddItemDialog by remember { mutableStateOf(false) }
-
-    // State for nested "Add New Product" dialog
     var showAddProductDialog by remember { mutableStateOf(false) }
-    var newProductNameForAddProductDialog by remember { mutableStateOf("") } // Pre-fill for AddProductDialog
-
-    // State for "Validate All Purchases" confirmation dialog
+    var newProductNameForAddProductDialog by remember { mutableStateOf("") }
     var showConfirmValidateDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -168,10 +141,9 @@ fun ShoppingListScreen(
         floatingActionButton = {
             FloatingActionButton(onClick = {
                 showAddShoppingItemDialog = true
-                // Reset fields when opening the Add Shopping Item dialog
                 newProductIdForAddItemDialog = null
                 newProductTextForAddItemDialog = ""
-                newQuantityForAddItemDialog = ""
+                newPlannedQuantityForAddItemDialog = "" // Reset planned quantity
                 newUnitForAddItemDialog = ""
                 expandedProductDropdownForAddItemDialog = false
             }) {
@@ -189,11 +161,8 @@ fun ShoppingListScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Button(
-                        onClick = {
-                            showConfirmValidateDialog = true // Show confirmation dialog
-                        },
-                        // Enable the button if there are any items in the list that could potentially be recorded
-                        enabled = shoppingListItems.any { it.quantity > 0.0 && it.unitPrice != null }
+                        onClick = { showConfirmValidateDialog = true },
+                        enabled = shoppingListItems.any { it.purchasedQuantity > 0.0 && it.unitPrice != null }
                     ) {
                         Text("Validate All Purchases")
                     }
@@ -207,7 +176,6 @@ fun ShoppingListScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            // Supplier Selection
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -246,21 +214,16 @@ fun ShoppingListScreen(
             }
 
             Spacer(Modifier.height(16.dp))
-
             HorizontalDivider()
-
             Spacer(Modifier.height(16.dp))
 
-            // Shopping List Items Display Section
             Text(stringResource(R.string.current_shopping_list_title), style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(8.dp))
 
             if (shoppingListItems.isEmpty()) {
                 Text(stringResource(R.string.no_items_in_list))
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                LazyColumn(modifier = Modifier.fillMaxWidth()) {
                     items(shoppingListItems, key = { it.id }) { item ->
                         ShoppingListItemCard(
                             item = item,
@@ -279,14 +242,12 @@ fun ShoppingListScreen(
         }
     }
 
-    // --- Add Shopping Item Dialog ---
     if (showAddShoppingItemDialog) {
         AlertDialog(
             onDismissRequest = { showAddShoppingItemDialog = false },
             title = { Text("Add New Shopping Item") },
             text = {
                 Column {
-                    // Product Selection (Autocomplete-like dropdown)
                     ExposedDropdownMenuBox(
                         expanded = expandedProductDropdownForAddItemDialog,
                         onExpandedChange = { expandedProductDropdownForAddItemDialog = !expandedProductDropdownForAddItemDialog },
@@ -296,13 +257,13 @@ fun ShoppingListScreen(
                             value = newProductTextForAddItemDialog,
                             onValueChange = { newValue ->
                                 newProductTextForAddItemDialog = newValue
-                                newProductIdForAddItemDialog = null // Clear product ID if text changes (user is typing)
-                                expandedProductDropdownForAddItemDialog = true // Keep dropdown open while typing
+                                newProductIdForAddItemDialog = null
+                                expandedProductDropdownForAddItemDialog = true
                             },
                             label = { Text(stringResource(R.string.product_name_label)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedProductDropdownForAddItemDialog) },
                             modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                                .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                                 .fillMaxWidth()
                         )
                         ExposedDropdownMenu(
@@ -316,8 +277,8 @@ fun ShoppingListScreen(
                                 DropdownMenuItem(
                                     text = { Text("Add new product: \"$newProductTextForAddItemDialog\"") },
                                     onClick = {
-                                        newProductNameForAddProductDialog = newProductTextForAddItemDialog // Pre-fill for AddProductDialog
-                                        showAddProductDialog = true // Show the nested add product dialog
+                                        newProductNameForAddProductDialog = newProductTextForAddItemDialog
+                                        showAddProductDialog = true
                                         expandedProductDropdownForAddItemDialog = false
                                     }
                                 )
@@ -335,16 +296,15 @@ fun ShoppingListScreen(
                             }
                         }
                     }
-
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
-                        value = newQuantityForAddItemDialog,
+                        value = newPlannedQuantityForAddItemDialog, // Use newPlannedQuantity...
                         onValueChange = { newValue ->
                             if (newValue.matches(Regex("""^\d*\.?\d*$"""))) {
-                                newQuantityForAddItemDialog = newValue
+                                newPlannedQuantityForAddItemDialog = newValue
                             }
                         },
-                        label = { Text(stringResource(R.string.quantity_label)) },
+                        label = { Text(stringResource(R.string.quantity_label)) }, // This label means "Planned Quantity"
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -361,21 +321,21 @@ fun ShoppingListScreen(
                 TextButton(
                     onClick = {
                         val productId = newProductIdForAddItemDialog
-                        val quantity = newQuantityForAddItemDialog.toDoubleOrNull()
-                        if (productId != null && quantity != null && quantity > 0) {
-                            shoppingListViewModel.addShoppingItem(productId, newUnitForAddItemDialog.ifBlank { null }, quantity)
-                            showAddShoppingItemDialog = false // Close dialog
+                        val plannedQuantity = newPlannedQuantityForAddItemDialog.toDoubleOrNull() // Parse planned quantity
+                        if (productId != null && plannedQuantity != null && plannedQuantity > 0) {
+                            shoppingListViewModel.addShoppingItem(productId, newUnitForAddItemDialog.ifBlank { null }, plannedQuantity)
+                            showAddShoppingItemDialog = false
                             coroutineScope.launch { snackbarHostState.showSnackbar("Item added to shopping list!") }
                         } else {
                             coroutineScope.launch {
                                 snackbarHostState.showSnackbar(
-                                    message = "Please select a product and enter a valid positive quantity.",
+                                    message = "Please select a product and enter a valid positive planned quantity.",
                                     withDismissAction = true
                                 )
                             }
                         }
                     },
-                    enabled = newProductIdForAddItemDialog != null && newQuantityForAddItemDialog.toDoubleOrNull() != null && (newQuantityForAddItemDialog.toDoubleOrNull() ?: 0.0) > 0
+                    enabled = newProductIdForAddItemDialog != null && newPlannedQuantityForAddItemDialog.toDoubleOrNull() != null && (newPlannedQuantityForAddItemDialog.toDoubleOrNull() ?: 0.0) > 0
                 ) { Text("Add") }
             },
             dismissButton = {
@@ -384,7 +344,6 @@ fun ShoppingListScreen(
         )
     }
 
-    // --- Add New Product Dialog (Extracted as a separate Composable) ---
     if (showAddProductDialog) {
         AddProductDialog(
             onDismissRequest = { showAddProductDialog = false },
@@ -392,14 +351,12 @@ fun ShoppingListScreen(
             expenseViewModel = expenseViewModel,
             snackbarHostState = snackbarHostState,
             onProductAddedOrSelected = { productId, productName ->
-                // Update the state variables of the *parent* Add Shopping Item Dialog
                 newProductIdForAddItemDialog = productId
                 newProductTextForAddItemDialog = productName
             }
         )
     }
 
-    // --- Confirmation Dialog for Validate All Purchases ---
     if (showConfirmValidateDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmValidateDialog = false },
@@ -427,16 +384,6 @@ fun ShoppingListScreen(
     }
 }
 
-/**
- * Composable function for displaying a single shopping list item as a card.
- * Allows updating purchased quantity and unit price, and deleting the item.
- *
- * @param item The [ShoppingListItem] to display.
- * @param onUpdate Lambda to be invoked when the item is updated.
- * @param onDelete Lambda to be invoked when the item is deleted.
- * @param allProducts List of all products to resolve product names.
- * @param modifier Modifier for this composable.
- */
 @Composable
 fun ShoppingListItemCard(
     item: ShoppingListItem,
@@ -445,53 +392,74 @@ fun ShoppingListItemCard(
     allProducts: List<Product>,
     modifier: Modifier = Modifier
 ) {
-    // Find the product name based on productId
     val productName = allProducts.find { it.id == item.productId }?.name ?: stringResource(R.string.unknown_product)
 
-    // State for purchased quantity and unit price text fields
-    var purchasedQuantityText by remember(item.quantity) {
-        mutableStateOf(if (item.quantity > 0.0) item.quantity.toString() else "")
+    // State for purchased quantity text field. Keyed by item.id.
+    var purchasedQuantityText by remember(item.id) {
+        mutableStateOf(item.purchasedQuantity.toString().takeIf { it != "0.0" } ?: "")
     }
-    var unitPriceText by remember(item.unitPrice) {
+    // State for unit price text field. Keyed by item.id.
+    var unitPriceText by remember(item.id) {
         mutableStateOf(item.unitPrice?.toString() ?: "")
+    }
+
+    // Effect to synchronize purchasedQuantityText with item.purchasedQuantity from the model
+    LaunchedEffect(item.purchasedQuantity) {
+        val modelPurchasedQty = item.purchasedQuantity
+        val textAsDouble = purchasedQuantityText.toDoubleOrNull()
+        // Update text field if it doesn't match the model, avoiding overwrite of user's partial input like "."
+        if (textAsDouble != modelPurchasedQty) {
+            purchasedQuantityText = if (modelPurchasedQty > 0.0) modelPurchasedQty.toString() else ""
+        }
+    }
+
+    // Effect to synchronize unitPriceText with item.unitPrice from the model
+    LaunchedEffect(item.unitPrice) {
+        val modelPrice = item.unitPrice
+        val textAsDouble = unitPriceText.toDoubleOrNull()
+        if (modelPrice == null) {
+            if (unitPriceText.isNotEmpty() && unitPriceText != ".") {
+                unitPriceText = ""
+            }
+        } else {
+            if (textAsDouble != modelPrice) {
+                unitPriceText = modelPrice.toString()
+            }
+        }
     }
 
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            // Change card color based on whether the item has been "purchased" (quantity > 0 and unitPrice is set)
-            containerColor = if (item.quantity > 0.0 && item.unitPrice != null) MaterialTheme.colorScheme.secondaryContainer
+            containerColor = if (item.purchasedQuantity > 0.0 && item.unitPrice != null) MaterialTheme.colorScheme.secondaryContainer
             else MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = productName,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(4.dp))
+            // Display the PLANNED quantity
             Text(
-                text = "${stringResource(R.string.planned_quantity_display)}: ${item.quantity} ${item.unit.orEmpty()}",
+                text = "${stringResource(R.string.planned_quantity_display)}: ${item.plannedQuantity} ${item.unit.orEmpty()}",
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(8.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = purchasedQuantityText,
                     onValueChange = { newValue ->
-                        // Allow only numeric input (including decimals)
                         if (newValue.matches(Regex("""^\d*\.?\d*$"""))) {
                             purchasedQuantityText = newValue
-                            val newQuantity = newValue.toDoubleOrNull() ?: 0.0
-                            // Update the item in the ViewModel (without creating expense yet)
-                            onUpdate(item.copy(quantity = newQuantity))
+                            val newPurchasedQuantity = newValue.toDoubleOrNull() ?: 0.0
+                            onUpdate(item.copy(purchasedQuantity = newPurchasedQuantity))
+                        } else if (newValue.isEmpty()) {
+                            purchasedQuantityText = ""
+                            onUpdate(item.copy(purchasedQuantity = 0.0))
                         }
                     },
                     label = { Text(stringResource(R.string.purchased_quantity_label)) },
@@ -502,11 +470,9 @@ fun ShoppingListItemCard(
                 OutlinedTextField(
                     value = unitPriceText,
                     onValueChange = { newValue ->
-                        // Allow only numeric input (including decimals)
                         if (newValue.matches(Regex("""^\d*\.?\d*$"""))) {
                             unitPriceText = newValue
                             val newPrice = newValue.toDoubleOrNull()
-                            // Update the item in the ViewModel (without creating expense yet)
                             onUpdate(item.copy(unitPrice = newPrice))
                         }
                     },
@@ -516,7 +482,7 @@ fun ShoppingListItemCard(
                 )
                 Spacer(Modifier.width(8.dp))
                 IconButton(
-                    onClick = { onDelete(item) }, // Delete the item
+                    onClick = { onDelete(item) },
                     modifier = Modifier.align(Alignment.CenterVertically)
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_item))
@@ -526,17 +492,6 @@ fun ShoppingListItemCard(
     }
 }
 
-/**
- * Composable function for adding a new product or selecting an existing one.
- * This dialog is typically nested within another dialog (e.g., Add Shopping Item Dialog).
- *
- * @param onDismissRequest Lambda to be invoked when the dialog is dismissed.
- * @param onProductAddedOrSelected Lambda to be invoked when a product is added or selected,
- * providing the product ID and name.
- * @param initialProductName The initial product name to pre-fill the text field.
- * @param expenseViewModel The ViewModel for expense-related operations (product/category management).
- * @param snackbarHostState The SnackbarHostState to show messages.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductDialog(
@@ -566,7 +521,6 @@ fun AddProductDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(8.dp))
-
                 ExposedDropdownMenuBox(
                     expanded = newProductCategoryDropdownExpanded,
                     onExpandedChange = { newProductCategoryDropdownExpanded = !newProductCategoryDropdownExpanded },
@@ -652,7 +606,7 @@ fun AddProductDialog(
                                 onProductAddedOrSelected(existingProduct.id, existingProduct.name)
                                 snackbarHostState.showSnackbar("Product already exists, selected.")
                             }
-                            onDismissRequest() // Dismiss this dialog
+                            onDismissRequest()
                         }
                     } else {
                         coroutineScope.launch { snackbarHostState.showSnackbar("Product name and category cannot be empty.") }
@@ -666,14 +620,10 @@ fun AddProductDialog(
     )
 }
 
-/**
- * Preview for the ShoppingListScreen.
- */
 @Preview(showBackground = true)
 @Composable
 fun PreviewShoppingListScreen() {
     ExpenseTrackerTheme {
-        // For preview, provide dummy ViewModels
         ShoppingListScreen(
             shoppingListViewModel = ShoppingListViewModel(Application()),
             expenseViewModel = ExpenseViewModel(Application())

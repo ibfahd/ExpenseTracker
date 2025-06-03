@@ -39,7 +39,7 @@ import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material.icons.filled.ShoppingCart // Import for the shopping cart icon
+import androidx.compose.material.icons.filled.ShoppingCart
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.Supplier
 

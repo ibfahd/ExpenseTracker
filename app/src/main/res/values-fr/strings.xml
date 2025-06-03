@@ -61,7 +61,7 @@
     <string name="no_items_in_list">Aucun article dans la liste de courses actuelle. Ajoutez-en !</string>
     <string name="unknown_product">Produit inconnu</string>
     <string name="planned_quantity_display">Prévu</string>
-    <string name="purchased_quantity_label">Quantité achetée</string>
+    <string name="purchased_quantity_label">Quantité</string>
     <string name="unit_price_label">Prix unitaire</string>
     <string name="delete_item">Supprimer l\'article</string>
 </resources>

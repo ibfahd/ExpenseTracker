@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -234,20 +236,23 @@ fun SupplierItem(
                 modifier = Modifier.weight(1f)
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = { onEditClick(supplier) },
-                    contentPadding = PaddingValues(8.dp),
-                    modifier = Modifier.height(36.dp)
+                IconButton(
+                    onClick = { onEditClick(supplier) }
                 ) {
-                    Text("Edit", style = MaterialTheme.typography.labelSmall)
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = "Edit ${supplier.name}",
+                        tint = MaterialTheme.colorScheme.secondary
+                    )
                 }
-                Button(
-                    onClick = { onDeleteClick(supplier) },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                    contentPadding = PaddingValues(8.dp),
-                    modifier = Modifier.height(36.dp)
+                IconButton(
+                    onClick = { onDeleteClick(supplier) }
                 ) {
-                    Text("Delete", style = MaterialTheme.typography.labelSmall)
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "Delete ${supplier.name}",
+                        tint = MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }

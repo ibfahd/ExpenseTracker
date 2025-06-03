@@ -62,7 +62,7 @@
     <string name="no_items_in_list">No items in the current shopping list. Add some!</string>
     <string name="unknown_product">Unknown Product</string>
     <string name="planned_quantity_display">Planned</string>
-    <string name="purchased_quantity_label">Purchased Quantity</string>
+    <string name="purchased_quantity_label">Quantity</string>
     <string name="unit_price_label">Unit Price</string>
     <string name="delete_item">Delete Item</string>
 </resources>

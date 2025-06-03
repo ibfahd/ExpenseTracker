@@ -25,8 +25,9 @@ data class ShoppingListItem(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val productId: Int,
     val unit: String?,
-    val quantity: Double, // This will store the actual purchased quantity for a trip
-    val unitPrice: Double?, // This will store the actual purchased unit price for a trip
+    val plannedQuantity: Double, // NEW: Stores the initially planned quantity
+    val purchasedQuantity: Double, // RENAMED: Stores the actual purchased quantity for a trip (was 'quantity')
+    val unitPrice: Double?,
     val supplierId: Int?,
-    val shoppingDate: Long // NEW: Timestamp of the specific shopping trip this item belongs to
+    val shoppingDate: Long // Timestamp of the specific shopping trip
 )
