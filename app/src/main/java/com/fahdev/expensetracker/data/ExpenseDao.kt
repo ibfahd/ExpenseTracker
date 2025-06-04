@@ -23,7 +23,7 @@ interface ExpenseDao {
     suspend fun deleteExpense(expense: Expense)
 
     @Transaction
-    @RewriteQueriesToDropUnusedColumns // Keep this if it's helping with other queries
+    @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM expenses ORDER BY timestamp DESC")
     fun getAllExpensesWithDetails(): Flow<List<ExpenseWithDetails>>
 
@@ -32,11 +32,10 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE id = :id")
     fun getExpenseWithDetailsById(id: Int): Flow<ExpenseWithDetails?>
 
-    // Existing query, might be useful for specific period totals
     @Query("SELECT SUM(amount) FROM expenses WHERE strftime('%Y-%m', datetime(timestamp / 1000, 'unixepoch')) = strftime('%Y-%m', datetime(:currentTimestamp / 1000, 'unixepoch'))")
     fun getTotalMonthlyExpenses(currentTimestamp: Long): Flow<Double?>
 
-    @SuppressWarnings(RoomWarnings.QUERY_MISMATCH) // Keep if necessary
+    @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
     @Transaction
     @RewriteQueriesToDropUnusedColumns
     @Query("""
@@ -74,7 +73,7 @@ interface ExpenseDao {
         supplierId: Int?
     ): Flow<Double?>
 
-    // --- New Reporting Queries ---
+    // --- Reporting Queries ---
 
     @Query("SELECT SUM(amount) FROM expenses")
     fun getTotalExpensesAllTime(): Flow<Double?>
@@ -103,4 +102,50 @@ interface ExpenseDao {
         ORDER BY totalAmount DESC
     """)
     fun getSpendingBySupplier(): Flow<List<SupplierSpending>>
+
+    // --- New Product Detail Report Query ---
+    @Transaction // Recommended for complex queries involving multiple tables
+    @Query("""
+        WITH RankedExpenses AS (
+            SELECT
+                e.id as expense_id,
+                e.productId,
+                e.supplierId,
+                e.amount,
+                e.timestamp,
+                ROW_NUMBER() OVER (PARTITION BY e.productId ORDER BY e.amount ASC, e.timestamp ASC) as rn
+            FROM Expenses e
+            WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
+              AND (:endDate IS NULL OR e.timestamp <= :endDate)
+        ),
+        MinPriceExpense AS (
+            SELECT * FROM RankedExpenses WHERE rn = 1
+        )
+        SELECT
+            p.id as productId,
+            p.name as productName,
+            c.id as categoryId,
+            c.name as categoryName,
+            (SELECT SUM(e_sum.amount) 
+             FROM Expenses e_sum 
+             WHERE e_sum.productId = p.id 
+               AND (:startDate IS NULL OR e_sum.timestamp >= :startDate) 
+               AND (:endDate IS NULL OR e_sum.timestamp <= :endDate)
+            ) as totalAmountSpent,
+            mpe.amount as lowestTransactionAmount,
+            s.name as cheapestSupplierName
+        FROM Products p
+        JOIN Categories c ON p.categoryId = c.id
+        LEFT JOIN MinPriceExpense mpe ON p.id = mpe.productId  -- LEFT JOIN in case a product has no expenses in period but we still want to list it (adjust if needed)
+        LEFT JOIN Suppliers s ON mpe.supplierId = s.id        -- LEFT JOIN to handle if supplier is somehow null for that min expense
+        -- Only include products that have expenses in the specified period
+        WHERE EXISTS (
+            SELECT 1 FROM Expenses e_check 
+            WHERE e_check.productId = p.id 
+              AND (:startDate IS NULL OR e_check.timestamp >= :startDate) 
+              AND (:endDate IS NULL OR e_check.timestamp <= :endDate)
+        )
+        ORDER BY c.name ASC, p.name ASC
+    """)
+    fun getProductReportDetails(startDate: Long?, endDate: Long?): Flow<List<ProductReportDetail>>
 }

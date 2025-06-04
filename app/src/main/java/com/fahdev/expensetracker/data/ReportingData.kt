@@ -11,3 +11,13 @@ data class SupplierSpending(
     val supplierName: String,
     val totalAmount: Double
 )
+
+data class ProductReportDetail(
+    val productId: Int,
+    val productName: String,
+    val categoryId: Int,
+    val categoryName: String,
+    val totalAmountSpent: Double,
+    val lowestTransactionAmount: Double, // The smallest amount recorded for this product in a single expense
+    val cheapestSupplierName: String? // The supplier for that lowest transaction amount
+)

@@ -10,6 +10,7 @@ import com.fahdev.expensetracker.data.Expense
 import com.fahdev.expensetracker.data.ExpenseDao
 import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.data.ProductDao
+import com.fahdev.expensetracker.data.ProductReportDetail
 import com.fahdev.expensetracker.data.Supplier
 import com.fahdev.expensetracker.data.SupplierDao
 import com.fahdev.expensetracker.data.SupplierSpending
@@ -17,7 +18,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow // Import StateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -36,12 +37,12 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     private val supplierDao: SupplierDao = database.supplierDao()
     private val categoryDao: CategoryDao = database.categoryDao()
 
-    val allProducts: Flow<List<Product>> = productDao.getAllProducts() // This can remain Flow if not directly used with stateIn for collectAsState without initial
-    val allSuppliers: Flow<List<Supplier>> = supplierDao.getAllSuppliers() // Same as above
-    val allCategories: Flow<List<Category>> = categoryDao.getAllCategories() // Same as above
+    val allProducts: Flow<List<Product>> = productDao.getAllProducts()
+    val allSuppliers: Flow<List<Supplier>> = supplierDao.getAllSuppliers()
+    val allCategories: Flow<List<Category>> = categoryDao.getAllCategories()
 
     private val _selectedStartDate = MutableStateFlow<Long?>(null)
-    val selectedStartDate: StateFlow<Long?> = _selectedStartDate.asStateFlow() // .asStateFlow() returns StateFlow
+    val selectedStartDate: StateFlow<Long?> = _selectedStartDate.asStateFlow()
 
     private val _selectedEndDate = MutableStateFlow<Long?>(null)
     val selectedEndDate: StateFlow<Long?> = _selectedEndDate.asStateFlow()
@@ -55,7 +56,7 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     private val _refreshTrigger = MutableStateFlow(0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val filteredExpenses: Flow<List<ExpenseWithDetails>> = combine( // This is a complex flow, often collected with an initial value or handled differently
+    val filteredExpenses: Flow<List<ExpenseWithDetails>> = combine(
         _selectedStartDate,
         _selectedEndDate,
         _selectedCategoryId,
@@ -70,11 +71,10 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
             params.categoryId,
             params.supplierId
         )
-    } // If this is collected with collectAsState without initial, it might need .stateIn too or an initial value at collection.
-    // For MainActivity, it's collected with collectAsState(initial = emptyList()), which is correct.
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val totalFilteredExpenses: StateFlow<Double> = combine( // Changed to StateFlow
+    val totalFilteredExpenses: StateFlow<Double> = combine(
         _selectedStartDate,
         _selectedEndDate,
         _selectedCategoryId,
@@ -90,7 +90,7 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
             params.supplierId
         )
     }.map { it ?: 0.0 }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0) // Initial value provided
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     private data class FilterParams(
         val startDate: Long?,
@@ -99,8 +99,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         val supplierId: Int?
     )
 
-    // --- Reporting Data Flows ---
-    // Explicitly type these as StateFlow since stateIn produces a StateFlow
     val totalExpensesAllTime: StateFlow<Double> = expenseDao.getTotalExpensesAllTime()
         .map { it ?: 0.0 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
@@ -131,7 +129,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         if (total > 0 && firstDateMs != null) {
             val firstCal = Calendar.getInstance().apply { timeInMillis = firstDateMs }
             val currentCal = Calendar.getInstance()
-
             var months = (currentCal.get(Calendar.YEAR) - firstCal.get(Calendar.YEAR)) * 12
             months -= firstCal.get(Calendar.MONTH)
             months += currentCal.get(Calendar.MONTH)
@@ -143,6 +140,17 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
             0.0
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val productReportDetails: StateFlow<List<ProductReportDetail>> = combine(
+        _selectedStartDate,
+        _selectedEndDate,
+        _refreshTrigger
+    ) { startDate, endDate, _ ->
+        Pair(startDate, endDate)
+    }.flatMapLatest { (startDate, endDate) ->
+        expenseDao.getProductReportDetails(startDate, endDate)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
     init {
@@ -166,6 +174,7 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
                     categoryDao.insertCategory(Category(name = name))
                 }
             }
+            resetFilters() // Initialize filters to "All Time" and no category/supplier
         }
     }
 
@@ -254,18 +263,15 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         return supplierDao.getSupplierById(id)
     }
 
-
+    // Reverted to general names for use by both MainActivity and ReportingActivity (if applicable)
     fun setCategoryFilter(categoryId: Int?) {
         _selectedCategoryId.value = categoryId
+        _refreshTrigger.value++ // Ensure dependent flows update
     }
 
     fun setSupplierFilter(supplierId: Int?) {
         _selectedSupplierId.value = supplierId
-    }
-
-    fun setCustomDateRangeFilter(startDate: Long?, endDate: Long?) {
-        _selectedStartDate.value = startDate
-        _selectedEndDate.value = endDate
+        _refreshTrigger.value++ // Ensure dependent flows update
     }
 
     fun setDateRangeFilter(rangeType: String) {
@@ -289,12 +295,12 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
                 calendar.set(Calendar.DAY_OF_MONTH, 1)
                 calendar.set(Calendar.HOUR_OF_DAY, 0); calendar.set(Calendar.MINUTE, 0); calendar.set(Calendar.SECOND, 0); calendar.set(Calendar.MILLISECOND, 0)
                 startDate = calendar.timeInMillis
-
-                val endOfLastMonth = Calendar.getInstance()
-                endOfLastMonth.timeInMillis = startDate
-                endOfLastMonth.add(Calendar.MONTH, 1)
-                endOfLastMonth.add(Calendar.DAY_OF_MONTH, -1)
-                endOfLastMonth.set(Calendar.HOUR_OF_DAY, 23); endOfLastMonth.set(Calendar.MINUTE, 59); endOfLastMonth.set(Calendar.SECOND, 59); endOfLastMonth.set(Calendar.MILLISECOND, 999)
+                val endOfLastMonth = Calendar.getInstance().apply {
+                    timeInMillis = startDate
+                    add(Calendar.MONTH, 1)
+                    add(Calendar.DAY_OF_MONTH, -1)
+                    set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59); set(Calendar.SECOND, 59); set(Calendar.MILLISECOND, 999)
+                }
                 endDate = endOfLastMonth.timeInMillis
             }
             "ThisYear" -> {
@@ -309,12 +315,19 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         }
         _selectedStartDate.value = startDate
         _selectedEndDate.value = endDate
+        _refreshTrigger.value++
+    }
+    fun setCustomDateRangeFilter(startDate: Long?, endDate: Long?) {
+        _selectedStartDate.value = startDate
+        _selectedEndDate.value = endDate
+        _refreshTrigger.value++
     }
 
+    // General reset for all filters, used by MainActivity and can be used by ReportingActivity
     fun resetFilters() {
-        _selectedStartDate.value = null
-        _selectedEndDate.value = null
+        setDateRangeFilter("All") // This sets dates to null and triggers refresh
         _selectedCategoryId.value = null
         _selectedSupplierId.value = null
+        // _refreshTrigger.value++ // setDateRangeFilter already triggers it
     }
 }
