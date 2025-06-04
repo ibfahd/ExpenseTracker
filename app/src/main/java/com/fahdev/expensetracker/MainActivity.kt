@@ -1,47 +1,77 @@
 package com.fahdev.expensetracker
 
+import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import java.text.SimpleDateFormat
-import java.util.*
-import android.app.Application
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material3.IconButton
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.DateRangePicker
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.rememberDateRangePickerState
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.Supplier
+import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import java.text.NumberFormat
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,7 +113,19 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 actions = {
-                    // Shopping List Button - Integrated
+                    // Reporting Button
+                    IconButton(
+                        onClick = {
+                            val intent = Intent(context, ReportingActivity::class.java)
+                            context.startActivity(intent)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Assessment, // Reporting Icon
+                            contentDescription = stringResource(R.string.title_activity_reporting),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                     IconButton(
                         onClick = {
                             val intent = Intent(context, ShoppingListActivity::class.java)
@@ -92,7 +134,7 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
                     ) {
                         Icon(
                             imageVector = Icons.Default.ShoppingCart,
-                            contentDescription = context.getString(R.string.shopping_list_title), // Using existing string
+                            contentDescription = context.getString(R.string.shopping_list_title),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
@@ -153,9 +195,7 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
             verticalArrangement = Arrangement.Top
         ) {
             ExpenseSummaryCard(totalAmount = totalFilteredExpenses)
-
             Spacer(Modifier.height(8.dp))
-
             FilterStatusRow(
                 selectedStartDate = selectedStartDate,
                 selectedEndDate = selectedEndDate,
@@ -163,9 +203,7 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
                 selectedSupplier = allSuppliers.find { it.id == selectedSupplierId },
                 onResetFilters = { expenseViewModel.resetFilters() }
             )
-
             Spacer(Modifier.height(8.dp))
-
             if (filteredExpenses.isEmpty()) {
                 Text(
                     text = context.getString(R.string.no_expenses),
@@ -175,7 +213,7 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
                 )
             } else {
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    items(filteredExpenses) { expenseWithDetails ->
+                    items(filteredExpenses, key = { it.expense.id }) { expenseWithDetails -> // Added key
                         ExpenseItem(
                             expenseWithDetails = expenseWithDetails,
                             onExpenseClick = { clickedExpenseId ->
@@ -203,10 +241,13 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
 
 @Composable
 fun ExpenseSummaryCard(totalAmount: Double) {
+    val context = LocalContext.current
+    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.getDefault())
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp),
+            .padding(top = 16.dp, bottom = 16.dp), // Ensure some padding if it's at the very top
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         ),
@@ -220,12 +261,12 @@ fun ExpenseSummaryCard(totalAmount: Double) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = LocalContext.current.getString(R.string.total_expenses),
+                text = context.getString(R.string.total_expenses), // This string should reflect "Total Filtered Expenses"
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
             )
             Text(
-                text = "$${"%.2f".format(totalAmount)}",
+                text = currencyFormat.format(totalAmount),
                 style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold, fontSize = 48.sp),
                 color = MaterialTheme.colorScheme.primary
             )
@@ -238,6 +279,8 @@ fun ExpenseItem(
     expenseWithDetails: ExpenseWithDetails,
     onExpenseClick: (Int) -> Unit
 ) {
+    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.getDefault())
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -265,7 +308,7 @@ fun ExpenseItem(
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = "$${"%.2f".format(expenseWithDetails.expense.amount)}",
+                    text = currencyFormat.format(expenseWithDetails.expense.amount),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Bold
@@ -283,14 +326,14 @@ fun ExpenseItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
                 Text(
-                    text = LocalContext.current.getString(R.string.from_supplier, expenseWithDetails.supplier.name),
+                    text = stringResource(R.string.from_supplier, expenseWithDetails.supplier.name),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
             Spacer(Modifier.height(4.dp))
             Text(
-                text = SimpleDateFormat("MMM dd,yyyy - HH:mm", Locale.getDefault()).format(Date(expenseWithDetails.expense.timestamp)),
+                text = SimpleDateFormat("MMM dd, yyyy - HH:mm", Locale.getDefault()).format(Date(expenseWithDetails.expense.timestamp)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
@@ -341,7 +384,16 @@ fun FilterStatusRow(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                         )
+                    } else if (selectedStartDate != null) { // Handle case where only start date is set (e.g. "This Month" before today)
+                        val start = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(selectedStartDate))
+                        Text(
+                            text = "From: $start",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                        )
                     }
+
+
                     if (selectedCategory != null) {
                         Text(
                             text = context.getString(R.string.category_filter, selectedCategory.name),
@@ -395,27 +447,21 @@ fun FilterDialog(
         title = { Text(context.getString(R.string.filter_expenses)) },
         text = {
             Column(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(vertical = 16.dp), // Added vertical padding
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(context.getString(R.string.filter_by_date), style = MaterialTheme.typography.titleSmall)
-                DateFilterDropdown(
+                DateFilterDropdown( // Pass current selections for accurate display
                     selectedStartDate = selectedStartDate,
                     selectedEndDate = selectedEndDate,
                     onDateOptionSelected = { option ->
-                        if (option == "All") {
-                            expenseViewModel.resetFilters()
-                        } else {
-                            expenseViewModel.setDateRangeFilter(option)
-                        }
-                        onDismiss()
+                        expenseViewModel.setDateRangeFilter(option)
+                        // onDismiss() // Keep dialog open to apply multiple filters
                     }
                 )
                 Button(
                     onClick = { showDatePicker = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
+                    modifier = Modifier.fillMaxWidth() // Removed fixed height
                 ) {
                     Text(context.getString(R.string.select_custom_date_range))
                 }
@@ -444,20 +490,26 @@ fun FilterDialog(
                 Button(
                     onClick = {
                         expenseViewModel.resetFilters()
-                        onDismiss()
+                        // onDismiss() // Keep dialog open after clearing
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    modifier = Modifier.fillMaxWidth(), // Removed fixed height
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)
                 ) {
                     Text(context.getString(R.string.clear_all_filters))
                 }
             }
         },
         confirmButton = {
-            Button(onClick = onDismiss) {
-                Text(context.getString(R.string.close))
+            Button(onClick = onDismiss) { // This button now applies and closes
+                Text(context.getString(R.string.apply_filters_button))
+            }
+        },
+        dismissButton = { // Added a cancel button
+            TextButton(onClick = {
+                // Optionally, revert any unapplied changes if you track them locally in dialog
+                onDismiss()
+            }) {
+                Text(context.getString(R.string.cancel))
             }
         }
     )
@@ -468,29 +520,42 @@ fun FilterDialog(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        dateRangePickerState.selectedStartDateMillis?.let { startDate ->
-                            val calendar = Calendar.getInstance()
-                            calendar.timeInMillis = startDate
-                            calendar.set(Calendar.HOUR_OF_DAY, 0)
-                            calendar.set(Calendar.MINUTE, 0)
-                            calendar.set(Calendar.SECOND, 0)
-                            calendar.set(Calendar.MILLISECOND, 0)
-                            val normalizedStartDate = calendar.timeInMillis
+                        val startDateMillis = dateRangePickerState.selectedStartDateMillis
+                        var endDateMillis = dateRangePickerState.selectedEndDateMillis
 
-                            val endDate = dateRangePickerState.selectedEndDateMillis ?: startDate
-                            calendar.timeInMillis = endDate
-                            calendar.set(Calendar.HOUR_OF_DAY, 23)
-                            calendar.set(Calendar.MINUTE, 59)
-                            calendar.set(Calendar.SECOND, 59)
-                            calendar.set(Calendar.MILLISECOND, 999)
-                            val normalizedEndDate = calendar.timeInMillis
-
-                            expenseViewModel.setCustomDateRangeFilter(normalizedStartDate, normalizedEndDate)
-                        } ?: run {
-                            expenseViewModel.setCustomDateRangeFilter(null, null)
+                        // If only start date is selected, set end date to end of start date
+                        if (startDateMillis != null && endDateMillis == null) {
+                            val cal = Calendar.getInstance().apply { timeInMillis = startDateMillis }
+                            cal.set(Calendar.HOUR_OF_DAY, 23)
+                            cal.set(Calendar.MINUTE, 59)
+                            cal.set(Calendar.SECOND, 59)
+                            cal.set(Calendar.MILLISECOND, 999)
+                            endDateMillis = cal.timeInMillis
                         }
+                        // Normalize start date to beginning of day
+                        val normalizedStartDate = startDateMillis?.let {
+                            Calendar.getInstance().apply {
+                                timeInMillis = it
+                                set(Calendar.HOUR_OF_DAY, 0)
+                                set(Calendar.MINUTE, 0)
+                                set(Calendar.SECOND, 0)
+                                set(Calendar.MILLISECOND, 0)
+                            }.timeInMillis
+                        }
+                        // Normalize end date to end of day
+                        val normalizedEndDate = endDateMillis?.let {
+                            Calendar.getInstance().apply {
+                                timeInMillis = it
+                                set(Calendar.HOUR_OF_DAY, 23)
+                                set(Calendar.MINUTE, 59)
+                                set(Calendar.SECOND, 59)
+                                set(Calendar.MILLISECOND, 999)
+                            }.timeInMillis
+                        }
+
+                        expenseViewModel.setCustomDateRangeFilter(normalizedStartDate, normalizedEndDate)
                         showDatePicker = false
-                        onDismiss()
+                        // onDismiss() // Keep filter dialog open
                     }
                 ) {
                     Text(context.getString(R.string.ok))
@@ -502,7 +567,7 @@ fun FilterDialog(
                 }
             }
         ) {
-            DateRangePicker(state = dateRangePickerState, modifier = Modifier.weight(1f))
+            DateRangePicker(state = dateRangePickerState, modifier = Modifier.padding(16.dp)) // Added padding
         }
     }
 }
@@ -523,16 +588,28 @@ fun DateFilterDropdown(
         "ThisYear" to context.getString(R.string.this_year),
         "All" to context.getString(R.string.all_time)
     )
-    val currentOption = dateOptions.find { (key, _) ->
-        when (key) {
-            "ThisMonth" -> selectedStartDate == getStartOfMonth(System.currentTimeMillis()) && selectedEndDate == System.currentTimeMillis()
-            "Last7Days" -> selectedStartDate == (System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L) && selectedEndDate == System.currentTimeMillis()
-            "LastMonth" -> selectedStartDate == getStartOfLastMonth() && selectedEndDate == getEndOfLastMonth()
-            "ThisYear" -> selectedStartDate == getStartOfYear() && selectedEndDate == System.currentTimeMillis()
-            "All" -> selectedStartDate == null && selectedEndDate == null
-            else -> false
+
+    // Determine current selection text more robustly
+    val currentSelectionText = remember(selectedStartDate, selectedEndDate) {
+        when {
+            selectedStartDate == null && selectedEndDate == null -> context.getString(R.string.all_time)
+            // Add checks for predefined ranges if you want to display their names
+            // For now, if custom, show "Custom Range" or the actual dates
+            else -> {
+                val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                val startStr = selectedStartDate?.let { sdf.format(Date(it)) } ?: "N/A"
+                val endStr = selectedEndDate?.let { sdf.format(Date(it)) } ?: "N/A"
+                if (selectedStartDate != null && selectedEndDate != null && selectedStartDate == selectedEndDate) {
+                    startStr // If start and end are same day
+                } else if (selectedStartDate != null && selectedEndDate != null) {
+                    "$startStr - $endStr"
+                } else {
+                    context.getString(R.string.select_date_range) // Fallback
+                }
+            }
         }
-    }?.second ?: context.getString(R.string.select_date_range)
+    }
+
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -540,13 +617,13 @@ fun DateFilterDropdown(
         modifier = Modifier.fillMaxWidth()
     ) {
         TextField(
-            value = currentOption,
+            value = currentSelectionText,
             onValueChange = {},
             readOnly = true,
             label = { Text(context.getString(R.string.date_range_label)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true) // Ensure it's not editable
                 .fillMaxWidth()
         )
         ExposedDropdownMenu(
@@ -666,58 +743,20 @@ fun SupplierFilterDropdown(
     }
 }
 
-private fun getStartOfMonth(timestamp: Long): Long {
-    val calendar = Calendar.getInstance().apply {
-        timeInMillis = timestamp
-        set(Calendar.DAY_OF_MONTH, 1)
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-    return calendar.timeInMillis
-}
-
-private fun getStartOfLastMonth(): Long {
-    val calendar = Calendar.getInstance().apply {
-        add(Calendar.MONTH, -1)
-        set(Calendar.DAY_OF_MONTH, 1)
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-    return calendar.timeInMillis
-}
-
-private fun getEndOfLastMonth(): Long {
-    val calendar = Calendar.getInstance().apply {
-        set(Calendar.DAY_OF_MONTH, 1)
-        add(Calendar.DAY_OF_MONTH, -1)
-        set(Calendar.HOUR_OF_DAY, 23)
-        set(Calendar.MINUTE, 59)
-        set(Calendar.SECOND, 59)
-        set(Calendar.MILLISECOND, 999)
-    }
-    return calendar.timeInMillis
-}
-
-private fun getStartOfYear(): Long {
-    val calendar = Calendar.getInstance().apply {
-        set(Calendar.MONTH, Calendar.JANUARY)
-        set(Calendar.DAY_OF_MONTH, 1)
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-    return calendar.timeInMillis
-}
-
 @Preview(showBackground = true)
 @Composable
 fun ExpenseTrackerAppPreview() {
     ExpenseTrackerTheme {
-        ExpenseTrackerApp(expenseViewModel = ExpenseViewModel(Application()))
+        val mockViewModel = remember {
+            ExpenseViewModel(
+                application = object : Application() {
+                    override fun getApplicationContext(): Context = this
+                }
+            ).apply {
+                // Optionally initialize mock data for preview
+                // Example: setFilteredExpenses(listOf(...mock expenses...))
+            }
+        }
+        ExpenseTrackerApp(expenseViewModel = mockViewModel)
     }
 }

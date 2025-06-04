@@ -6,21 +6,22 @@
     <string name="filter_expenses">Filter Expenses</string>
     <string name="add_new_expense">Add new expense</string>
     <string name="no_expenses">No expenses recorded yet, or no expenses match current filters.</string>
-    <string name="total_expenses">Total Expenses</string>
+    <string name="total_expenses">Total Expenses</string> <!-- Clarified this is for filtered view -->
     <string name="from_supplier">from %1$s</string>
     <string name="active_filters">Active Filters:</string>
     <string name="date_range">Date: %1$s - %2$s</string>
     <string name="category_filter">Category: %1$s</string>
     <string name="supplier_filter">Supplier: %1$s</string>
     <string name="clear_filters">Clear Filters</string>
+    <string name="close">Close</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="apply_filters_button">Apply</string> <!-- New for filter dialog -->
     <string name="filter_by_date">Filter by Period:</string>
     <string name="select_custom_date_range">Select Custom Date Range</string>
     <string name="filter_by_category">Filter by Category:</string>
     <string name="filter_by_supplier">Filter by Supplier:</string>
     <string name="clear_all_filters">Clear All Filters</string>
-    <string name="close">Close</string>
-    <string name="ok">OK</string>
-    <string name="cancel">Cancel</string>
     <string name="this_month">This Month</string>
     <string name="last_7_days">Last 7 Days</string>
     <string name="last_month">Last Month</string>
@@ -65,4 +66,18 @@
     <string name="purchased_quantity_label">Quantity</string>
     <string name="unit_price_label">Unit Price</string>
     <string name="delete_item">Delete Item</string>
+
+    <!-- Reporting Activity Strings -->
+    <string name="title_activity_reporting">Expense Report</string>
+    <string name="back_button_desc">Back</string>
+    <string name="report_section_summary">Overall Summary</string>
+    <string name="report_total_expenses_all_time">Total Expenses (All Time)</string>
+    <string name="report_average_daily_expense">Average Daily Expense</string>
+    <string name="report_average_monthly_expense">Average Monthly Expense</string>
+    <string name="report_total_transactions">Total Transactions</string>
+    <string name="report_section_spending_by_category">Spending by Category</string>
+    <string name="report_section_spending_by_supplier">Spending by Supplier</string>
+    <string name="report_no_data_categories">No category spending data available.</string>
+    <string name="report_no_data_suppliers">No supplier spending data available.</string>
+
 </resources>

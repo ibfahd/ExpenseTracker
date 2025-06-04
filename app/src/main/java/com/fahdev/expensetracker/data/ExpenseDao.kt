@@ -23,7 +23,7 @@ interface ExpenseDao {
     suspend fun deleteExpense(expense: Expense)
 
     @Transaction
-    @RewriteQueriesToDropUnusedColumns
+    @RewriteQueriesToDropUnusedColumns // Keep this if it's helping with other queries
     @Query("SELECT * FROM expenses ORDER BY timestamp DESC")
     fun getAllExpensesWithDetails(): Flow<List<ExpenseWithDetails>>
 
@@ -32,10 +32,11 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE id = :id")
     fun getExpenseWithDetailsById(id: Int): Flow<ExpenseWithDetails?>
 
+    // Existing query, might be useful for specific period totals
     @Query("SELECT SUM(amount) FROM expenses WHERE strftime('%Y-%m', datetime(timestamp / 1000, 'unixepoch')) = strftime('%Y-%m', datetime(:currentTimestamp / 1000, 'unixepoch'))")
     fun getTotalMonthlyExpenses(currentTimestamp: Long): Flow<Double?>
 
-    @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
+    @SuppressWarnings(RoomWarnings.QUERY_MISMATCH) // Keep if necessary
     @Transaction
     @RewriteQueriesToDropUnusedColumns
     @Query("""
@@ -72,4 +73,34 @@ interface ExpenseDao {
         categoryId: Int?,
         supplierId: Int?
     ): Flow<Double?>
+
+    // --- New Reporting Queries ---
+
+    @Query("SELECT SUM(amount) FROM expenses")
+    fun getTotalExpensesAllTime(): Flow<Double?>
+
+    @Query("SELECT MIN(timestamp) FROM expenses")
+    fun getFirstExpenseDate(): Flow<Long?>
+
+    @Query("SELECT COUNT(id) FROM expenses")
+    fun getTotalTransactionCount(): Flow<Int?>
+
+    @Query("""
+        SELECT c.name as categoryName, SUM(e.amount) as totalAmount
+        FROM Expenses e
+        INNER JOIN Products p ON e.productId = p.id
+        INNER JOIN Categories c ON p.categoryId = c.id
+        GROUP BY c.name
+        ORDER BY totalAmount DESC
+    """)
+    fun getSpendingByCategory(): Flow<List<CategorySpending>>
+
+    @Query("""
+        SELECT s.name as supplierName, SUM(e.amount) as totalAmount
+        FROM Expenses e
+        INNER JOIN Suppliers s ON e.supplierId = s.id
+        GROUP BY s.name
+        ORDER BY totalAmount DESC
+    """)
+    fun getSpendingBySupplier(): Flow<List<SupplierSpending>>
 }
