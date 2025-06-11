@@ -68,7 +68,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fahdev.expensetracker.data.CurrencyHelper
 import com.fahdev.expensetracker.data.ProductReportDetail
+import com.fahdev.expensetracker.data.UserPreferencesRepository
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -89,7 +91,6 @@ class ReportingActivity : ComponentActivity() {
     }
 }
 
-// Define an enum for tab types for better readability
 enum class ReportTab(val titleResId: Int, val icon: ImageVector) {
     SUMMARY(R.string.report_tab_summary, Icons.Filled.Info),
     PRODUCT_DETAILS(R.string.report_tab_product_details, Icons.AutoMirrored.Filled.ListAlt)
@@ -101,6 +102,13 @@ fun ReportingScreenWithTabs(expenseViewModel: ExpenseViewModel) {
     val context = LocalContext.current
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = ReportTab.entries.toTypedArray()
+
+    // Get the singleton instance of the repository
+    val userPrefsRepo = remember { UserPreferencesRepository.getInstance(context.applicationContext) }
+    val currencyCode by userPrefsRepo.currencyCode.collectAsState()
+    val currencyFormatter = remember(currencyCode) {
+        CurrencyHelper.getCurrencyFormatter(currencyCode)
+    }
 
     Scaffold(
         topBar = {
@@ -131,18 +139,16 @@ fun ReportingScreenWithTabs(expenseViewModel: ExpenseViewModel) {
                     )
                 }
             }
-            // Content based on selected tab
             when (tabs[selectedTabIndex]) {
-                ReportTab.SUMMARY -> SummaryReportContent(expenseViewModel)
-                ReportTab.PRODUCT_DETAILS -> ProductDetailsReportContent(expenseViewModel)
+                ReportTab.SUMMARY -> SummaryReportContent(expenseViewModel, currencyFormatter)
+                ReportTab.PRODUCT_DETAILS -> ProductDetailsReportContent(expenseViewModel, currencyFormatter)
             }
         }
     }
 }
 
 @Composable
-fun SummaryReportContent(expenseViewModel: ExpenseViewModel) {
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.getDefault())
+fun SummaryReportContent(expenseViewModel: ExpenseViewModel, currencyFormatter: NumberFormat) {
     val totalExpensesAllTime by expenseViewModel.totalExpensesAllTime.collectAsState()
     val averageDailyExpense by expenseViewModel.averageDailyExpense.collectAsState()
     val averageMonthlyExpense by expenseViewModel.averageMonthlyExpense.collectAsState()
@@ -158,9 +164,9 @@ fun SummaryReportContent(expenseViewModel: ExpenseViewModel) {
     ) {
         item {
             ReportSectionCard(title = stringResource(R.string.report_section_summary)) {
-                StatItem(label = stringResource(R.string.report_total_expenses_all_time), value = currencyFormat.format(totalExpensesAllTime))
-                StatItem(label = stringResource(R.string.report_average_daily_expense), value = currencyFormat.format(averageDailyExpense))
-                StatItem(label = stringResource(R.string.report_average_monthly_expense), value = currencyFormat.format(averageMonthlyExpense))
+                StatItem(label = stringResource(R.string.report_total_expenses_all_time), value = currencyFormatter.format(totalExpensesAllTime))
+                StatItem(label = stringResource(R.string.report_average_daily_expense), value = currencyFormatter.format(averageDailyExpense))
+                StatItem(label = stringResource(R.string.report_average_monthly_expense), value = currencyFormatter.format(averageMonthlyExpense))
                 StatItem(label = stringResource(R.string.report_total_transactions), value = totalTransactionCount.toString())
             }
         }
@@ -168,7 +174,7 @@ fun SummaryReportContent(expenseViewModel: ExpenseViewModel) {
             item {
                 ReportSectionCard(title = stringResource(R.string.report_section_spending_by_category_all_time)) {
                     spendingByCategory.take(5).forEach { categoryData ->
-                        StatItem(label = categoryData.categoryName, value = currencyFormat.format(categoryData.totalAmount))
+                        StatItem(label = categoryData.categoryName, value = currencyFormatter.format(categoryData.totalAmount))
                     }
                     if (spendingByCategory.size > 5) {
                         Text("...", style = MaterialTheme.typography.bodySmall, modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -186,7 +192,7 @@ fun SummaryReportContent(expenseViewModel: ExpenseViewModel) {
             item {
                 ReportSectionCard(title = stringResource(R.string.report_section_spending_by_supplier_all_time)) {
                     spendingBySupplier.take(5).forEach { supplierData ->
-                        StatItem(label = supplierData.supplierName, value = currencyFormat.format(supplierData.totalAmount))
+                        StatItem(label = supplierData.supplierName, value = currencyFormatter.format(supplierData.totalAmount))
                     }
                     if (spendingBySupplier.size > 5) {
                         Text("...", style = MaterialTheme.typography.bodySmall, modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -206,8 +212,7 @@ fun SummaryReportContent(expenseViewModel: ExpenseViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductDetailsReportContent(expenseViewModel: ExpenseViewModel) {
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.getDefault())
+fun ProductDetailsReportContent(expenseViewModel: ExpenseViewModel, currencyFormatter: NumberFormat) {
     val productReportDetails by expenseViewModel.productReportDetails.collectAsState()
     val selectedStartDate by expenseViewModel.selectedStartDate.collectAsState()
     val selectedEndDate by expenseViewModel.selectedEndDate.collectAsState()
@@ -221,8 +226,7 @@ fun ProductDetailsReportContent(expenseViewModel: ExpenseViewModel) {
     }
     val expandedCategories = remember { mutableStateMapOf<String, Boolean>() }
 
-    Column(modifier = Modifier.fillMaxSize()) { // Use Column for overall structure of this tab
-        // Date Filters specifically for Product Details
+    Column(modifier = Modifier.fillMaxSize()) {
         ReportDateFilterControls(
             selectedStartDate = selectedStartDate,
             selectedEndDate = selectedEndDate,
@@ -234,9 +238,9 @@ fun ProductDetailsReportContent(expenseViewModel: ExpenseViewModel) {
 
         LazyColumn(
             modifier = Modifier
-                .weight(1f) // Allow LazyColumn to take remaining space
+                .weight(1f)
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp) // Remove default spacing, handle in items
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             if (productReportDetails.isEmpty()) {
                 item {
@@ -262,15 +266,14 @@ fun ProductDetailsReportContent(expenseViewModel: ExpenseViewModel) {
                     }
                     item {
                         AnimatedVisibility(visible = expandedCategories[categoryName] == true) {
-                            Column(modifier = Modifier.padding(bottom = 8.dp)) { // Add bottom padding to the group
+                            Column(modifier = Modifier.padding(bottom = 8.dp)) {
                                 productsInCategory.forEach { productDetail ->
-                                    ProductReportItem(productDetail = productDetail, currencyFormat = currencyFormat)
-                                    HorizontalDivider(modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp)) // Divider between products
+                                    ProductReportItem(productDetail = productDetail, currencyFormatter = currencyFormatter)
+                                    HorizontalDivider(modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp))
                                 }
                             }
                         }
                     }
-                    // No divider here, CategoryAccordionHeader has its own visual separation or can be added
                 }
             }
             item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -315,6 +318,7 @@ fun ProductDetailsReportContent(expenseViewModel: ExpenseViewModel) {
 }
 
 
+// These composables remain unchanged as they don't display currency, but are needed for the file to compile.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportDateFilterControls(
@@ -402,7 +406,7 @@ fun CategoryAccordionHeader(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onToggle)
-            .padding(vertical = 12.dp, horizontal = 0.dp), // Use horizontal padding of LazyColumn
+            .padding(vertical = 12.dp, horizontal = 0.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -469,12 +473,12 @@ fun StatItem(label: String, value: String) {
 }
 
 @Composable
-fun ProductReportItem(productDetail: ProductReportDetail, currencyFormat: NumberFormat) {
+fun ProductReportItem(productDetail: ProductReportDetail, currencyFormatter: NumberFormat) {
     Column(modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)) {
         Text(productDetail.productName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(6.dp))
-        ProductStatRow(label = stringResource(R.string.report_product_total_spent), value = currencyFormat.format(productDetail.totalAmountSpent))
-        ProductStatRow(label = stringResource(R.string.report_product_lowest_price), value = currencyFormat.format(productDetail.lowestTransactionAmount))
+        ProductStatRow(label = stringResource(R.string.report_product_total_spent), value = currencyFormatter.format(productDetail.totalAmountSpent))
+        ProductStatRow(label = stringResource(R.string.report_product_lowest_price), value = currencyFormatter.format(productDetail.lowestTransactionAmount))
         ProductStatRow(label = stringResource(R.string.report_product_cheapest_supplier), value = productDetail.cheapestSupplierName ?: stringResource(R.string.report_not_available))
     }
 }
@@ -490,10 +494,9 @@ fun ProductStatRow(label: String, value: String) {
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
-fun ReportingScreenWithTabsPreview() { // Renamed preview function
+fun ReportingScreenWithTabsPreview() {
     ExpenseTrackerTheme {
         val context = LocalContext.current
         ReportingScreenWithTabs(expenseViewModel = ExpenseViewModel(context.applicationContext as Application))

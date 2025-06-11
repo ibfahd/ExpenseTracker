@@ -77,7 +77,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.Category
+import com.fahdev.expensetracker.data.CurrencyHelper
 import com.fahdev.expensetracker.data.Supplier
+import com.fahdev.expensetracker.data.UserPreferencesRepository
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -105,7 +107,13 @@ fun MainAppScreen(expenseViewModel: ExpenseViewModel) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    // Defines navigation actions from the drawer
+    // Get the singleton instance of the repository
+    val userPrefsRepo = remember { UserPreferencesRepository.getInstance(context.applicationContext) }
+    val currencyCode by userPrefsRepo.currencyCode.collectAsState()
+    val currencyFormatter = remember(currencyCode) {
+        CurrencyHelper.getCurrencyFormatter(currencyCode)
+    }
+
     val navigationActions = mapOf(
         stringResource(R.string.manage_categories) to { context.startActivity(Intent(context, CategoryManagementActivity::class.java)) },
         stringResource(R.string.manage_suppliers) to { context.startActivity(Intent(context, SupplierManagementActivity::class.java)) },
@@ -128,6 +136,7 @@ fun MainAppScreen(expenseViewModel: ExpenseViewModel) {
     ) {
         ExpenseTrackerApp(
             expenseViewModel = expenseViewModel,
+            currencyFormatter = currencyFormatter,
             onMenuClick = {
                 scope.launch {
                     drawerState.open()
@@ -164,7 +173,7 @@ fun AppDrawerContent(onNavigate: (String) -> Unit) {
                 NavigationDrawerItem(
                     icon = { Icon(item.icon, contentDescription = item.key) },
                     label = { Text(item.key) },
-                    selected = false, // Set to true for the current screen if needed
+                    selected = false,
                     onClick = { onNavigate(item.key) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
@@ -176,7 +185,11 @@ fun AppDrawerContent(onNavigate: (String) -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel, onMenuClick: () -> Unit) {
+fun ExpenseTrackerApp(
+    expenseViewModel: ExpenseViewModel,
+    currencyFormatter: NumberFormat,
+    onMenuClick: () -> Unit
+) {
     val context = LocalContext.current
 
     val filteredExpenses by expenseViewModel.filteredExpenses.collectAsState(initial = emptyList())
@@ -239,7 +252,10 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel, onMenuClick: () -> Uni
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            ExpenseSummaryCard(totalAmount = totalFilteredExpenses)
+            ExpenseSummaryCard(
+                totalAmount = totalFilteredExpenses,
+                currencyFormatter = currencyFormatter
+            )
             Spacer(Modifier.height(8.dp))
             FilterStatusRow(
                 selectedStartDate = selectedStartDate,
@@ -258,9 +274,10 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel, onMenuClick: () -> Uni
                 )
             } else {
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    items(filteredExpenses, key = { it.expense.id }) { expenseWithDetails -> // Added key
+                    items(filteredExpenses, key = { it.expense.id }) { expenseWithDetails ->
                         ExpenseItem(
                             expenseWithDetails = expenseWithDetails,
+                            currencyFormatter = currencyFormatter,
                             onExpenseClick = { clickedExpenseId ->
                                 val intent = Intent(context, EditExpenseActivity::class.java).apply {
                                     putExtra("EXPENSE_ID", clickedExpenseId)
@@ -285,14 +302,13 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel, onMenuClick: () -> Uni
 }
 
 @Composable
-fun ExpenseSummaryCard(totalAmount: Double) {
+fun ExpenseSummaryCard(totalAmount: Double, currencyFormatter: NumberFormat) {
     val context = LocalContext.current
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.getDefault())
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp, bottom = 16.dp), // Ensure some padding if it's at the very top
+            .padding(top = 16.dp, bottom = 16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         ),
@@ -306,12 +322,12 @@ fun ExpenseSummaryCard(totalAmount: Double) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = context.getString(R.string.total_expenses), // This string should reflect "Total Filtered Expenses"
+                text = context.getString(R.string.total_expenses),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
             )
             Text(
-                text = currencyFormat.format(totalAmount),
+                text = currencyFormatter.format(totalAmount),
                 style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold, fontSize = 48.sp),
                 color = MaterialTheme.colorScheme.primary
             )
@@ -322,10 +338,9 @@ fun ExpenseSummaryCard(totalAmount: Double) {
 @Composable
 fun ExpenseItem(
     expenseWithDetails: ExpenseWithDetails,
+    currencyFormatter: NumberFormat,
     onExpenseClick: (Int) -> Unit
 ) {
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.getDefault())
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -353,7 +368,7 @@ fun ExpenseItem(
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = currencyFormat.format(expenseWithDetails.expense.amount),
+                    text = currencyFormatter.format(expenseWithDetails.expense.amount),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Bold
@@ -386,6 +401,7 @@ fun ExpenseItem(
     }
 }
 
+// FilterStatusRow and FilterDialog remain unchanged.
 @Composable
 fun FilterStatusRow(
     selectedStartDate: Long?,
@@ -429,7 +445,7 @@ fun FilterStatusRow(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                         )
-                    } else if (selectedStartDate != null) { // Handle case where only start date is set (e.g. "This Month" before today)
+                    } else if (selectedStartDate != null) {
                         val start = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(selectedStartDate))
                         Text(
                             text = "From: $start",
@@ -492,21 +508,20 @@ fun FilterDialog(
         title = { Text(context.getString(R.string.filter_expenses)) },
         text = {
             Column(
-                modifier = Modifier.padding(vertical = 16.dp), // Added vertical padding
+                modifier = Modifier.padding(vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(context.getString(R.string.filter_by_date), style = MaterialTheme.typography.titleSmall)
-                DateFilterDropdown( // Pass current selections for accurate display
+                DateFilterDropdown(
                     selectedStartDate = selectedStartDate,
                     selectedEndDate = selectedEndDate,
                     onDateOptionSelected = { option ->
                         expenseViewModel.setDateRangeFilter(option)
-                        // onDismiss() // Keep dialog open to apply multiple filters
                     }
                 )
                 Button(
                     onClick = { showDatePicker = true },
-                    modifier = Modifier.fillMaxWidth() // Removed fixed height
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(context.getString(R.string.select_custom_date_range))
                 }
@@ -535,9 +550,8 @@ fun FilterDialog(
                 Button(
                     onClick = {
                         expenseViewModel.resetFilters()
-                        // onDismiss() // Keep dialog open after clearing
                     },
-                    modifier = Modifier.fillMaxWidth(), // Removed fixed height
+                    modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)
                 ) {
                     Text(context.getString(R.string.clear_all_filters))
@@ -545,15 +559,12 @@ fun FilterDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onDismiss) { // This button now applies and closes
+            Button(onClick = onDismiss) {
                 Text(context.getString(R.string.apply_filters_button))
             }
         },
-        dismissButton = { // Added a cancel button
-            TextButton(onClick = {
-                // Optionally, revert any unapplied changes if you track them locally in dialog
-                onDismiss()
-            }) {
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
                 Text(context.getString(R.string.cancel))
             }
         }
@@ -568,7 +579,6 @@ fun FilterDialog(
                         val startDateMillis = dateRangePickerState.selectedStartDateMillis
                         var endDateMillis = dateRangePickerState.selectedEndDateMillis
 
-                        // If only start date is selected, set end date to end of start date
                         if (startDateMillis != null && endDateMillis == null) {
                             val cal = Calendar.getInstance().apply { timeInMillis = startDateMillis }
                             cal.set(Calendar.HOUR_OF_DAY, 23)
@@ -577,7 +587,6 @@ fun FilterDialog(
                             cal.set(Calendar.MILLISECOND, 999)
                             endDateMillis = cal.timeInMillis
                         }
-                        // Normalize start date to beginning of day
                         val normalizedStartDate = startDateMillis?.let {
                             Calendar.getInstance().apply {
                                 timeInMillis = it
@@ -587,7 +596,6 @@ fun FilterDialog(
                                 set(Calendar.MILLISECOND, 0)
                             }.timeInMillis
                         }
-                        // Normalize end date to end of day
                         val normalizedEndDate = endDateMillis?.let {
                             Calendar.getInstance().apply {
                                 timeInMillis = it
@@ -600,7 +608,6 @@ fun FilterDialog(
 
                         expenseViewModel.setCustomDateRangeFilter(normalizedStartDate, normalizedEndDate)
                         showDatePicker = false
-                        // onDismiss() // Keep filter dialog open
                     }
                 ) {
                     Text(context.getString(R.string.ok))
@@ -612,7 +619,7 @@ fun FilterDialog(
                 }
             }
         ) {
-            DateRangePicker(state = dateRangePickerState, modifier = Modifier.padding(16.dp)) // Added padding
+            DateRangePicker(state = dateRangePickerState, modifier = Modifier.padding(16.dp))
         }
     }
 }
@@ -634,22 +641,19 @@ fun DateFilterDropdown(
         "All" to context.getString(R.string.all_time)
     )
 
-    // Determine current selection text more robustly
     val currentSelectionText = remember(selectedStartDate, selectedEndDate) {
         when {
             selectedStartDate == null && selectedEndDate == null -> context.getString(R.string.all_time)
-            // Add checks for predefined ranges if you want to display their names
-            // For now, if custom, show "Custom Range" or the actual dates
             else -> {
                 val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
                 val startStr = selectedStartDate?.let { sdf.format(Date(it)) } ?: "N/A"
                 val endStr = selectedEndDate?.let { sdf.format(Date(it)) } ?: "N/A"
                 if (selectedStartDate != null && selectedEndDate != null && selectedStartDate == selectedEndDate) {
-                    startStr // If start and end are same day
+                    startStr
                 } else if (selectedStartDate != null && selectedEndDate != null) {
                     "$startStr - $endStr"
                 } else {
-                    context.getString(R.string.select_date_range) // Fallback
+                    context.getString(R.string.select_date_range)
                 }
             }
         }
@@ -668,7 +672,7 @@ fun DateFilterDropdown(
             label = { Text(context.getString(R.string.date_range_label)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true) // Ensure it's not editable
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
                 .fillMaxWidth()
         )
         ExposedDropdownMenu(

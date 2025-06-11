@@ -65,11 +65,13 @@
     <string name="unit_price_label">Precio unitario</string>
     <string name="delete_item">Eliminar artículo</string>
 
-    <!-- New Strings for Drawer Menu -->
+    <!-- Drawer Menu -->
     <string name="menu">Menú</string>
     <string name="settings">Ajustes</string>
     <string name="about">Acerca de</string>
     <string name="apply_filters_button">Aplicar</string>
+
+    <!-- Reporting -->
     <string name="title_activity_reporting">Informe de gastos</string>
     <string name="back_button_desc">Atrás</string>
     <string name="report_section_summary">Resumen general (todo el tiempo)</string>
@@ -89,4 +91,8 @@
     <string name="report_not_available">N/D</string>
     <string name="report_tab_summary">Resumen</string>
     <string name="report_tab_product_details">Detalles del producto</string>
+
+    <!-- Settings Screen -->
+    <string name="setting_regional_title">Ajustes regionales</string>
+    <string name="setting_currency_label">Moneda</string>
 </resources>

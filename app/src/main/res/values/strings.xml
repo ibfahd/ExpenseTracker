@@ -94,4 +94,8 @@
     <string name="settings">Settings</string>
     <string name="about">About</string>
 
+    <!-- New Strings for Settings Screen -->
+    <string name="setting_regional_title">Regional Settings</string>
+    <string name="setting_currency_label">Currency</string>
+
 </resources>
