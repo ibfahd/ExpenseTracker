@@ -24,7 +24,10 @@ import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -33,15 +36,21 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,14 +58,17 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDateRangePickerState
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +79,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.Supplier
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -80,15 +93,90 @@ class MainActivity : ComponentActivity() {
         setContent {
             ExpenseTrackerTheme {
                 val expenseViewModel: ExpenseViewModel = viewModel(factory = ExpenseViewModelFactory(application))
-                ExpenseTrackerApp(expenseViewModel = expenseViewModel)
+                MainAppScreen(expenseViewModel = expenseViewModel)
             }
         }
     }
 }
 
+@Composable
+fun MainAppScreen(expenseViewModel: ExpenseViewModel) {
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    // Defines navigation actions from the drawer
+    val navigationActions = mapOf(
+        stringResource(R.string.manage_categories) to { context.startActivity(Intent(context, CategoryManagementActivity::class.java)) },
+        stringResource(R.string.manage_suppliers) to { context.startActivity(Intent(context, SupplierManagementActivity::class.java)) },
+        stringResource(R.string.shopping_list_title) to { context.startActivity(Intent(context, ShoppingListActivity::class.java)) },
+        stringResource(R.string.title_activity_reporting) to { context.startActivity(Intent(context, ReportingActivity::class.java)) },
+        stringResource(R.string.settings) to { context.startActivity(Intent(context, SettingsActivity::class.java)) },
+        stringResource(R.string.about) to { context.startActivity(Intent(context, AboutActivity::class.java)) }
+    )
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            AppDrawerContent(
+                onNavigate = { destinationKey ->
+                    navigationActions[destinationKey]?.invoke()
+                    scope.launch { drawerState.close() }
+                }
+            )
+        }
+    ) {
+        ExpenseTrackerApp(
+            expenseViewModel = expenseViewModel,
+            onMenuClick = {
+                scope.launch {
+                    drawerState.open()
+                }
+            }
+        )
+    }
+}
+
+data class DrawerMenuItem(val key: String, val icon: ImageVector)
+
+@Composable
+fun AppDrawerContent(onNavigate: (String) -> Unit) {
+    val context = LocalContext.current
+    val menuItems = listOf(
+        DrawerMenuItem(context.getString(R.string.manage_categories), Icons.Default.Category),
+        DrawerMenuItem(context.getString(R.string.manage_suppliers), Icons.Default.LocationOn),
+        DrawerMenuItem(context.getString(R.string.shopping_list_title), Icons.Default.ShoppingCart),
+        DrawerMenuItem(context.getString(R.string.title_activity_reporting), Icons.Default.Assessment),
+        DrawerMenuItem(context.getString(R.string.settings), Icons.Default.Settings),
+        DrawerMenuItem(context.getString(R.string.about), Icons.Default.Info)
+    )
+
+    ModalDrawerSheet {
+        Column {
+            Text(
+                stringResource(id = R.string.app_name),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(16.dp)
+            )
+            HorizontalDivider()
+            Spacer(Modifier.height(12.dp))
+            menuItems.forEach { item ->
+                NavigationDrawerItem(
+                    icon = { Icon(item.icon, contentDescription = item.key) },
+                    label = { Text(item.key) },
+                    selected = false, // Set to true for the current screen if needed
+                    onClick = { onNavigate(item.key) },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+            }
+        }
+    }
+}
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
+fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel, onMenuClick: () -> Unit) {
     val context = LocalContext.current
 
     val filteredExpenses by expenseViewModel.filteredExpenses.collectAsState(initial = emptyList())
@@ -108,60 +196,17 @@ fun ExpenseTrackerApp(expenseViewModel: ExpenseViewModel) {
         topBar = {
             TopAppBar(
                 title = { Text(context.getString(R.string.app_name)) },
+                navigationIcon = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu))
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 actions = {
-                    // Reporting Button
-                    IconButton(
-                        onClick = {
-                            val intent = Intent(context, ReportingActivity::class.java)
-                            context.startActivity(intent)
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Assessment, // Reporting Icon
-                            contentDescription = stringResource(R.string.title_activity_reporting),
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                    IconButton(
-                        onClick = {
-                            val intent = Intent(context, ShoppingListActivity::class.java)
-                            context.startActivity(intent)
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ShoppingCart,
-                            contentDescription = context.getString(R.string.shopping_list_title),
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                    IconButton(
-                        onClick = {
-                            val intent = Intent(context, CategoryManagementActivity::class.java)
-                            context.startActivity(intent)
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Category,
-                            contentDescription = context.getString(R.string.manage_categories),
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                    IconButton(
-                        onClick = {
-                            val intent = Intent(context, SupplierManagementActivity::class.java)
-                            context.startActivity(intent)
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = context.getString(R.string.manage_suppliers),
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
                     IconButton(onClick = { showFilterDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.FilterList,
@@ -745,18 +790,15 @@ fun SupplierFilterDropdown(
 
 @Preview(showBackground = true)
 @Composable
-fun ExpenseTrackerAppPreview() {
+fun MainAppScreenPreview() {
     ExpenseTrackerTheme {
         val mockViewModel = remember {
             ExpenseViewModel(
                 application = object : Application() {
                     override fun getApplicationContext(): Context = this
                 }
-            ).apply {
-                // Optionally initialize mock data for preview
-                // Example: setFilteredExpenses(listOf(...mock expenses...))
-            }
+            )
         }
-        ExpenseTrackerApp(expenseViewModel = mockViewModel)
+        MainAppScreen(expenseViewModel = mockViewModel)
     }
 }

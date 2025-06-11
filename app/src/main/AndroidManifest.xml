@@ -48,13 +48,27 @@
             android:label="@string/shopping_list_title"
             android:theme="@style/Theme.ExpenseTracker" />
 
-        <!-- New Reporting Activity -->
         <activity
             android:name=".ReportingActivity"
             android:exported="false"
             android:label="@string/title_activity_reporting"
             android:parentActivityName=".MainActivity"
             android:theme="@style/Theme.ExpenseTracker" />
+
+        <!-- New Activities for Drawer Menu -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="@string/settings"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme.ExpenseTracker" />
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:label="@string/about"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme.ExpenseTracker" />
+
 
     </application>
 

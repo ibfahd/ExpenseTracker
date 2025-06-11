@@ -64,4 +64,29 @@
     <string name="purchased_quantity_label">Quantité</string>
     <string name="unit_price_label">Prix unitaire</string>
     <string name="delete_item">Supprimer l\'article</string>
+
+    <!-- New Strings for Drawer Menu -->
+    <string name="menu">Menu</string>
+    <string name="settings">Paramètres</string>
+    <string name="about">À propos</string>
+    <string name="apply_filters_button">Appliquer</string>
+    <string name="title_activity_reporting">Rapport de dépenses</string>
+    <string name="back_button_desc">Retour</string>
+    <string name="report_section_summary">Résumé global (depuis toujours)</string>
+    <string name="report_total_expenses_all_time">Dépenses totales (depuis toujours)</string>
+    <string name="report_average_daily_expense">Dépense quotidienne moyenne</string>
+    <string name="report_average_monthly_expense">Dépense mensuelle moyenne</string>
+    <string name="report_total_transactions">Total des transactions</string>
+    <string name="report_section_spending_by_category_all_time">Principales dépenses par catégorie (depuis toujours)</string>
+    <string name="report_section_spending_by_supplier_all_time">Principales dépenses par fournisseur (depuis toujours)</string>
+    <string name="report_no_data_categories_all_time">Aucune donnée de dépense par catégorie disponible.</string>
+    <string name="report_no_data_suppliers_all_time">Aucune donnée de dépense par fournisseur disponible.</string>
+    <string name="report_section_product_details">Détails des achats de produits (filtrés par période)</string>
+    <string name="report_no_product_data">Aucun détail d\'achat de produit disponible pour la période sélectionnée.</string>
+    <string name="report_product_total_spent">Total dépensé :</string>
+    <string name="report_product_lowest_price">Prix le plus bas payé :</string>
+    <string name="report_product_cheapest_supplier">Fournisseur le moins cher (au prix le plus bas) :</string>
+    <string name="report_not_available">N/A</string>
+    <string name="report_tab_summary">Résumé</string>
+    <string name="report_tab_product_details">Détails du produit</string>
 </resources>

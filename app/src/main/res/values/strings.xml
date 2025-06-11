@@ -89,4 +89,9 @@
     <string name="report_tab_summary">Summary</string>
     <string name="report_tab_product_details">Product Details</string>
 
+    <!-- New Strings for Drawer Menu -->
+    <string name="menu">Menu</string>
+    <string name="settings">Settings</string>
+    <string name="about">About</string>
+
 </resources>

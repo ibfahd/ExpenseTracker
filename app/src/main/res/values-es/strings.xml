@@ -64,4 +64,29 @@
     <string name="purchased_quantity_label">Cantidad</string>
     <string name="unit_price_label">Precio unitario</string>
     <string name="delete_item">Eliminar artículo</string>
+
+    <!-- New Strings for Drawer Menu -->
+    <string name="menu">Menú</string>
+    <string name="settings">Ajustes</string>
+    <string name="about">Acerca de</string>
+    <string name="apply_filters_button">Aplicar</string>
+    <string name="title_activity_reporting">Informe de gastos</string>
+    <string name="back_button_desc">Atrás</string>
+    <string name="report_section_summary">Resumen general (todo el tiempo)</string>
+    <string name="report_total_expenses_all_time">Gastos totales (todo el tiempo)</string>
+    <string name="report_average_daily_expense">Gasto diario promedio</string>
+    <string name="report_average_monthly_expense">Gasto mensual promedio</string>
+    <string name="report_total_transactions">Total de transacciones</string>
+    <string name="report_section_spending_by_category_all_time">Mayores gastos por categoría (todo el tiempo)</string>
+    <string name="report_section_spending_by_supplier_all_time">Mayores gastos por proveedor (todo el tiempo)</string>
+    <string name="report_no_data_categories_all_time">No hay datos de gastos por categoría disponibles.</string>
+    <string name="report_no_data_suppliers_all_time">No hay datos de gastos por proveedor disponibles.</string>
+    <string name="report_section_product_details">Detalles de compra de productos (filtrado por período)</string>
+    <string name="report_no_product_data">No hay detalles de compra de productos disponibles para el período seleccionado.</string>
+    <string name="report_product_total_spent">Total gastado:</string>
+    <string name="report_product_lowest_price">Precio más bajo pagado:</string>
+    <string name="report_product_cheapest_supplier">Proveedor más barato (al precio más bajo):</string>
+    <string name="report_not_available">N/D</string>
+    <string name="report_tab_summary">Resumen</string>
+    <string name="report_tab_product_details">Detalles del producto</string>
 </resources>
