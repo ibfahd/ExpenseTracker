@@ -2,6 +2,7 @@ package com.fahdev.expensetracker.data
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index // <<< ADD THIS IMPORT
 import androidx.room.PrimaryKey
 
 @Entity(
@@ -19,15 +20,20 @@ import androidx.room.PrimaryKey
             childColumns = ["supplierId"],
             onDelete = ForeignKey.SET_NULL
         )
+    ],
+    // Add indices to the foreign key columns for performance
+    indices = [
+        Index(value = ["productId"]),
+        Index(value = ["supplierId"])
     ]
 )
 data class ShoppingListItem(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val productId: Int,
     val unit: String?,
-    val plannedQuantity: Double, // NEW: Stores the initially planned quantity
-    val purchasedQuantity: Double, // RENAMED: Stores the actual purchased quantity for a trip (was 'quantity')
+    val plannedQuantity: Double,
+    val purchasedQuantity: Double,
     val unitPrice: Double?,
     val supplierId: Int?,
-    val shoppingDate: Long // Timestamp of the specific shopping trip
+    val shoppingDate: Long
 )
