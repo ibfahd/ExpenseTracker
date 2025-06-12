@@ -34,7 +34,6 @@
     <string name="supplier">Fournisseur</string>
     <string name="start">Début</string>
     <string name="end">Fin</string>
-
     <string name="category_food_drinks">Aliments et boissons</string>
     <string name="category_housing">Logement</string>
     <string name="category_transportation">Transport</string>
@@ -47,7 +46,6 @@
     <string name="category_education">Éducation</string>
     <string name="category_savings_investments">Épargne et investissements</string>
     <string name="category_miscellaneous">Divers</string>
-
     <string name="shopping_list_title">Liste de courses</string>
     <string name="supplier_label">Fournisseur :</string>
     <string name="select_supplier">Sélectionner un fournisseur</string>
@@ -64,14 +62,7 @@
     <string name="purchased_quantity_label">Quantité</string>
     <string name="unit_price_label">Prix unitaire</string>
     <string name="delete_item">Supprimer l\'article</string>
-
-    <!-- Drawer Menu -->
-    <string name="menu">Menu</string>
-    <string name="settings">Paramètres</string>
-    <string name="about">À propos</string>
     <string name="apply_filters_button">Appliquer</string>
-
-    <!-- Reporting -->
     <string name="title_activity_reporting">Rapport de dépenses</string>
     <string name="back_button_desc">Retour</string>
     <string name="report_section_summary">Résumé global (depuis toujours)</string>
@@ -91,8 +82,16 @@
     <string name="report_not_available">N/A</string>
     <string name="report_tab_summary">Résumé</string>
     <string name="report_tab_product_details">Détails du produit</string>
-
-    <!-- Settings Screen -->
+    <string name="menu">Menu</string>
+    <string name="settings">Paramètres</string>
+    <string name="about">À propos</string>
     <string name="setting_regional_title">Paramètres régionaux</string>
     <string name="setting_currency_label">Devise</string>
+    <string name="version_label">Version %1$s</string>
+    <string name="about_section_disclaimer">Avis de non-responsabilité</string>
+    <string name="about_disclaimer_content">Cette application est un outil de gestion des finances personnelles conçu pour vous aider à suivre vos dépenses. Elle ne fournit PAS de conseils financiers, n\'offre PAS de prêts ou de crédits, ne facilite PAS les investissements et ne s\'engage dans aucun service financier réglementé.</string>
+    <string name="about_section_privacy">Données et Confidentialité</string>
+    <string name="about_privacy_content">Toutes les données financières que vous saisissez sont stockées de manière sécurisée et exclusivement sur votre appareil. Cette application ne collecte ni ne transmet aucune de vos informations financières personnelles à des serveurs externes. Votre vie privée est une priorité absolue.</string>
+    <string name="about_section_contact">Contact et Assistance</string>
+    <string name="about_contact_content">Pour toute question, commentaire ou assistance, veuillez nous envoyer un e-mail à : fahdboussouf@gmail.com</string>
 </resources>
