@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.ExpenseTracker" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+      Using a Material3 DayNight theme with NoActionBar ensures compatibility with
+      AppCompatActivity and allows the app's Compose theme to control the UI,
+      which is the modern recommended approach.
+    -->
+    <style name="Theme.ExpenseTracker" parent="Theme.Material3.DayNight.NoActionBar" />
 </resources>

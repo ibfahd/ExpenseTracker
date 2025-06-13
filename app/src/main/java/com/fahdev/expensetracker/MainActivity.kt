@@ -4,9 +4,9 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -88,7 +88,8 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-class MainActivity : ComponentActivity() {
+// Changed from ComponentActivity to AppCompatActivity
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -101,13 +102,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 @Composable
 fun MainAppScreen(expenseViewModel: ExpenseViewModel) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    // Get the singleton instance of the repository
     val userPrefsRepo = remember { UserPreferencesRepository.getInstance(context.applicationContext) }
     val currencyCode by userPrefsRepo.currencyCode.collectAsState()
     val currencyFormatter = remember(currencyCode) {
@@ -146,8 +147,11 @@ fun MainAppScreen(expenseViewModel: ExpenseViewModel) {
     }
 }
 
-data class DrawerMenuItem(val key: String, val icon: ImageVector)
+// ... All other composable functions in this file remain the same
+// The only change was MainActivity extending AppCompatActivity.
+// The rest of the file is included for completeness.
 
+data class DrawerMenuItem(val key: String, val icon: ImageVector)
 @Composable
 fun AppDrawerContent(onNavigate: (String) -> Unit) {
     val context = LocalContext.current
@@ -401,7 +405,6 @@ fun ExpenseItem(
     }
 }
 
-// FilterStatusRow and FilterDialog remain unchanged.
 @Composable
 fun FilterStatusRow(
     selectedStartDate: Long?,
@@ -806,3 +809,4 @@ fun MainAppScreenPreview() {
         MainAppScreen(expenseViewModel = mockViewModel)
     }
 }
+

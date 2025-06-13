@@ -94,4 +94,5 @@
     <string name="about_privacy_content">All financial data you enter is stored securely and exclusively on your device. This app does not collect or transmit any of your personal financial information to external servers. Your privacy is a top priority.</string>
     <string name="about_section_contact">Contact &amp; Support</string>
     <string name="about_contact_content">For questions, feedback, or support, please email us at: fahdboussouf@gmail.com</string>
+    <string name="setting_language_label">Language</string>
 </resources>

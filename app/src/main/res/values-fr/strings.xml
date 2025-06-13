@@ -94,4 +94,5 @@
     <string name="about_privacy_content">Toutes les données financières que vous saisissez sont stockées de manière sécurisée et exclusivement sur votre appareil. Cette application ne collecte ni ne transmet aucune de vos informations financières personnelles à des serveurs externes. Votre vie privée est une priorité absolue.</string>
     <string name="about_section_contact">Contact et Assistance</string>
     <string name="about_contact_content">Pour toute question, commentaire ou assistance, veuillez nous envoyer un e-mail à : fahdboussouf@gmail.com</string>
+    <string name="setting_language_label">Langue</string>
 </resources>

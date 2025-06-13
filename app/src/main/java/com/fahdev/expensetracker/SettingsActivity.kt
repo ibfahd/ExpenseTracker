@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
@@ -45,6 +47,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.CurrencyHelper
+import com.fahdev.expensetracker.data.LocaleHelper
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 
 class SettingsActivity : ComponentActivity() {
@@ -62,6 +65,7 @@ class SettingsActivity : ComponentActivity() {
     }
 }
 
+// Add the OptIn annotation here to cover all experimental APIs used within this screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(settingsViewModel: SettingsViewModel) {
@@ -74,7 +78,7 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel) {
                     IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back_button_desc)
                         )
                     }
                 },
@@ -91,6 +95,7 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel) {
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
             Card(
@@ -105,6 +110,8 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel) {
                     )
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     CurrencySelector(settingsViewModel = settingsViewModel)
+                    Spacer(Modifier.height(16.dp))
+                    LanguageSelector(settingsViewModel = settingsViewModel)
                 }
             }
         }
@@ -135,7 +142,7 @@ fun CurrencySelector(settingsViewModel: SettingsViewModel) {
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1.5f) // Give more space to dropdown
         ) {
             TextField(
                 value = selectedCurrency?.displayName ?: "Select Currency",
@@ -154,6 +161,58 @@ fun CurrencySelector(settingsViewModel: SettingsViewModel) {
                         text = { Text("${currencyInfo.displayName} (${currencyInfo.code})") },
                         onClick = {
                             settingsViewModel.setCurrency(currencyInfo.code)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LanguageSelector(settingsViewModel: SettingsViewModel) {
+    val selectedLanguageTag by settingsViewModel.selectedLanguage.collectAsState()
+    val availableLanguages = settingsViewModel.availableLanguages
+    var expanded by remember { mutableStateOf(false) }
+
+    val selectedLanguage = remember(selectedLanguageTag) {
+        availableLanguages.find { it.tag == selectedLanguageTag }
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = stringResource(R.string.setting_language_label),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge
+        )
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier.weight(1.5f)
+        ) {
+            TextField(
+                value = selectedLanguage?.nativeName ?: "System Default",
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                availableLanguages.forEach { language ->
+                    DropdownMenuItem(
+                        text = { Text(language.nativeName) },
+                        onClick = {
+                            settingsViewModel.setLanguage(language.tag)
                             expanded = false
                         }
                     )

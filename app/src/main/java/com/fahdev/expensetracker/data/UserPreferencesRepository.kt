@@ -6,18 +6,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * A repository for managing user preferences, such as the default currency.
- * This class uses SharedPreferences for persistence and follows a singleton pattern
- * to ensure all parts of the app use the same instance.
+ * A repository for managing user preferences, such as the default currency and language.
+ * This class uses SharedPreferences for persistence and follows a singleton pattern.
  */
 class UserPreferencesRepository private constructor(context: Context) {
 
     private val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
 
+    // Currency Preference
     private val _currencyCode = MutableStateFlow(
         sharedPreferences.getString(KEY_CURRENCY, "USD") ?: "USD"
     )
-
     val currencyCode = _currencyCode.asStateFlow()
 
     fun setCurrency(currencyCode: String) {
@@ -27,18 +26,26 @@ class UserPreferencesRepository private constructor(context: Context) {
         _currencyCode.value = currencyCode
     }
 
+    // Language Preference
+    private val _language = MutableStateFlow(
+        sharedPreferences.getString(KEY_LANGUAGE, "system") ?: "system"
+    )
+    val language = _language.asStateFlow()
+
+    fun setLanguage(languageTag: String) {
+        sharedPreferences.edit {
+            putString(KEY_LANGUAGE, languageTag)
+        }
+        _language.value = languageTag
+    }
+
     companion object {
         private const val KEY_CURRENCY = "currency_code"
+        private const val KEY_LANGUAGE = "language_tag"
 
         @Volatile
         private var INSTANCE: UserPreferencesRepository? = null
 
-        /**
-         * Returns the singleton instance of the repository.
-         *
-         * @param context The application context.
-         * @return The singleton UserPreferencesRepository instance.
-         */
         fun getInstance(context: Context): UserPreferencesRepository {
             return INSTANCE ?: synchronized(this) {
                 val instance = UserPreferencesRepository(context.applicationContext)
