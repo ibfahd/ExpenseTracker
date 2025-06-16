@@ -2,9 +2,9 @@ package com.fahdev.expensetracker
 
 import android.app.Application
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,7 +26,8 @@ import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import kotlinx.coroutines.launch
 
-class CategoryManagementActivity : ComponentActivity() {
+class CategoryManagementActivity : AppCompatActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -47,14 +49,10 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
 
     val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
 
-    // State for showing the Add/Edit Category dialog
     var showAddEditDialog by remember { mutableStateOf(false) }
-    // State to hold the category being edited (null for adding new)
     var categoryToEdit by remember { mutableStateOf<Category?>(null) }
-    // State for the text field in the dialog
     var categoryNameInput by remember { mutableStateOf("") }
 
-    // State for delete confirmation dialog
     var showDeleteDialog by remember { mutableStateOf(false) }
     var categoryToDelete by remember { mutableStateOf<Category?>(null) }
 
@@ -63,14 +61,14 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Manage Categories") },
+                title = { Text(stringResource(R.string.manage_categories)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    IconButton(onClick = { (context as? AppCompatActivity)?.finish() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back_button_desc))
                     }
                 }
             )
@@ -78,14 +76,14 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    categoryToEdit = null // Indicate adding a new category
-                    categoryNameInput = "" // Clear input field
+                    categoryToEdit = null
+                    categoryNameInput = ""
                     showAddEditDialog = true
                 },
                 containerColor = MaterialTheme.colorScheme.tertiary,
                 contentColor = MaterialTheme.colorScheme.onTertiary
             ) {
-                Icon(Icons.Filled.Add, "Add new category")
+                Icon(Icons.Filled.Add, stringResource(R.string.add_new_category_desc))
             }
         },
         modifier = Modifier.fillMaxSize()
@@ -99,7 +97,7 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
         ) {
             if (allCategories.isEmpty()) {
                 Text(
-                    text = "No categories yet. Tap '+' to add one!",
+                    text = stringResource(R.string.no_categories_placeholder),
                     modifier = Modifier.padding(top = 16.dp),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -125,16 +123,18 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
         }
     }
 
-    // Add/Edit Category Dialog
     if (showAddEditDialog) {
         AlertDialog(
             onDismissRequest = { showAddEditDialog = false },
-            title = { Text(if (categoryToEdit == null) "Add Category" else "Edit Category") },
+            title = {
+                val titleRes = if (categoryToEdit == null) R.string.add_category_title else R.string.edit_category_title
+                Text(stringResource(titleRes))
+            },
             text = {
                 TextField(
                     value = categoryNameInput,
                     onValueChange = { categoryNameInput = it },
-                    label = { Text("Category Name") },
+                    label = { Text(stringResource(R.string.category_name_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -145,49 +145,47 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
                         scope.launch {
                             val existingCategory = expenseViewModel.getCategoryByName(categoryNameInput)
                             if (existingCategory != null && existingCategory.id != categoryToEdit?.id) {
-                                snackbarHostState.showSnackbar("Category with this name already exists!")
+                                snackbarHostState.showSnackbar(context.getString(R.string.category_exists_error))
                             } else {
                                 if (categoryToEdit == null) {
-                                    // Add new category
                                     expenseViewModel.addCategory(Category(name = categoryNameInput))
-                                    snackbarHostState.showSnackbar("Category added!")
+                                    snackbarHostState.showSnackbar(context.getString(R.string.category_added_success))
                                 } else {
-                                    // Update existing category
                                     val updatedCategory = categoryToEdit!!.copy(name = categoryNameInput)
                                     expenseViewModel.updateCategory(updatedCategory)
-                                    snackbarHostState.showSnackbar("Category updated!")
+                                    snackbarHostState.showSnackbar(context.getString(R.string.category_updated_success))
                                 }
                                 showAddEditDialog = false
                             }
                         }
                     } else {
-                        scope.launch { snackbarHostState.showSnackbar("Category name cannot be empty.") }
+                        scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.category_name_empty_error)) }
                     }
                 }) {
-                    Text(if (categoryToEdit == null) "Add" else "Save")
+                    val textRes = if (categoryToEdit == null) R.string.add_button else R.string.save_button
+                    Text(stringResource(textRes))
                 }
             },
             dismissButton = {
                 Button(onClick = { showAddEditDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
     }
 
-    // Delete Confirmation Dialog
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Confirm Deletion") },
-            text = { Text("Are you sure you want to delete category '${categoryToDelete?.name}'? This will also affect expenses using this category.") },
+            title = { Text(stringResource(R.string.confirm_deletion_title)) },
+            text = { Text(stringResource(R.string.delete_category_confirmation_message, categoryToDelete?.name ?: "")) },
             confirmButton = {
                 Button(
                     onClick = {
                         categoryToDelete?.let { category ->
                             scope.launch {
                                 expenseViewModel.deleteCategory(category)
-                                snackbarHostState.showSnackbar("Category deleted!")
+                                snackbarHostState.showSnackbar(context.getString(R.string.category_deleted_success))
                             }
                         }
                         showDeleteDialog = false
@@ -195,12 +193,12 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete_button))
                 }
             },
             dismissButton = {
                 Button(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -241,7 +239,7 @@ fun CategoryItem(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Edit,
-                        contentDescription = "Edit ${category.name}",
+                        contentDescription = stringResource(R.string.edit_category_desc, category.name),
                         tint = MaterialTheme.colorScheme.secondary
                     )
                 }
@@ -250,7 +248,7 @@ fun CategoryItem(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Delete,
-                        contentDescription = "Delete ${category.name}",
+                        contentDescription = stringResource(R.string.delete_category_desc, category.name),
                         tint = MaterialTheme.colorScheme.error
                     )
                 }

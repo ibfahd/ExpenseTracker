@@ -2,9 +2,9 @@ package com.fahdev.expensetracker
 
 import android.content.pm.PackageManager
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,7 +35,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 
-class AboutActivity : ComponentActivity() {
+class AboutActivity : AppCompatActivity() {
+    // Add the OptIn annotation here to cover all experimental APIs used within this Activity
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,7 +76,6 @@ fun AboutScreenContent(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val versionName: String = try {
         val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        // Corrected: Handle the case where versionName itself might be null
         packageInfo.versionName ?: "1.0"
     } catch (e: PackageManager.NameNotFoundException) {
         "1.0" // Fallback version

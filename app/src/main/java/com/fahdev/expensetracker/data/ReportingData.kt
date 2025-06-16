@@ -17,7 +17,9 @@ data class ProductReportDetail(
     val productName: String,
     val categoryId: Int,
     val categoryName: String,
-    val totalAmountSpent: Double,
-    val lowestTransactionAmount: Double, // The smallest amount recorded for this product in a single expense
-    val cheapestSupplierName: String? // The supplier for that lowest transaction amount
+    // Changed to nullable Double to prevent crashes if SUM is null
+    val totalAmountSpent: Double?,
+    // Changed to nullable Double to prevent crashes if LEFT JOIN results in null
+    val lowestTransactionAmount: Double?,
+    val cheapestSupplierName: String?
 )

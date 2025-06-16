@@ -95,4 +95,35 @@
     <string name="about_section_contact">Contact &amp; Support</string>
     <string name="about_contact_content">For questions, feedback, or support, please email us at: fahdboussouf@gmail.com</string>
     <string name="setting_language_label">Language</string>
+    <string name="add_new_category_desc">Add new category</string>
+    <string name="no_categories_placeholder">No categories yet. Tap \'+\' to add one!</string>
+    <string name="add_category_title">Add Category</string>
+    <string name="edit_category_title">Edit Category</string>
+    <string name="category_name_label">Category Name</string>
+    <string name="add_button">Add</string>
+    <string name="save_button">Save</string>
+    <string name="confirm_deletion_title">Confirm Deletion</string>
+    <string name="delete_category_confirmation_message">Are you sure you want to delete category \'%1$s\'? This will also affect related expenses.</string>
+    <string name="delete_button">Delete</string>
+    <string name="edit_category_desc">Edit %1$s</string>
+    <string name="delete_category_desc">Delete %1$s</string>
+    <string name="category_exists_error">Category with this name already exists!</string>
+    <string name="category_added_success">Category added!</string>
+    <string name="category_updated_success">Category updated!</string>
+    <string name="category_deleted_success">Category deleted!</string>
+    <string name="category_name_empty_error">Category name cannot be empty.</string>
+
+    <string name="add_new_supplier_desc">Add new supplier</string>
+    <string name="no_suppliers_placeholder">No suppliers yet. Tap \'+\' to add one!</string>
+    <string name="add_supplier_title">Add Supplier</string>
+    <string name="edit_supplier_title">Edit Supplier</string>
+    <string name="supplier_name_label">Supplier Name</string>
+    <string name="delete_supplier_confirmation_message">Are you sure you want to delete supplier \'%1$s\'? This will also affect related expenses.</string>
+    <string name="edit_supplier_desc">Edit %1$s</string>
+    <string name="delete_supplier_desc">Delete %1$s</string>
+    <string name="supplier_exists_error">Supplier with this name already exists!</string>
+    <string name="supplier_added_success">Supplier added!</string>
+    <string name="supplier_updated_success">Supplier updated!</string>
+    <string name="supplier_deleted_success">Supplier deleted!</string>
+    <string name="supplier_name_empty_error">Supplier name cannot be empty.</string>
 </resources>

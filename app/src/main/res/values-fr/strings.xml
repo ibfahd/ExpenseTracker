@@ -95,4 +95,35 @@
     <string name="about_section_contact">Contact et Assistance</string>
     <string name="about_contact_content">Pour toute question, commentaire ou assistance, veuillez nous envoyer un e-mail à : fahdboussouf@gmail.com</string>
     <string name="setting_language_label">Langue</string>
+    <string name="add_new_category_desc">Ajouter une nouvelle catégorie</string>
+    <string name="no_categories_placeholder">Aucune catégorie pour le moment. Appuyez sur \'+\' pour en ajouter une !</string>
+    <string name="add_category_title">Ajouter une Catégorie</string>
+    <string name="edit_category_title">Modifier la Catégorie</string>
+    <string name="category_name_label">Nom de la Catégorie</string>
+    <string name="add_button">Ajouter</string>
+    <string name="save_button">Enregistrer</string>
+    <string name="confirm_deletion_title">Confirmer la Suppression</string>
+    <string name="delete_category_confirmation_message">Êtes-vous sûr de vouloir supprimer la catégorie \'%1$s\' ? Cela affectera également les dépenses associées.</string>
+    <string name="delete_button">Supprimer</string>
+    <string name="edit_category_desc">Modifier %1$s</string>
+    <string name="delete_category_desc">Supprimer %1$s</string>
+    <string name="category_exists_error">Une catégorie avec ce nom existe déjà !</string>
+    <string name="category_added_success">Catégorie ajoutée !</string>
+    <string name="category_updated_success">Catégorie mise à jour !</string>
+    <string name="category_deleted_success">Catégorie supprimée !</string>
+    <string name="category_name_empty_error">Le nom de la catégorie ne peut pas être vide.</string>
+
+    <string name="add_new_supplier_desc">Ajouter un nouveau fournisseur</string>
+    <string name="no_suppliers_placeholder">Aucun fournisseur pour le moment. Appuyez sur \'+\' pour en ajouter un !</string>
+    <string name="add_supplier_title">Ajouter un Fournisseur</string>
+    <string name="edit_supplier_title">Modifier le Fournisseur</string>
+    <string name="supplier_name_label">Nom du Fournisseur</string>
+    <string name="delete_supplier_confirmation_message">Êtes-vous sûr de vouloir supprimer le fournisseur \'%1$s\' ? Cela affectera également les dépenses associées.</string>
+    <string name="edit_supplier_desc">Modifier %1$s</string>
+    <string name="delete_supplier_desc">Supprimer %1$s</string>
+    <string name="supplier_exists_error">Un fournisseur avec ce nom existe déjà !</string>
+    <string name="supplier_added_success">Fournisseur ajouté !</string>
+    <string name="supplier_updated_success">Fournisseur mis à jour !</string>
+    <string name="supplier_deleted_success">Fournisseur supprimé !</string>
+    <string name="supplier_name_empty_error">Le nom du fournisseur ne peut pas être vide.</string>
 </resources>

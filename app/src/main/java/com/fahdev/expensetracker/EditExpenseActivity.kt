@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,17 +31,14 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-class EditExpenseActivity : ComponentActivity() {
+class EditExpenseActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ExpenseTrackerTheme {
                 val expenseViewModel: ExpenseViewModel = viewModel(factory = ExpenseViewModelFactory(application))
-
-                // Get the expense ID passed from MainActivity
                 val expenseId = intent.getIntExtra("EXPENSE_ID", -1)
-
                 EditExpenseScreen(
                     expenseViewModel = expenseViewModel,
                     expenseId = expenseId

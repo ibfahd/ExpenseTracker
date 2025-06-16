@@ -2,9 +2,9 @@ package com.fahdev.expensetracker
 
 import android.app.Application
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
@@ -78,7 +78,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-class ReportingActivity : ComponentActivity() {
+class ReportingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -90,6 +90,32 @@ class ReportingActivity : ComponentActivity() {
         }
     }
 }
+
+// ... SummaryReportContent and other composables are unchanged, only ProductReportItem is updated
+
+@Composable
+fun ProductReportItem(productDetail: ProductReportDetail, currencyFormatter: NumberFormat) {
+    Column(modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)) {
+        Text(productDetail.productName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.height(6.dp))
+        // Safely format the values, providing a default if they are null
+        ProductStatRow(
+            label = stringResource(R.string.report_product_total_spent),
+            value = currencyFormatter.format(productDetail.totalAmountSpent ?: 0.0)
+        )
+        ProductStatRow(
+            label = stringResource(R.string.report_product_lowest_price),
+            value = currencyFormatter.format(productDetail.lowestTransactionAmount ?: 0.0)
+        )
+        ProductStatRow(
+            label = stringResource(R.string.report_product_cheapest_supplier),
+            value = productDetail.cheapestSupplierName ?: stringResource(R.string.report_not_available)
+        )
+    }
+}
+
+// The rest of the file is included for context but is unchanged from the last working version.
+// The primary fix is in ProductReportItem above and the ReportingData.kt file.
 
 enum class ReportTab(val titleResId: Int, val icon: ImageVector) {
     SUMMARY(R.string.report_tab_summary, Icons.Filled.Info),
@@ -103,7 +129,6 @@ fun ReportingScreenWithTabs(expenseViewModel: ExpenseViewModel) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = ReportTab.entries.toTypedArray()
 
-    // Get the singleton instance of the repository
     val userPrefsRepo = remember { UserPreferencesRepository.getInstance(context.applicationContext) }
     val currencyCode by userPrefsRepo.currencyCode.collectAsState()
     val currencyFormatter = remember(currencyCode) {
@@ -115,7 +140,7 @@ fun ReportingScreenWithTabs(expenseViewModel: ExpenseViewModel) {
             TopAppBar(
                 title = { Text(stringResource(R.string.title_activity_reporting)) },
                 navigationIcon = {
-                    IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
+                    IconButton(onClick = { (context as? AppCompatActivity)?.finish() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back_button_desc))
                     }
                 },
@@ -317,8 +342,6 @@ fun ProductDetailsReportContent(expenseViewModel: ExpenseViewModel, currencyForm
     }
 }
 
-
-// These composables remain unchanged as they don't display currency, but are needed for the file to compile.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportDateFilterControls(
@@ -469,17 +492,6 @@ fun StatItem(label: String, value: String) {
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.weight(0.4f)
         )
-    }
-}
-
-@Composable
-fun ProductReportItem(productDetail: ProductReportDetail, currencyFormatter: NumberFormat) {
-    Column(modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)) {
-        Text(productDetail.productName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        Spacer(Modifier.height(6.dp))
-        ProductStatRow(label = stringResource(R.string.report_product_total_spent), value = currencyFormatter.format(productDetail.totalAmountSpent))
-        ProductStatRow(label = stringResource(R.string.report_product_lowest_price), value = currencyFormatter.format(productDetail.lowestTransactionAmount))
-        ProductStatRow(label = stringResource(R.string.report_product_cheapest_supplier), value = productDetail.cheapestSupplierName ?: stringResource(R.string.report_not_available))
     }
 }
 

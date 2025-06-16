@@ -2,9 +2,9 @@ package com.fahdev.expensetracker
 
 import android.app.Application
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,7 +26,8 @@ import com.fahdev.expensetracker.data.Supplier
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import kotlinx.coroutines.launch
 
-class SupplierManagementActivity : ComponentActivity() {
+class SupplierManagementActivity : AppCompatActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -47,30 +49,25 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
 
     val allSuppliers by expenseViewModel.allSuppliers.collectAsState(initial = emptyList())
 
-    // State for showing the Add/Edit Supplier dialog
     var showAddEditDialog by remember { mutableStateOf(false) }
-    // State to hold the supplier being edited (null for adding new)
     var supplierToEdit by remember { mutableStateOf<Supplier?>(null) }
-    // State for the text field in the dialog
     var supplierNameInput by remember { mutableStateOf("") }
 
-    // State for delete confirmation dialog
     var showDeleteDialog by remember { mutableStateOf(false) }
     var supplierToDelete by remember { mutableStateOf<Supplier?>(null) }
-
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Manage Suppliers") },
+                title = { Text(stringResource(R.string.manage_suppliers)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    IconButton(onClick = { (context as? AppCompatActivity)?.finish() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back_button_desc))
                     }
                 }
             )
@@ -78,14 +75,14 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    supplierToEdit = null // Indicate adding a new supplier
-                    supplierNameInput = "" // Clear input field
+                    supplierToEdit = null
+                    supplierNameInput = ""
                     showAddEditDialog = true
                 },
                 containerColor = MaterialTheme.colorScheme.tertiary,
                 contentColor = MaterialTheme.colorScheme.onTertiary
             ) {
-                Icon(Icons.Filled.Add, "Add new supplier")
+                Icon(Icons.Filled.Add, stringResource(R.string.add_new_supplier_desc))
             }
         },
         modifier = Modifier.fillMaxSize()
@@ -99,7 +96,7 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
         ) {
             if (allSuppliers.isEmpty()) {
                 Text(
-                    text = "No suppliers yet. Tap '+' to add one!",
+                    text = stringResource(R.string.no_suppliers_placeholder),
                     modifier = Modifier.padding(top = 16.dp),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -125,16 +122,18 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
         }
     }
 
-    // Add/Edit Supplier Dialog
     if (showAddEditDialog) {
         AlertDialog(
             onDismissRequest = { showAddEditDialog = false },
-            title = { Text(if (supplierToEdit == null) "Add Supplier" else "Edit Supplier") },
+            title = {
+                val titleRes = if (supplierToEdit == null) R.string.add_supplier_title else R.string.edit_supplier_title
+                Text(stringResource(titleRes))
+            },
             text = {
                 TextField(
                     value = supplierNameInput,
                     onValueChange = { supplierNameInput = it },
-                    label = { Text("Supplier Name") },
+                    label = { Text(stringResource(R.string.supplier_name_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -145,49 +144,47 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
                         scope.launch {
                             val existingSupplier = expenseViewModel.getSupplierByName(supplierNameInput)
                             if (existingSupplier != null && existingSupplier.id != supplierToEdit?.id) {
-                                snackbarHostState.showSnackbar("Supplier with this name already exists!")
+                                snackbarHostState.showSnackbar(context.getString(R.string.supplier_exists_error))
                             } else {
                                 if (supplierToEdit == null) {
-                                    // Add new supplier
                                     expenseViewModel.addSupplier(Supplier(name = supplierNameInput))
-                                    snackbarHostState.showSnackbar("Supplier added!")
+                                    snackbarHostState.showSnackbar(context.getString(R.string.supplier_added_success))
                                 } else {
-                                    // Update existing supplier
                                     val updatedSupplier = supplierToEdit!!.copy(name = supplierNameInput)
                                     expenseViewModel.updateSupplier(updatedSupplier)
-                                    snackbarHostState.showSnackbar("Supplier updated!")
+                                    snackbarHostState.showSnackbar(context.getString(R.string.supplier_updated_success))
                                 }
                                 showAddEditDialog = false
                             }
                         }
                     } else {
-                        scope.launch { snackbarHostState.showSnackbar("Supplier name cannot be empty.") }
+                        scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.supplier_name_empty_error)) }
                     }
                 }) {
-                    Text(if (supplierToEdit == null) "Add" else "Save")
+                    val textRes = if (supplierToEdit == null) R.string.add_button else R.string.save_button
+                    Text(stringResource(textRes))
                 }
             },
             dismissButton = {
                 Button(onClick = { showAddEditDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
     }
 
-    // Delete Confirmation Dialog
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Confirm Deletion") },
-            text = { Text("Are you sure you want to delete supplier '${supplierToDelete?.name}'? This will also affect expenses using this supplier.") },
+            title = { Text(stringResource(R.string.confirm_deletion_title)) },
+            text = { Text(stringResource(R.string.delete_supplier_confirmation_message, supplierToDelete?.name ?: "")) },
             confirmButton = {
                 Button(
                     onClick = {
                         supplierToDelete?.let { supplier ->
                             scope.launch {
                                 expenseViewModel.deleteSupplier(supplier)
-                                snackbarHostState.showSnackbar("Supplier deleted!")
+                                snackbarHostState.showSnackbar(context.getString(R.string.supplier_deleted_success))
                             }
                         }
                         showDeleteDialog = false
@@ -195,12 +192,12 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete_button))
                 }
             },
             dismissButton = {
                 Button(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -241,7 +238,7 @@ fun SupplierItem(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Edit,
-                        contentDescription = "Edit ${supplier.name}",
+                        contentDescription = stringResource(R.string.edit_supplier_desc, supplier.name),
                         tint = MaterialTheme.colorScheme.secondary
                     )
                 }
@@ -250,7 +247,7 @@ fun SupplierItem(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Delete,
-                        contentDescription = "Delete ${supplier.name}",
+                        contentDescription = stringResource(R.string.delete_supplier_desc, supplier.name),
                         tint = MaterialTheme.colorScheme.error
                     )
                 }

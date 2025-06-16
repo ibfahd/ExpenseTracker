@@ -95,4 +95,35 @@
     <string name="about_privacy_content">يتم تخزين جميع البيانات المالية التي تدخلها بشكل آمن وحصري على جهازك. لا يقوم هذا التطبيق بجمع أو نقل أي من معلوماتك المالية الشخصية إلى خوادم خارجية. خصوصيتك هي الأولوية القصوى.</string>
     <string name="about_section_contact">الاتصال والدعم</string>
     <string name="about_contact_content">للأسئلة أو الملاحظات أو الدعم، يرجى مراسلتنا عبر البريد الإلكتروني على: support@example.com</string>
+    <string name="add_new_category_desc">إضافة فئة جديدة</string>
+    <string name="no_categories_placeholder">لا توجد فئات حتى الآن. انقر على \'+\' لإضافة واحدة!</string>
+    <string name="add_category_title">إضافة فئة</string>
+    <string name="edit_category_title">تعديل الفئة</string>
+    <string name="category_name_label">اسم الفئة</string>
+    <string name="add_button">إضافة</string>
+    <string name="save_button">حفظ</string>
+    <string name="confirm_deletion_title">تأكيد الحذف</string>
+    <string name="delete_category_confirmation_message">هل أنت متأكد من أنك تريد حذف الفئة \'%1$s\'؟ سيؤثر هذا أيضًا على المصاريف ذات الصلة.</string>
+    <string name="delete_button">حذف</string>
+    <string name="edit_category_desc">تعديل %1$s</string>
+    <string name="delete_category_desc">حذف %1$s</string>
+    <string name="category_exists_error">فئة بهذا الاسم موجودة بالفعل!</string>
+    <string name="category_added_success">تمت إضافة الفئة!</string>
+    <string name="category_updated_success">تم تحديث الفئة!</string>
+    <string name="category_deleted_success">تم حذف الفئة!</string>
+    <string name="category_name_empty_error">لا يمكن أن يكون اسم الفئة فارغًا.</string>
+
+    <string name="add_new_supplier_desc">إضافة مورد جديد</string>
+    <string name="no_suppliers_placeholder">لا يوجد موردون حتى الآن. انقر على \'+\' لإضافة واحد!</string>
+    <string name="add_supplier_title">إضافة مورد</string>
+    <string name="edit_supplier_title">تعديل المورد</string>
+    <string name="supplier_name_label">اسم المورد</string>
+    <string name="delete_supplier_confirmation_message">هل أنت متأكد من أنك تريد حذف المورد \'%1$s\'؟ سيؤثر هذا أيضًا على المصاريف ذات الصلة.</string>
+    <string name="edit_supplier_desc">تعديل %1$s</string>
+    <string name="delete_supplier_desc">حذف %1$s</string>
+    <string name="supplier_exists_error">مورد بهذا الاسم موجود بالفعل!</string>
+    <string name="supplier_added_success">تمت إضافة المورد!</string>
+    <string name="supplier_updated_success">تم تحديث المورد!</string>
+    <string name="supplier_deleted_success">تم حذف المورد!</string>
+    <string name="supplier_name_empty_error">لا يمكن أن يكون اسم المورد فارغًا.</string>
 </resources>
