@@ -507,7 +507,11 @@ fun ProductStatRow(label: String, value: String) {
 @Composable
 fun ReportingScreenWithTabsPreview() {
     ExpenseTrackerTheme {
+        // Correctly create ViewModel for preview using the factory
         val context = LocalContext.current
-        ReportingScreenWithTabs(expenseViewModel = ExpenseViewModel(context.applicationContext as Application))
+        val application = context.applicationContext as Application
+        val factory = ExpenseViewModelFactory(application)
+        val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
+        ReportingScreenWithTabs(expenseViewModel = expenseViewModel)
     }
 }

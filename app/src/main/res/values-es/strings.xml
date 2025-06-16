@@ -126,4 +126,6 @@
     <string name="supplier_updated_success">¡Proveedor actualizado!</string>
     <string name="supplier_deleted_success">¡Proveedor eliminado!</string>
     <string name="supplier_name_empty_error">El nombre del proveedor no puede estar vacío.</string>
+    <string name="setting_display_title">Opciones de Visualización</string>
+    <string name="setting_home_filter_label">Vista de Inicio Predeterminada</string>
 </resources>

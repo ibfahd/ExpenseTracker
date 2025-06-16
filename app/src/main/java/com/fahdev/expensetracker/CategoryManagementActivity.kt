@@ -261,6 +261,11 @@ fun CategoryItem(
 @Composable
 fun CategoryManagementScreenPreview() {
     ExpenseTrackerTheme {
-        CategoryManagementScreen(expenseViewModel = ExpenseViewModel(Application()))
+        // Correctly create ViewModel for preview using the factory
+        val context = LocalContext.current
+        val application = context.applicationContext as Application
+        val factory = ExpenseViewModelFactory(application)
+        val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
+        CategoryManagementScreen(expenseViewModel = expenseViewModel)
     }
 }

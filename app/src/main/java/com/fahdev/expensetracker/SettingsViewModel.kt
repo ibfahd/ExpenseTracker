@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
     private val userPreferencesRepository = UserPreferencesRepository.getInstance(application)
 
-    // Currency-related properties
+    // Currency properties
     val selectedCurrencyCode: StateFlow<String> = userPreferencesRepository.currencyCode
     val availableCurrencies: List<CurrencyHelper.CurrencyInfo> = CurrencyHelper.getAvailableCurrencies()
 
@@ -23,15 +23,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         userPreferencesRepository.setCurrency(currencyCode)
     }
 
-    // Language-related properties
+    // Language properties
     val selectedLanguage: StateFlow<String> = userPreferencesRepository.language
     val availableLanguages: List<LocaleHelper.Language> = LocaleHelper.supportedLanguages
 
     fun setLanguage(languageTag: String) {
-        // Persist the new language setting
         userPreferencesRepository.setLanguage(languageTag)
-        // Apply the new locale to the app
         LocaleHelper.updateAppLocale(languageTag)
+    }
+
+    // Default Home Filter properties
+    val selectedHomeFilter: StateFlow<String> = userPreferencesRepository.homeScreenDefaultFilter
+
+    fun setHomeFilter(filterKey: String) {
+        userPreferencesRepository.setHomeScreenDefaultFilter(filterKey)
     }
 }
 

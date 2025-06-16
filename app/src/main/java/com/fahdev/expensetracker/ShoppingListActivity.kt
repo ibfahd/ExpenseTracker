@@ -625,9 +625,15 @@ fun AddProductDialog(
 @Composable
 fun PreviewShoppingListScreen() {
     ExpenseTrackerTheme {
+        // Correctly create ViewModel for preview using the factory
+        val context = LocalContext.current
+        val application = context.applicationContext as Application
+        val shoppingListViewModel: ShoppingListViewModel = viewModel(factory = ShoppingListViewModelFactory(application))
+        val expenseViewModel: ExpenseViewModel = viewModel(factory = ExpenseViewModelFactory(application))
+
         ShoppingListScreen(
-            shoppingListViewModel = ShoppingListViewModel(Application()),
-            expenseViewModel = ExpenseViewModel(Application())
+            shoppingListViewModel = shoppingListViewModel,
+            expenseViewModel = expenseViewModel
         )
     }
 }

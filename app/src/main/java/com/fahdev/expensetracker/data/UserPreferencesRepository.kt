@@ -6,8 +6,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * A repository for managing user preferences, such as the default currency and language.
- * This class uses SharedPreferences for persistence and follows a singleton pattern.
+ * A repository for managing user preferences, such as the default currency, language,
+ * and default home screen filter.
  */
 class UserPreferencesRepository private constructor(context: Context) {
 
@@ -39,9 +39,23 @@ class UserPreferencesRepository private constructor(context: Context) {
         _language.value = languageTag
     }
 
+    // Default Home Filter Preference
+    private val _homeScreenDefaultFilter = MutableStateFlow(
+        sharedPreferences.getString(KEY_HOME_FILTER, "All") ?: "All"
+    )
+    val homeScreenDefaultFilter = _homeScreenDefaultFilter.asStateFlow()
+
+    fun setHomeScreenDefaultFilter(filterKey: String) {
+        sharedPreferences.edit {
+            putString(KEY_HOME_FILTER, filterKey)
+        }
+        _homeScreenDefaultFilter.value = filterKey
+    }
+
     companion object {
         private const val KEY_CURRENCY = "currency_code"
         private const val KEY_LANGUAGE = "language_tag"
+        private const val KEY_HOME_FILTER = "home_screen_filter"
 
         @Volatile
         private var INSTANCE: UserPreferencesRepository? = null

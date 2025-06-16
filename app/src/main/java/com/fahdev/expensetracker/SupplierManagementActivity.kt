@@ -260,6 +260,11 @@ fun SupplierItem(
 @Composable
 fun SupplierManagementScreenPreview() {
     ExpenseTrackerTheme {
-        SupplierManagementScreen(expenseViewModel = ExpenseViewModel(Application()))
+        // Correctly create ViewModel for preview using the factory
+        val context = LocalContext.current
+        val application = context.applicationContext as Application
+        val factory = ExpenseViewModelFactory(application)
+        val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
+        SupplierManagementScreen(expenseViewModel = expenseViewModel)
     }
 }

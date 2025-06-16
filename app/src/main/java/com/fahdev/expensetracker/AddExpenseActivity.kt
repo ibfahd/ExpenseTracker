@@ -1,8 +1,7 @@
 package com.fahdev.expensetracker
 
-import android.app.Application // Make sure this is imported
+import android.app.Application
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -21,10 +20,10 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,6 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,19 +39,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
-import androidx.compose.runtime.collectAsState
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.Expense
 import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.data.Supplier
+import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import kotlinx.coroutines.launch
-
-// AddExpenseActivity and ExpenseViewModelFactory are unchanged.
 
 class AddExpenseActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,7 +57,9 @@ class AddExpenseActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContent {
             ExpenseTrackerTheme {
+                // Correctly use the ViewModelFactory which now handles dependencies
                 val expenseViewModel: ExpenseViewModel = viewModel(factory = ExpenseViewModelFactory(application))
+
                 AddExpenseScreen(
                     expenseViewModel = expenseViewModel,
                     onBackClick = { finish() }
@@ -69,16 +69,7 @@ class AddExpenseActivity : AppCompatActivity() {
     }
 }
 
-class ExpenseViewModelFactory(private val application: Application) : androidx.lifecycle.ViewModelProvider.Factory {
-    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ExpenseViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return ExpenseViewModel(application) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-}
-
+// The old, redundant ExpenseViewModelFactory class has been removed from this file.
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,10 +80,10 @@ fun AddExpenseScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add New Expense") },
+                title = { Text(stringResource(R.string.add_new_expense)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back_button_desc))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -120,33 +111,28 @@ fun AddExpenseForm(
     onSaveSuccess: () -> Unit
 ) {
     var amount by remember { mutableStateOf("") }
-
-    // --- Product Selection State ---
     val allProducts by expenseViewModel.allProducts.collectAsState(initial = emptyList())
-    var selectedProduct by remember { mutableStateOf<Product?>(null) } // Holds selected Product object
-    var productSearchQuery by remember { mutableStateOf("") } // For filtering product suggestions
+    var selectedProduct by remember { mutableStateOf<Product?>(null) }
+    var productSearchQuery by remember { mutableStateOf("") }
     var productDropdownExpanded by remember { mutableStateOf(false) }
 
-    // --- Supplier Selection State ---
     val allSuppliers by expenseViewModel.allSuppliers.collectAsState(initial = emptyList())
-    var selectedSupplier by remember { mutableStateOf<Supplier?>(null) } // Holds selected Supplier object
+    var selectedSupplier by remember { mutableStateOf<Supplier?>(null) }
     var supplierSearchQuery by remember { mutableStateOf("") }
     var supplierDropdownExpanded by remember { mutableStateOf(false) }
 
-    // --- Category Selection for New Product Dialog ---
-    val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList()) // Get all categories from ViewModel
-    var showAddProductDialog by remember { mutableStateOf(false) } // Controls "Add New Product" dialog
+    val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
+    var showAddProductDialog by remember { mutableStateOf(false) }
     var newProductName by remember { mutableStateOf("") }
-    var newProductSelectedCategory by remember { mutableStateOf<Category?>(null) } // Holds selected Category object for new product
-    var newProductCategorySearchQuery by remember { mutableStateOf("") } // For searching/filtering categories in new product dialog
-    var newProductCategoryDropdownExpanded by remember { mutableStateOf(false) } // Controls category dropdown in new product dialog
+    var newProductSelectedCategory by remember { mutableStateOf<Category?>(null) }
+    var newProductCategorySearchQuery by remember { mutableStateOf("") }
+    var newProductCategoryDropdownExpanded by remember { mutableStateOf(false) }
 
-
-    var showAddSupplierDialog by remember { mutableStateOf(false) } // Controls "Add New Supplier" dialog
+    var showAddSupplierDialog by remember { mutableStateOf(false) }
     var newSupplierName by remember { mutableStateOf("") }
 
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope() // Coroutine scope for calling suspend ViewModel functions
+    val coroutineScope = rememberCoroutineScope()
 
 
     Column(
@@ -157,7 +143,7 @@ fun AddExpenseForm(
         OutlinedTextField(
             value = amount,
             onValueChange = { newValue ->
-                if (newValue.matches(Regex("""^\d*\.?\d{0,2}$"""))) { // Fixed regex warning
+                if (newValue.matches(Regex("""^\d*\.?\d{0,2}$"""))) {
                     amount = newValue
                 }
             },
@@ -167,7 +153,6 @@ fun AddExpenseForm(
         )
         Spacer(Modifier.height(16.dp))
 
-        // --- Product Selector (Autocomplete-like dropdown) ---
         ExposedDropdownMenuBox(
             expanded = productDropdownExpanded,
             onExpandedChange = { productDropdownExpanded = !productDropdownExpanded },
@@ -177,14 +162,14 @@ fun AddExpenseForm(
                 value = productSearchQuery,
                 onValueChange = { newValue ->
                     productSearchQuery = newValue
-                    selectedProduct = null // Clear selection if user types
-                    productDropdownExpanded = true // Keep expanded while typing
+                    selectedProduct = null
+                    productDropdownExpanded = true
                 },
                 label = { Text("Select Product") },
-                readOnly = false, // Allow typing
+                readOnly = false,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = productDropdownExpanded) },
                 modifier = Modifier
-                    .menuAnchor(MenuAnchorType.PrimaryEditable, true) // Updated menuAnchor for editable text field
+                    .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                     .fillMaxWidth()
             )
 
@@ -196,30 +181,26 @@ fun AddExpenseForm(
                     it.name.contains(productSearchQuery, ignoreCase = true)
                 }
                 if (filteredProducts.isEmpty() && productSearchQuery.isNotBlank()) {
-                    // Option to add new product if not found
                     DropdownMenuItem(
                         text = { Text("Add new product: \"$productSearchQuery\"") },
                         onClick = {
-                            newProductName = productSearchQuery // Pre-fill new product name
-                            // Reset category selection for new product dialog
+                            newProductName = productSearchQuery
                             newProductSelectedCategory = null
                             newProductCategorySearchQuery = ""
-
-                            showAddProductDialog = true // Show dialog
-                            productDropdownExpanded = false // Close main dropdown
+                            showAddProductDialog = true
+                            productDropdownExpanded = false
                         }
                     )
                     Spacer(Modifier.height(8.dp))
                 }
                 filteredProducts.forEach { product ->
-                    // Display product name and category (lookup category name from allCategories)
                     val productCategory = allCategories.find { it.id == product.categoryId }?.name ?: "Unknown Category"
                     DropdownMenuItem(
                         text = { Text("${product.name} (${productCategory})") },
                         onClick = {
                             selectedProduct = product
-                            productSearchQuery = product.name // Set text field to selected product's name
-                            productDropdownExpanded = false // Close dropdown
+                            productSearchQuery = product.name
+                            productDropdownExpanded = false
                         }
                     )
                 }
@@ -227,7 +208,6 @@ fun AddExpenseForm(
         }
         Spacer(Modifier.height(16.dp))
 
-        // --- Supplier Selector (Autocomplete-like dropdown) ---
         ExposedDropdownMenuBox(
             expanded = supplierDropdownExpanded,
             onExpandedChange = { supplierDropdownExpanded = !supplierDropdownExpanded },
@@ -237,7 +217,7 @@ fun AddExpenseForm(
                 value = supplierSearchQuery,
                 onValueChange = { newValue ->
                     supplierSearchQuery = newValue
-                    selectedSupplier = null // Clear selection if user types
+                    selectedSupplier = null
                     supplierDropdownExpanded = true
                 },
                 label = { Text("Select Supplier") },
@@ -256,13 +236,12 @@ fun AddExpenseForm(
                     it.name.contains(supplierSearchQuery, ignoreCase = true)
                 }
                 if (filteredSuppliers.isEmpty() && supplierSearchQuery.isNotBlank()) {
-                    // Option to add new supplier if not found
                     DropdownMenuItem(
                         text = { Text("Add new supplier: \"$supplierSearchQuery\"") },
                         onClick = {
-                            newSupplierName = supplierSearchQuery // Pre-fill new supplier name
-                            showAddSupplierDialog = true // Show dialog
-                            supplierDropdownExpanded = false // Close main dropdown
+                            newSupplierName = supplierSearchQuery
+                            showAddSupplierDialog = true
+                            supplierDropdownExpanded = false
                         }
                     )
                     Spacer(Modifier.height(8.dp))
@@ -272,8 +251,8 @@ fun AddExpenseForm(
                         text = { Text(supplier.name) },
                         onClick = {
                             selectedSupplier = supplier
-                            supplierSearchQuery = supplier.name // Set text field to selected supplier's name
-                            supplierDropdownExpanded = false // Close dropdown
+                            supplierSearchQuery = supplier.name
+                            supplierDropdownExpanded = false
                         }
                     )
                 }
@@ -281,7 +260,6 @@ fun AddExpenseForm(
         }
         Spacer(Modifier.height(32.dp))
 
-        // Save Button
         Button(
             onClick = {
                 val amountDouble = amount.toDoubleOrNull()
@@ -290,15 +268,15 @@ fun AddExpenseForm(
                     return@Button
                 }
 
-                coroutineScope.launch { // Use coroutineScope to call suspend functions
+                coroutineScope.launch {
                     val newExpense = Expense(
                         amount = amountDouble,
-                        productId = selectedProduct!!.id, // Use !! to assert not null after validation
+                        productId = selectedProduct!!.id,
                         supplierId = selectedSupplier!!.id
                     )
                     expenseViewModel.addExpense(newExpense)
                     android.widget.Toast.makeText(context, "Expense saved!", android.widget.Toast.LENGTH_SHORT).show()
-                    onSaveSuccess() // Navigate back to the main screen
+                    onSaveSuccess()
                 }
             },
             modifier = Modifier
@@ -309,12 +287,10 @@ fun AddExpenseForm(
         }
     }
 
-    // --- Add New Product Dialog ---
     if (showAddProductDialog) {
         AlertDialog(
             onDismissRequest = {
                 showAddProductDialog = false
-                // Reset fields on dismiss to clean state for next time
                 newProductName = ""
                 newProductSelectedCategory = null
                 newProductCategorySearchQuery = ""
@@ -330,18 +306,17 @@ fun AddExpenseForm(
                     )
                     Spacer(Modifier.height(8.dp))
 
-                    // Category Selector for new product within the dialog
                     ExposedDropdownMenuBox(
                         expanded = newProductCategoryDropdownExpanded,
                         onExpandedChange = { newProductCategoryDropdownExpanded = !newProductCategoryDropdownExpanded },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         OutlinedTextField(
-                            value = newProductSelectedCategory?.name ?: newProductCategorySearchQuery, // Display selected category name or search query
+                            value = newProductSelectedCategory?.name ?: newProductCategorySearchQuery,
                             onValueChange = { newValue ->
                                 newProductCategorySearchQuery = newValue
-                                newProductSelectedCategory = null // Clear selection if user types
-                                newProductCategoryDropdownExpanded = true // Keep expanded while typing
+                                newProductSelectedCategory = null
+                                newProductCategoryDropdownExpanded = true
                             },
                             readOnly = false,
                             label = { Text("Category") },
@@ -358,25 +333,22 @@ fun AddExpenseForm(
                                 it.name.contains(newProductCategorySearchQuery, ignoreCase = true)
                             }
                             if (filteredCategories.isEmpty() && newProductCategorySearchQuery.isNotBlank()) {
-                                // Option to add new category if not found
                                 DropdownMenuItem(
                                     text = { Text("Add new category: \"$newProductCategorySearchQuery\"") },
                                     onClick = {
                                         coroutineScope.launch {
                                             val existingCategory = expenseViewModel.getCategoryByName(newProductCategorySearchQuery)
                                             val categoryToAdd = existingCategory ?: Category(name = newProductCategorySearchQuery)
-                                            // Try to insert; if it exists, insertCategory will return -1.
                                             val categoryId = existingCategory?.id?.toLong() ?: expenseViewModel.addCategory(categoryToAdd)
 
-                                            if (categoryId != -1L) { // Check if insertion was successful or category already existed
-                                                newProductSelectedCategory = categoryToAdd.copy(id = categoryId.toInt()) // Select the category (new or existing)
-                                                newProductCategorySearchQuery = newProductSelectedCategory!!.name // Update text field
+                                            if (categoryId != -1L) {
+                                                newProductSelectedCategory = categoryToAdd.copy(id = categoryId.toInt())
+                                                newProductCategorySearchQuery = newProductSelectedCategory!!.name
                                                 android.widget.Toast.makeText(context, "Category added!", android.widget.Toast.LENGTH_SHORT).show()
                                             } else {
-                                                // This else block is less likely with OnConflictStrategy.IGNORE, but good for robust error handling
                                                 android.widget.Toast.makeText(context, "Failed to add category.", android.widget.Toast.LENGTH_SHORT).show()
                                             }
-                                            newProductCategoryDropdownExpanded = false // Close category dropdown
+                                            newProductCategoryDropdownExpanded = false
                                         }
                                     }
                                 )
@@ -387,8 +359,8 @@ fun AddExpenseForm(
                                     text = { Text(category.name) },
                                     onClick = {
                                         newProductSelectedCategory = category
-                                        newProductCategorySearchQuery = category.name // Update search query field
-                                        newProductCategoryDropdownExpanded = false // Close category dropdown
+                                        newProductCategorySearchQuery = category.name
+                                        newProductCategoryDropdownExpanded = false
                                     }
                                 )
                             }
@@ -409,26 +381,23 @@ fun AddExpenseForm(
                                             categoryId = newProductSelectedCategory!!.id
                                         )
                                     )
-                                    if (newId != -1L) { // Check if insertion was successful
-                                        // Select the newly added product in the main form's state
+                                    if (newId != -1L) {
                                         selectedProduct = Product(
                                             id = newId.toInt(),
                                             name = newProductName,
                                             categoryId = newProductSelectedCategory!!.id
                                         )
-                                        productSearchQuery = newProductName // Set the main product search query field
+                                        productSearchQuery = newProductName
                                         android.widget.Toast.makeText(context, "Product added!", android.widget.Toast.LENGTH_SHORT).show()
                                     } else {
                                         android.widget.Toast.makeText(context, "Failed to add product.", android.widget.Toast.LENGTH_SHORT).show()
                                     }
                                 } else {
-                                    // Product already exists, select it instead of adding a new one
                                     selectedProduct = existingProduct
                                     productSearchQuery = existingProduct.name
                                     android.widget.Toast.makeText(context, "Product already exists, selected.", android.widget.Toast.LENGTH_SHORT).show()
                                 }
-                                showAddProductDialog = false // Close the add product dialog
-                                // Reset dialog fields after successful add or selection
+                                showAddProductDialog = false
                                 newProductName = ""
                                 newProductSelectedCategory = null
                                 newProductCategorySearchQuery = ""
@@ -442,7 +411,6 @@ fun AddExpenseForm(
             dismissButton = {
                 TextButton(onClick = {
                     showAddProductDialog = false
-                    // Reset dialog fields on dismiss
                     newProductName = ""
                     newProductSelectedCategory = null
                     newProductCategorySearchQuery = ""
@@ -451,7 +419,6 @@ fun AddExpenseForm(
         )
     }
 
-    // --- Add New Supplier Dialog (Unchanged, copied for completeness) ---
     if (showAddSupplierDialog) {
         AlertDialog(
             onDismissRequest = { showAddSupplierDialog = false },
@@ -501,12 +468,18 @@ fun AddExpenseForm(
 }
 
 
-// Preview composables for AddExpenseScreen (unchanged)
 @Preview(showBackground = true)
 @Composable
 fun AddExpenseScreenPreview() {
     ExpenseTrackerTheme {
-        AddExpenseScreen(expenseViewModel = ExpenseViewModel(Application()), onBackClick = {})
+        // Correctly get application context for preview
+        val context = LocalContext.current
+        val application = context.applicationContext as Application
+        // Use the factory to create the ViewModel instance for the preview
+        val factory = ExpenseViewModelFactory(application)
+        val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
+
+        AddExpenseScreen(expenseViewModel = expenseViewModel, onBackClick = {})
     }
 }
 
@@ -514,6 +487,13 @@ fun AddExpenseScreenPreview() {
 @Composable
 fun AddExpenseFormPreview() {
     ExpenseTrackerTheme {
-        AddExpenseForm(expenseViewModel = ExpenseViewModel(Application()), onSaveSuccess = {})
+        // Correctly get application context for preview
+        val context = LocalContext.current
+        val application = context.applicationContext as Application
+        // Use the factory to create the ViewModel instance for the preview
+        val factory = ExpenseViewModelFactory(application)
+        val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
+
+        AddExpenseForm(expenseViewModel = expenseViewModel, onSaveSuccess = {})
     }
 }

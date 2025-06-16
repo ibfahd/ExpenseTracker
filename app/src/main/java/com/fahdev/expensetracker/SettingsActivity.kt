@@ -2,7 +2,6 @@ package com.fahdev.expensetracker
 
 import android.app.Application
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -52,6 +51,7 @@ import com.fahdev.expensetracker.data.LocaleHelper
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 
 class SettingsActivity : AppCompatActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -66,7 +66,6 @@ class SettingsActivity : AppCompatActivity() {
     }
 }
 
-// Add the OptIn annotation here to cover all experimental APIs used within this screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(settingsViewModel: SettingsViewModel) {
@@ -76,7 +75,7 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel) {
                 title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     val context = LocalContext.current
-                    IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
+                    IconButton(onClick = { (context as? AppCompatActivity)?.finish() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back_button_desc)
@@ -115,10 +114,81 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel) {
                     LanguageSelector(settingsViewModel = settingsViewModel)
                 }
             }
+            Spacer(Modifier.height(16.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.setting_display_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    DefaultHomeFilterSelector(settingsViewModel = settingsViewModel)
+                }
+            }
         }
     }
 }
 
+// ... CurrencySelector and LanguageSelector are unchanged ...
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DefaultHomeFilterSelector(settingsViewModel: SettingsViewModel) {
+    val selectedFilterKey by settingsViewModel.selectedHomeFilter.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
+
+    val filterOptions = mapOf(
+        "All" to stringResource(id = R.string.all_time),
+        "ThisMonth" to stringResource(id = R.string.this_month),
+        "Last7Days" to stringResource(id = R.string.last_7_days)
+    )
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = stringResource(R.string.setting_home_filter_label),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge
+        )
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier.weight(1.5f)
+        ) {
+            TextField(
+                value = filterOptions[selectedFilterKey] ?: "",
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                filterOptions.forEach { (key, name) ->
+                    DropdownMenuItem(
+                        text = { Text(name) },
+                        onClick = {
+                            settingsViewModel.setHomeFilter(key)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+// Preview and other composables for currency/language remain the same
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CurrencySelector(settingsViewModel: SettingsViewModel) {

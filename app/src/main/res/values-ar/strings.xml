@@ -126,4 +126,6 @@
     <string name="supplier_updated_success">تم تحديث المورد!</string>
     <string name="supplier_deleted_success">تم حذف المورد!</string>
     <string name="supplier_name_empty_error">لا يمكن أن يكون اسم المورد فارغًا.</string>
+    <string name="setting_display_title">خيارات العرض</string>
+    <string name="setting_home_filter_label">العرض الافتراضي للشاشة الرئيسية</string>
 </resources>

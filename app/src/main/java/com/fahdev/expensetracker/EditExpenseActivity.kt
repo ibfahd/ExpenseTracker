@@ -342,7 +342,11 @@ fun <T : Any> ProductOrSupplierPickerDialog(
 @Composable
 fun EditExpenseScreenPreview() {
     ExpenseTrackerTheme {
-        // Provide a dummy ID for preview purposes; actual data won't load
-        EditExpenseScreen(expenseViewModel = ExpenseViewModel(Application()), expenseId = 1)
+        // Correctly create ViewModel for preview using the factory
+        val context = LocalContext.current
+        val application = context.applicationContext as Application
+        val factory = ExpenseViewModelFactory(application)
+        val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
+        EditExpenseScreen(expenseViewModel = expenseViewModel, expenseId = -1)
     }
 }

@@ -799,13 +799,11 @@ fun SupplierFilterDropdown(
 @Composable
 fun MainAppScreenPreview() {
     ExpenseTrackerTheme {
-        val mockViewModel = remember {
-            ExpenseViewModel(
-                application = object : Application() {
-                    override fun getApplicationContext(): Context = this
-                }
-            )
-        }
+        // Correctly create ViewModel for preview using the factory
+        val context = LocalContext.current
+        val application = context.applicationContext as Application
+        val factory = ExpenseViewModelFactory(application)
+        val mockViewModel: ExpenseViewModel = viewModel(factory = factory)
         MainAppScreen(expenseViewModel = mockViewModel)
     }
 }

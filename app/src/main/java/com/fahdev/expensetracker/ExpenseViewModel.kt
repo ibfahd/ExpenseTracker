@@ -12,13 +12,17 @@ import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
-class ExpenseViewModel(application: Application) : AndroidViewModel(application) {
+class ExpenseViewModel(
+    application: Application,
+    userPreferencesRepository: UserPreferencesRepository // Inject repository
+) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)
     private val expenseDao: ExpenseDao = database.expenseDao()
     private val productDao: ProductDao = database.productDao()
     private val supplierDao: SupplierDao = database.supplierDao()
     private val categoryDao: CategoryDao = database.categoryDao()
 
+    // ... other properties ...
     val allProducts: Flow<List<Product>> = productDao.getAllProducts()
     val allSuppliers: Flow<List<Supplier>> = supplierDao.getAllSuppliers()
     val allCategories: Flow<List<Category>> = categoryDao.getAllCategories()
@@ -123,7 +127,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    // --- REBUILT Product Report Details Flow ---
     @OptIn(ExperimentalCoroutinesApi::class)
     val productReportDetails: StateFlow<List<ProductReportDetail>> = combine(
         _selectedStartDate,
@@ -132,16 +135,12 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     ) { startDate, endDate, _ ->
         Pair(startDate, endDate)
     }.flatMapLatest { (startDate, endDate) ->
-        // This new flow combines results from two simpler, more stable queries.
         expenseDao.getProductSpendingReport(startDate, endDate).map { spendingList ->
             spendingList.map { spendingInfo ->
-                // For each product, fetch its lowest price details in a separate, simple query.
                 val lowestPriceInfo = expenseDao.getLowestPriceForProduct(spendingInfo.productId, startDate, endDate)
                 val cheapestSupplierName = lowestPriceInfo?.supplierId?.let { id ->
-                    // Fetch the supplier's name. Use .first() to get the result from the Flow once.
                     supplierDao.getSupplierById(id).first()?.name
                 }
-
                 ProductReportDetail(
                     productId = spendingInfo.productId,
                     productName = spendingInfo.productName,
@@ -154,14 +153,19 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }.catch { e ->
-        // This is the safety net. If any error occurs in the flow, log it and emit
-        // an empty list. This PREVENTS THE APP FROM CRASHING.
         Log.e("ExpenseViewModel", "Error fetching product report details", e)
         emit(emptyList())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
     init {
+        // Apply default filter on initialization
+        viewModelScope.launch {
+            val defaultFilter = userPreferencesRepository.homeScreenDefaultFilter.first()
+            setDateRangeFilter(defaultFilter)
+        }
+
+        // Populate initial categories if database is empty
         viewModelScope.launch {
             if (allCategories.first().isEmpty()) {
                 val initialCategories = listOf(
@@ -182,7 +186,6 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
                     categoryDao.insertCategory(Category(name = name))
                 }
             }
-            resetFilters()
         }
     }
 

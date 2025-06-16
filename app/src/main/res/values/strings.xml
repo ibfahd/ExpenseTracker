@@ -126,4 +126,6 @@
     <string name="supplier_updated_success">Supplier updated!</string>
     <string name="supplier_deleted_success">Supplier deleted!</string>
     <string name="supplier_name_empty_error">Supplier name cannot be empty.</string>
+    <string name="setting_display_title">Display Options</string>
+    <string name="setting_home_filter_label">Default Home View</string>
 </resources>
