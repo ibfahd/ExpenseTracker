@@ -103,49 +103,50 @@ interface ExpenseDao {
     """)
     fun getSpendingBySupplier(): Flow<List<SupplierSpending>>
 
-    // --- New Product Detail Report Query ---
-    @Transaction // Recommended for complex queries involving multiple tables
+    // --- NEW, STABLE Product Detail Report Queries ---
+
+    // Intermediate data class for the first step of the report
+    data class ProductSpendingInfo(
+        val productId: Int,
+        val productName: String,
+        val categoryId: Int,
+        val categoryName: String,
+        val totalAmountSpent: Double?
+    )
+
+    // Intermediate data class for the second step
+    data class LowestPriceInfo(
+        val amount: Double?,
+        val supplierId: Int?
+    )
+
+    // Step 1: Get the total spending for each product in the given date range.
     @Query("""
-        WITH RankedExpenses AS (
-            SELECT
-                e.id as expense_id,
-                e.productId,
-                e.supplierId,
-                e.amount,
-                e.timestamp,
-                ROW_NUMBER() OVER (PARTITION BY e.productId ORDER BY e.amount ASC, e.timestamp ASC) as rn
-            FROM Expenses e
-            WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
-              AND (:endDate IS NULL OR e.timestamp <= :endDate)
-        ),
-        MinPriceExpense AS (
-            SELECT * FROM RankedExpenses WHERE rn = 1
-        )
         SELECT
             p.id as productId,
             p.name as productName,
             c.id as categoryId,
             c.name as categoryName,
-            (SELECT SUM(e_sum.amount) 
-             FROM Expenses e_sum 
-             WHERE e_sum.productId = p.id 
-               AND (:startDate IS NULL OR e_sum.timestamp >= :startDate) 
-               AND (:endDate IS NULL OR e_sum.timestamp <= :endDate)
-            ) as totalAmountSpent,
-            mpe.amount as lowestTransactionAmount,
-            s.name as cheapestSupplierName
+            SUM(e.amount) as totalAmountSpent
         FROM Products p
         JOIN Categories c ON p.categoryId = c.id
-        LEFT JOIN MinPriceExpense mpe ON p.id = mpe.productId  -- LEFT JOIN in case a product has no expenses in period but we still want to list it (adjust if needed)
-        LEFT JOIN Suppliers s ON mpe.supplierId = s.id        -- LEFT JOIN to handle if supplier is somehow null for that min expense
-        -- Only include products that have expenses in the specified period
-        WHERE EXISTS (
-            SELECT 1 FROM Expenses e_check 
-            WHERE e_check.productId = p.id 
-              AND (:startDate IS NULL OR e_check.timestamp >= :startDate) 
-              AND (:endDate IS NULL OR e_check.timestamp <= :endDate)
-        )
+        JOIN Expenses e ON e.productId = p.id
+        WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
+          AND (:endDate IS NULL OR e.timestamp <= :endDate)
+        GROUP BY p.id, p.name, c.id, c.name
         ORDER BY c.name ASC, p.name ASC
     """)
-    fun getProductReportDetails(startDate: Long?, endDate: Long?): Flow<List<ProductReportDetail>>
+    fun getProductSpendingReport(startDate: Long?, endDate: Long?): Flow<List<ProductSpendingInfo>>
+
+    // Step 2: Get the lowest price details for a single product within the date range.
+    @Query("""
+        SELECT e.amount, e.supplierId
+        FROM Expenses e
+        WHERE e.productId = :productId
+          AND (:startDate IS NULL OR e.timestamp >= :startDate)
+          AND (:endDate IS NULL OR e.timestamp <= :endDate)
+        ORDER BY e.amount ASC, e.timestamp ASC
+        LIMIT 1
+    """)
+    suspend fun getLowestPriceForProduct(productId: Int, startDate: Long?, endDate: Long?): LowestPriceInfo?
 }

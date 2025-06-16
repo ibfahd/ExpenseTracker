@@ -12,14 +12,14 @@ data class SupplierSpending(
     val totalAmount: Double
 )
 
+// Data class for the final, combined product report details.
+// Nullable fields are essential to prevent crashes when data is missing.
 data class ProductReportDetail(
     val productId: Int,
     val productName: String,
     val categoryId: Int,
     val categoryName: String,
-    // Changed to nullable Double to prevent crashes if SUM is null
     val totalAmountSpent: Double?,
-    // Changed to nullable Double to prevent crashes if LEFT JOIN results in null
     val lowestTransactionAmount: Double?,
     val cheapestSupplierName: String?
 )

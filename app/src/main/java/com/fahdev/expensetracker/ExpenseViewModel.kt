@@ -1,30 +1,12 @@
 package com.fahdev.expensetracker
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.fahdev.expensetracker.data.Category
-import com.fahdev.expensetracker.data.CategoryDao
-import com.fahdev.expensetracker.data.CategorySpending
-import com.fahdev.expensetracker.data.Expense
-import com.fahdev.expensetracker.data.ExpenseDao
-import com.fahdev.expensetracker.data.Product
-import com.fahdev.expensetracker.data.ProductDao
-import com.fahdev.expensetracker.data.ProductReportDetail
-import com.fahdev.expensetracker.data.Supplier
-import com.fahdev.expensetracker.data.SupplierDao
-import com.fahdev.expensetracker.data.SupplierSpending
+import com.fahdev.expensetracker.data.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
@@ -141,6 +123,7 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
+    // --- REBUILT Product Report Details Flow ---
     @OptIn(ExperimentalCoroutinesApi::class)
     val productReportDetails: StateFlow<List<ProductReportDetail>> = combine(
         _selectedStartDate,
@@ -149,7 +132,32 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     ) { startDate, endDate, _ ->
         Pair(startDate, endDate)
     }.flatMapLatest { (startDate, endDate) ->
-        expenseDao.getProductReportDetails(startDate, endDate)
+        // This new flow combines results from two simpler, more stable queries.
+        expenseDao.getProductSpendingReport(startDate, endDate).map { spendingList ->
+            spendingList.map { spendingInfo ->
+                // For each product, fetch its lowest price details in a separate, simple query.
+                val lowestPriceInfo = expenseDao.getLowestPriceForProduct(spendingInfo.productId, startDate, endDate)
+                val cheapestSupplierName = lowestPriceInfo?.supplierId?.let { id ->
+                    // Fetch the supplier's name. Use .first() to get the result from the Flow once.
+                    supplierDao.getSupplierById(id).first()?.name
+                }
+
+                ProductReportDetail(
+                    productId = spendingInfo.productId,
+                    productName = spendingInfo.productName,
+                    categoryId = spendingInfo.categoryId,
+                    categoryName = spendingInfo.categoryName,
+                    totalAmountSpent = spendingInfo.totalAmountSpent,
+                    lowestTransactionAmount = lowestPriceInfo?.amount,
+                    cheapestSupplierName = cheapestSupplierName
+                )
+            }
+        }
+    }.catch { e ->
+        // This is the safety net. If any error occurs in the flow, log it and emit
+        // an empty list. This PREVENTS THE APP FROM CRASHING.
+        Log.e("ExpenseViewModel", "Error fetching product report details", e)
+        emit(emptyList())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
@@ -174,10 +182,11 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
                     categoryDao.insertCategory(Category(name = name))
                 }
             }
-            resetFilters() // Initialize filters to "All Time" and no category/supplier
+            resetFilters()
         }
     }
 
+    // ... other ViewModel functions (addExpense, updateExpense, etc.) remain unchanged ...
     fun addExpense(expense: Expense) {
         viewModelScope.launch {
             expenseDao.insertExpense(expense)
@@ -263,15 +272,14 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         return supplierDao.getSupplierById(id)
     }
 
-    // Reverted to general names for use by both MainActivity and ReportingActivity (if applicable)
     fun setCategoryFilter(categoryId: Int?) {
         _selectedCategoryId.value = categoryId
-        _refreshTrigger.value++ // Ensure dependent flows update
+        _refreshTrigger.value++
     }
 
     fun setSupplierFilter(supplierId: Int?) {
         _selectedSupplierId.value = supplierId
-        _refreshTrigger.value++ // Ensure dependent flows update
+        _refreshTrigger.value++
     }
 
     fun setDateRangeFilter(rangeType: String) {
@@ -323,11 +331,9 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         _refreshTrigger.value++
     }
 
-    // General reset for all filters, used by MainActivity and can be used by ReportingActivity
     fun resetFilters() {
-        setDateRangeFilter("All") // This sets dates to null and triggers refresh
+        setDateRangeFilter("All")
         _selectedCategoryId.value = null
         _selectedSupplierId.value = null
-        // _refreshTrigger.value++ // setDateRangeFilter already triggers it
     }
 }

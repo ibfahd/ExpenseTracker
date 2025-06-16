@@ -91,14 +91,12 @@ class ReportingActivity : AppCompatActivity() {
     }
 }
 
-// ... SummaryReportContent and other composables are unchanged, only ProductReportItem is updated
-
 @Composable
 fun ProductReportItem(productDetail: ProductReportDetail, currencyFormatter: NumberFormat) {
     Column(modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)) {
         Text(productDetail.productName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(6.dp))
-        // Safely format the values, providing a default if they are null
+        // Safely handle nullable Double values by providing a default of 0.0 for formatting.
         ProductStatRow(
             label = stringResource(R.string.report_product_total_spent),
             value = currencyFormatter.format(productDetail.totalAmountSpent ?: 0.0)
@@ -107,6 +105,7 @@ fun ProductReportItem(productDetail: ProductReportDetail, currencyFormatter: Num
             label = stringResource(R.string.report_product_lowest_price),
             value = currencyFormatter.format(productDetail.lowestTransactionAmount ?: 0.0)
         )
+        // Safely handle nullable String value by providing a fallback resource.
         ProductStatRow(
             label = stringResource(R.string.report_product_cheapest_supplier),
             value = productDetail.cheapestSupplierName ?: stringResource(R.string.report_not_available)
@@ -114,8 +113,7 @@ fun ProductReportItem(productDetail: ProductReportDetail, currencyFormatter: Num
     }
 }
 
-// The rest of the file is included for context but is unchanged from the last working version.
-// The primary fix is in ProductReportItem above and the ReportingData.kt file.
+// ... The rest of the file remains the same, included for completeness ...
 
 enum class ReportTab(val titleResId: Int, val icon: ImageVector) {
     SUMMARY(R.string.report_tab_summary, Icons.Filled.Info),
@@ -447,7 +445,6 @@ fun CategoryAccordionHeader(
         )
     }
 }
-
 
 @Composable
 fun ReportSectionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
