@@ -128,4 +128,5 @@
     <string name="supplier_name_empty_error">El nombre del proveedor no puede estar vacío.</string>
     <string name="setting_display_title">Opciones de Visualización</string>
     <string name="setting_home_filter_label">Vista de Inicio Predeterminada</string>
+    <string name="delete_category_error_has_products">No se puede eliminar: Esta categoría tiene productos asociados.</string>
 </resources>

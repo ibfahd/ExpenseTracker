@@ -140,15 +140,17 @@ fun ShoppingListScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                showAddShoppingItemDialog = true
-                newProductIdForAddItemDialog = null
-                newProductTextForAddItemDialog = ""
-                newPlannedQuantityForAddItemDialog = "" // Reset planned quantity
-                newUnitForAddItemDialog = ""
-                expandedProductDropdownForAddItemDialog = false
-            }) {
-                Icon(Icons.Default.Add, contentDescription = "Add new shopping item")
+            if (currentSupplierId != null) {
+                FloatingActionButton(onClick = {
+                    showAddShoppingItemDialog = true
+                    newProductIdForAddItemDialog = null
+                    newProductTextForAddItemDialog = ""
+                    newPlannedQuantityForAddItemDialog = "" // Reset planned quantity
+                    newUnitForAddItemDialog = ""
+                    expandedProductDropdownForAddItemDialog = false
+                }) {
+                    Icon(Icons.Default.Add, contentDescription = "Add new shopping item")
+                }
             }
         },
         bottomBar = {

@@ -16,4 +16,7 @@ interface ProductDao {
 
     @Query("SELECT * FROM products WHERE name = :name LIMIT 1")
     suspend fun getProductByName(name: String): Product?
+
+    @Query("SELECT COUNT(id) FROM products WHERE categoryId = :categoryId")
+    suspend fun getProductCountForCategory(categoryId: Int): Int
 }

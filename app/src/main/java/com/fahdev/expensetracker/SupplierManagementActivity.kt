@@ -141,6 +141,7 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
             confirmButton = {
                 Button(onClick = {
                     if (supplierNameInput.isNotBlank()) {
+                        showAddEditDialog = false
                         scope.launch {
                             val existingSupplier = expenseViewModel.getSupplierByName(supplierNameInput)
                             if (existingSupplier != null && existingSupplier.id != supplierToEdit?.id) {
@@ -148,13 +149,12 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
                             } else {
                                 if (supplierToEdit == null) {
                                     expenseViewModel.addSupplier(Supplier(name = supplierNameInput))
-                                    snackbarHostState.showSnackbar(context.getString(R.string.supplier_added_success))
+                                    //snackbarHostState.showSnackbar(context.getString(R.string.supplier_added_success))
                                 } else {
                                     val updatedSupplier = supplierToEdit!!.copy(name = supplierNameInput)
                                     expenseViewModel.updateSupplier(updatedSupplier)
-                                    snackbarHostState.showSnackbar(context.getString(R.string.supplier_updated_success))
+                                    //snackbarHostState.showSnackbar(context.getString(R.string.supplier_updated_success))
                                 }
-                                showAddEditDialog = false
                             }
                         }
                     } else {
@@ -184,7 +184,7 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
                         supplierToDelete?.let { supplier ->
                             scope.launch {
                                 expenseViewModel.deleteSupplier(supplier)
-                                snackbarHostState.showSnackbar(context.getString(R.string.supplier_deleted_success))
+                                //snackbarHostState.showSnackbar(context.getString(R.string.supplier_deleted_success))
                             }
                         }
                         showDeleteDialog = false

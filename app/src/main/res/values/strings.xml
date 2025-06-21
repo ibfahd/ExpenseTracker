@@ -128,4 +128,6 @@
     <string name="supplier_name_empty_error">Supplier name cannot be empty.</string>
     <string name="setting_display_title">Display Options</string>
     <string name="setting_home_filter_label">Default Home View</string>
+
+    <string name="delete_category_error_has_products">Cannot delete: This category has products associated with it.</string>
 </resources>

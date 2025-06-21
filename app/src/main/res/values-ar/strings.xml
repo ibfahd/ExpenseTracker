@@ -128,4 +128,5 @@
     <string name="supplier_name_empty_error">لا يمكن أن يكون اسم المورد فارغًا.</string>
     <string name="setting_display_title">خيارات العرض</string>
     <string name="setting_home_filter_label">العرض الافتراضي للشاشة الرئيسية</string>
+    <string name="delete_category_error_has_products">لا يمكن الحذف: هذه الفئة لديها منتجات مرتبطة بها.</string>
 </resources>

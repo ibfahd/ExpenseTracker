@@ -239,6 +239,10 @@ class ExpenseViewModel(
         return categoryDao.getCategoryByName(name)
     }
 
+    suspend fun hasProductsInCategory(categoryId: Int): Boolean {
+        return productDao.getProductCountForCategory(categoryId) > 0
+    }
+
     fun updateCategory(category: Category) {
         viewModelScope.launch {
             categoryDao.updateCategory(category)

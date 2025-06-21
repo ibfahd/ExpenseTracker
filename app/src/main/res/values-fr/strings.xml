@@ -128,4 +128,5 @@
     <string name="supplier_name_empty_error">Le nom du fournisseur ne peut pas être vide.</string>
     <string name="setting_display_title">Options d\'Affichage</string>
     <string name="setting_home_filter_label">Vue par Défaut de l\'Accueil</string>
+    <string name="delete_category_error_has_products">Impossible de supprimer : cette catégorie a des produits qui lui sont associés.</string>
 </resources>

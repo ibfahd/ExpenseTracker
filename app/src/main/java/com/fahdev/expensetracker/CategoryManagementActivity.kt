@@ -142,6 +142,7 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
             confirmButton = {
                 Button(onClick = {
                     if (categoryNameInput.isNotBlank()) {
+                        showAddEditDialog = false
                         scope.launch {
                             val existingCategory = expenseViewModel.getCategoryByName(categoryNameInput)
                             if (existingCategory != null && existingCategory.id != categoryToEdit?.id) {
@@ -149,13 +150,12 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
                             } else {
                                 if (categoryToEdit == null) {
                                     expenseViewModel.addCategory(Category(name = categoryNameInput))
-                                    snackbarHostState.showSnackbar(context.getString(R.string.category_added_success))
+                                    //snackbarHostState.showSnackbar(context.getString(R.string.category_added_success))
                                 } else {
                                     val updatedCategory = categoryToEdit!!.copy(name = categoryNameInput)
                                     expenseViewModel.updateCategory(updatedCategory)
-                                    snackbarHostState.showSnackbar(context.getString(R.string.category_updated_success))
+                                    //snackbarHostState.showSnackbar(context.getString(R.string.category_updated_success))
                                 }
-                                showAddEditDialog = false
                             }
                         }
                     } else {
@@ -184,8 +184,14 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
                     onClick = {
                         categoryToDelete?.let { category ->
                             scope.launch {
-                                expenseViewModel.deleteCategory(category)
-                                snackbarHostState.showSnackbar(context.getString(R.string.category_deleted_success))
+                                if (expenseViewModel.hasProductsInCategory(category.id)) {
+                                    // If it has products, show an error message
+                                    snackbarHostState.showSnackbar(context.getString(R.string.delete_category_error_has_products))
+                                } else {
+                                    // Otherwise, proceed with the deletion
+                                    expenseViewModel.deleteCategory(category)
+                                }
+                                //snackbarHostState.showSnackbar(context.getString(R.string.category_deleted_success))
                             }
                         }
                         showDeleteDialog = false
