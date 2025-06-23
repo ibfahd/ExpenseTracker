@@ -119,6 +119,7 @@
     <string name="edit_supplier_title">Editar Proveedor</string>
     <string name="supplier_name_label">Nombre del Proveedor</string>
     <string name="delete_supplier_confirmation_message">¿Seguro que quieres eliminar el proveedor \'%1$s\'? Esto también afectará a los gastos relacionados.</string>
+    <string name="delete_supplier_with_expenses_confirmation">Advertencia: \'%1$s\' tiene gastos asociados. Eliminar el proveedor también eliminará permanentemente todos sus registros de gastos. Esta acción no se puede deshacer.</string>
     <string name="edit_supplier_desc">Editar %1$s</string>
     <string name="delete_supplier_desc">Eliminar %1$s</string>
     <string name="supplier_exists_error">¡Ya existe un proveedor con este nombre!</string>

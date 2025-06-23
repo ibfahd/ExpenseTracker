@@ -25,6 +25,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.clickable
+import android.content.Intent
 
 class CategoryManagementActivity : AppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -217,10 +219,18 @@ fun CategoryItem(
     onEditClick: (Category) -> Unit,
     onDeleteClick: (Category) -> Unit
 ) {
+    val context = LocalContext.current // Get context for the Intent
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable { // Make the whole card clickable
+                val intent = Intent(context, ProductManagementActivity::class.java).apply {
+                    putExtra("CATEGORY_ID", category.id)
+                    putExtra("CATEGORY_NAME", category.name)
+                }
+                context.startActivity(intent)
+            },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),

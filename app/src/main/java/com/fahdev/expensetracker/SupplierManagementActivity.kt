@@ -56,6 +56,8 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var supplierToDelete by remember { mutableStateOf<Supplier?>(null) }
 
+    var showDeleteWithExpensesDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -183,12 +185,21 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
                     onClick = {
                         supplierToDelete?.let { supplier ->
                             scope.launch {
-                                expenseViewModel.deleteSupplier(supplier)
+                                if (expenseViewModel.supplierHasExpenses(supplier.id)) {
+                                    // Supplier has expenses, so show the second dialog instead of deleting
+                                    showDeleteDialog = false
+                                    showDeleteWithExpensesDialog = true
+                                } else {
+                                    // No expenses, delete directly
+                                    expenseViewModel.deleteSupplier(supplier)
+                                    showDeleteDialog = false
+                                    supplierToDelete = null
+                                }
                                 //snackbarHostState.showSnackbar(context.getString(R.string.supplier_deleted_success))
                             }
                         }
-                        showDeleteDialog = false
-                        supplierToDelete = null
+                        //showDeleteDialog = false
+                        //supplierToDelete = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
@@ -197,6 +208,31 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
             },
             dismissButton = {
                 Button(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+    if (showDeleteWithExpensesDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteWithExpensesDialog = false },
+            title = { Text(stringResource(R.string.confirm_deletion_title)) },
+            // Use the new, more descriptive warning message
+            text = { Text(stringResource(id = R.string.delete_supplier_with_expenses_confirmation, supplierToDelete?.name ?: "")) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        supplierToDelete?.let { expenseViewModel.deleteSupplierAndExpenses(it) }
+                        showDeleteWithExpensesDialog = false
+                        supplierToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.delete_button))
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showDeleteWithExpensesDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
             }

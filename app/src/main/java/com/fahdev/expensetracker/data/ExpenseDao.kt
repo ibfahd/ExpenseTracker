@@ -149,4 +149,13 @@ interface ExpenseDao {
         LIMIT 1
     """)
     suspend fun getLowestPriceForProduct(productId: Int, startDate: Long?, endDate: Long?): LowestPriceInfo?
+
+    @Query("SELECT COUNT(id) FROM expenses WHERE productId = :productId")
+    suspend fun getExpenseCountForProduct(productId: Int): Int
+
+    @Query("SELECT COUNT(id) FROM expenses WHERE supplierId = :supplierId")
+    suspend fun getExpenseCountForSupplier(supplierId: Int): Int
+
+    @Query("DELETE FROM expenses WHERE supplierId = :supplierId")
+    suspend fun deleteExpensesBySupplierId(supplierId: Int)
 }

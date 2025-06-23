@@ -119,6 +119,7 @@
     <string name="edit_supplier_title">تعديل المورد</string>
     <string name="supplier_name_label">اسم المورد</string>
     <string name="delete_supplier_confirmation_message">هل أنت متأكد من أنك تريد حذف المورد \'%1$s\'؟ سيؤثر هذا أيضًا على المصاريف ذات الصلة.</string>
+    <string name="delete_supplier_with_expenses_confirmation">تحذير: \'%1$s\' مرتبط بنفقات. سيؤدي حذف المورد إلى حذف جميع سجلات نفقاته نهائيًا. لا يمكن التراجع عن هذا الإجراء.</string>
     <string name="edit_supplier_desc">تعديل %1$s</string>
     <string name="delete_supplier_desc">حذف %1$s</string>
     <string name="supplier_exists_error">مورد بهذا الاسم موجود بالفعل!</string>

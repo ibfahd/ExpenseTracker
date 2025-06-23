@@ -118,7 +118,8 @@
     <string name="add_supplier_title">Add Supplier</string>
     <string name="edit_supplier_title">Edit Supplier</string>
     <string name="supplier_name_label">Supplier Name</string>
-    <string name="delete_supplier_confirmation_message">Are you sure you want to delete supplier \'%1$s\'? This will also affect related expenses.</string>
+    <string name="delete_supplier_confirmation_message">Are you sure you want to delete supplier \'%1$s\'?</string>
+    <string name="delete_supplier_with_expenses_confirmation" translatable="false">Warning: \'%1$s\' has associated expenses. Deleting the supplier will also permanently delete all of its expense records. This action cannot be undone.</string>
     <string name="edit_supplier_desc">Edit %1$s</string>
     <string name="delete_supplier_desc">Delete %1$s</string>
     <string name="supplier_exists_error">Supplier with this name already exists!</string>
@@ -130,4 +131,5 @@
     <string name="setting_home_filter_label">Default Home View</string>
 
     <string name="delete_category_error_has_products">Cannot delete: This category has products associated with it.</string>
+
 </resources>

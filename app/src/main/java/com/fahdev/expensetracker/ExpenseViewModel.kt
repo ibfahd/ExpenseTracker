@@ -343,4 +343,45 @@ class ExpenseViewModel(
         _selectedCategoryId.value = null
         _selectedSupplierId.value = null
     }
+
+    // Function to get products for a specific category
+    fun getProductsForCategory(categoryId: Int): Flow<List<Product>> {
+        return productDao.getProductsForCategory(categoryId)
+    }
+
+    // Function to check for duplicate product names within the same category
+    suspend fun getProductByNameInCategory(name: String, categoryId: Int): Product? {
+        return productDao.getProductByNameInCategory(name, categoryId)
+    }
+
+    // Function to update a product
+    fun updateProduct(product: Product) {
+        viewModelScope.launch {
+            productDao.updateProduct(product)
+        }
+    }
+
+    // Function to delete a product
+    fun deleteProduct(product: Product) {
+        viewModelScope.launch {
+            productDao.deleteProduct(product)
+        }
+    }
+
+    // Function to check if a product has associated expenses
+    suspend fun productHasExpenses(productId: Int): Boolean {
+        return expenseDao.getExpenseCountForProduct(productId) > 0
+    }
+
+    suspend fun supplierHasExpenses(supplierId: Int): Boolean {
+        return expenseDao.getExpenseCountForSupplier(supplierId) > 0
+    }
+
+    fun deleteSupplierAndExpenses(supplier: Supplier) {
+        viewModelScope.launch {
+            expenseDao.deleteExpensesBySupplierId(supplier.id)
+            supplierDao.deleteSupplier(supplier)
+            _refreshTrigger.value++ // Ensure UI updates
+        }
+    }
 }

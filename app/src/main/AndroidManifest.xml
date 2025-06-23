@@ -68,7 +68,12 @@
             android:label="@string/about"
             android:parentActivityName=".MainActivity"
             android:theme="@style/Theme.ExpenseTracker" />
-
+        <activity
+            android:name=".ProductManagementActivity"
+            android:exported="false"
+            android:label="Manage Products"
+            android:parentActivityName=".CategoryManagementActivity"
+            android:theme="@style/Theme.ExpenseTracker" />
 
     </application>
 

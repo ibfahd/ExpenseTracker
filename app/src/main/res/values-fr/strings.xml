@@ -119,6 +119,7 @@
     <string name="edit_supplier_title">Modifier le Fournisseur</string>
     <string name="supplier_name_label">Nom du Fournisseur</string>
     <string name="delete_supplier_confirmation_message">Êtes-vous sûr de vouloir supprimer le fournisseur \'%1$s\' ? Cela affectera également les dépenses associées.</string>
+    <string name="delete_supplier_with_expenses_confirmation">Avertissement :  \'%1$s\' a des dépenses associées. La suppression du fournisseur entraînera également la suppression définitive de tous ses enregistrements de dépenses. Cette action est irréversible.</string>
     <string name="edit_supplier_desc">Modifier %1$s</string>
     <string name="delete_supplier_desc">Supprimer %1$s</string>
     <string name="supplier_exists_error">Un fournisseur avec ce nom existe déjà !</string>
