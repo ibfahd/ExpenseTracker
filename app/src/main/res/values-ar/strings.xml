@@ -6,7 +6,7 @@
     <string name="filter_expenses">تصفية المصاريف</string>
     <string name="add_new_expense">إضافة مصروف جديد</string>
     <string name="no_expenses">لا توجد مصاريف مسجلة بعد، أو لا توجد مصاريف تطابق الفلاتر الحالية.</string>
-    <string name="total_expenses">إجمالي المصاريف المصفاة</string>
+    <string name="total_expenses">إجمالي المصاريف</string>
     <string name="from_supplier">من %1$s</string>
     <string name="active_filters">الفلاتر النشطة:</string>
     <string name="date_range">التاريخ: %1$s - %2$s</string>
@@ -94,7 +94,7 @@
     <string name="about_section_privacy">البيانات والخصوصية</string>
     <string name="about_privacy_content">يتم تخزين جميع البيانات المالية التي تدخلها بشكل آمن وحصري على جهازك. لا يقوم هذا التطبيق بجمع أو نقل أي من معلوماتك المالية الشخصية إلى خوادم خارجية. خصوصيتك هي الأولوية القصوى.</string>
     <string name="about_section_contact">الاتصال والدعم</string>
-    <string name="about_contact_content">للأسئلة أو الملاحظات أو الدعم، يرجى مراسلتنا عبر البريد الإلكتروني على: support@example.com</string>
+    <string name="about_contact_content">للأسئلة أو الملاحظات أو الدعم، يرجى مراسلتنا : https://expensetrackerwebsite.web.app/#contact</string>
     <string name="add_new_category_desc">إضافة فئة جديدة</string>
     <string name="no_categories_placeholder">لا توجد فئات حتى الآن. انقر على \'+\' لإضافة واحدة!</string>
     <string name="add_category_title">إضافة فئة</string>

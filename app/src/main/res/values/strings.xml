@@ -6,7 +6,7 @@
     <string name="filter_expenses">Filter Expenses</string>
     <string name="add_new_expense">Add new expense</string>
     <string name="no_expenses">No expenses recorded yet, or no expenses match current filters.</string>
-    <string name="total_expenses">Total Filtered Expenses</string>
+    <string name="total_expenses">Total Spent</string>
     <string name="from_supplier">from %1$s</string>
     <string name="active_filters">Active Filters:</string>
     <string name="date_range">Date: %1$s - %2$s</string>
@@ -93,7 +93,7 @@
     <string name="about_section_privacy">Data &amp; Privacy</string>
     <string name="about_privacy_content">All financial data you enter is stored securely and exclusively on your device. This app does not collect or transmit any of your personal financial information to external servers. Your privacy is a top priority.</string>
     <string name="about_section_contact">Contact &amp; Support</string>
-    <string name="about_contact_content">For questions, feedback, or support, please email us at: fahdboussouf@gmail.com</string>
+    <string name="about_contact_content">For questions, feedback, or support, please contact us at: https://expensetrackerwebsite.web.app/#contact</string>
     <string name="setting_language_label">Language</string>
     <string name="add_new_category_desc">Add new category</string>
     <string name="no_categories_placeholder">No categories yet. Tap \'+\' to add one!</string>

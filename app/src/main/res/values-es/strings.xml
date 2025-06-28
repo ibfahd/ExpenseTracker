@@ -93,7 +93,7 @@
     <string name="about_section_privacy">Datos y Privacidad</string>
     <string name="about_privacy_content">Todos los datos financieros que introduce se almacenan de forma segura y exclusiva en su dispositivo. Esta aplicación no recopila ni transmite su información financiera personal a servidores externos. Su privacidad es una máxima prioridad.</string>
     <string name="about_section_contact">Contacto y Soporte</string>
-    <string name="about_contact_content">Para preguntas, comentarios o soporte, por favor envíenos un correo electrónico a: fahdboussouf@gmail.com</string>
+    <string name="about_contact_content">Para preguntas, comentarios o soporte : https://expensetrackerwebsite.web.app/#contact</string>
     <string name="setting_language_label">Idioma</string>
     <string name="add_new_category_desc">Añadir nueva categoría</string>
     <string name="no_categories_placeholder">No hay categorías todavía. ¡Toca \'+\' para añadir una!</string>
