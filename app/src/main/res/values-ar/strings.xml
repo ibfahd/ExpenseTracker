@@ -130,4 +130,14 @@
     <string name="setting_display_title">خيارات العرض</string>
     <string name="setting_home_filter_label">العرض الافتراضي للشاشة الرئيسية</string>
     <string name="delete_category_error_has_products">لا يمكن الحذف: هذه الفئة لديها منتجات مرتبطة بها.</string>
+    <string name="no_categories_title">لم يتم العثور على فئات</string>
+    <string name="no_categories_description">اضغط على زر \"+\" لإضافة فئتك الأولى والبدء في تنظيم نفقاتك.</string>
+    <string name="no_suppliers_title">لم يتم العثور على الموردين</string>
+    <string name="no_suppliers_description">اضغط على زر \"+\" لإضافة المورد الأول الخاص بك.</string>
+    <string name="no_expenses_title">لا توجد نفقات هنا</string>
+    <string name="no_expenses_description">بمجرد إضافة مصروف، سوف يظهر هنا.</string>
+    <string name="no_expenses_match_filter_title">لا توجد نفقات مطابقة</string>
+    <string name="no_expenses_match_filter_description">حاول ضبط أو مسح المرشحات الخاصة بك لرؤية المزيد من النتائج.</string>
+    <string name="no_items_in_list_title">قائمة التسوق الخاصة بك فارغة</string>
+    <string name="no_items_in_list_description">حدد المورد واضغط على زر \"+\" لإضافة العناصر إلى قائمتك.</string>
 </resources>

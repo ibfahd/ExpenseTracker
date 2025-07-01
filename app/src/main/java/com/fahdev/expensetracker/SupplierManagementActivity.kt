@@ -25,6 +25,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.Supplier
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.outlined.Storefront
+import com.fahdev.expensetracker.ui.components.EmptyState
 
 class SupplierManagementActivity : AppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -97,11 +99,10 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (allSuppliers.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.no_suppliers_placeholder),
-                    modifier = Modifier.padding(top = 16.dp),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                EmptyState(
+                    icon = Icons.Outlined.Storefront,
+                    title = stringResource(id = R.string.no_suppliers_title),
+                    description = stringResource(id = R.string.no_suppliers_description)
                 )
             } else {
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {

@@ -1,7 +1,6 @@
 package com.fahdev.expensetracker
 
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -19,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Category
@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -80,6 +81,7 @@ import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.CurrencyHelper
 import com.fahdev.expensetracker.data.Supplier
 import com.fahdev.expensetracker.data.UserPreferencesRepository
+import com.fahdev.expensetracker.ui.components.EmptyState
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -270,12 +272,23 @@ fun ExpenseTrackerApp(
             )
             Spacer(Modifier.height(8.dp))
             if (filteredExpenses.isEmpty()) {
-                Text(
-                    text = context.getString(R.string.no_expenses),
-                    modifier = Modifier.padding(top = 16.dp),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                val isFilterActive = selectedStartDate != null || selectedEndDate != null || selectedCategoryId != null || selectedSupplierId != null
+                val title = if (isFilterActive) {
+                    stringResource(R.string.no_expenses_match_filter_title)
+                } else {
+                    stringResource(R.string.no_expenses_title)
+                }
+                val description = if (isFilterActive) {
+                    stringResource(R.string.no_expenses_match_filter_description)
+                } else {
+                    stringResource(R.string.no_expenses_description)
+                }
+                val icon = if (isFilterActive) {
+                    Icons.Outlined.SearchOff
+                } else {
+                    Icons.AutoMirrored.Outlined.ReceiptLong
+                }
+                EmptyState(icon = icon, title = title, description = description)
             } else {
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {
                     items(filteredExpenses, key = { it.expense.id }) { expenseWithDetails ->

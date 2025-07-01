@@ -2,7 +2,6 @@ package com.fahdev.expensetracker
 
 import android.app.Application
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -22,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.outlined.ShoppingCartCheckout
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
@@ -66,6 +66,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.data.ShoppingListItem
+import com.fahdev.expensetracker.ui.components.EmptyState
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import kotlinx.coroutines.launch
 
@@ -109,7 +110,7 @@ fun ShoppingListScreen(
     val allSuppliers by shoppingListViewModel.allSuppliers.collectAsState(initial = emptyList())
     val shoppingListItems by shoppingListViewModel.shoppingListItems.collectAsState(initial = emptyList())
     val allProducts by shoppingListViewModel.allProducts.collectAsState(initial = emptyList())
-    val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
+    //val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
 
     var expandedSupplierDropdown by remember { mutableStateOf(false) }
     var showAddShoppingItemDialog by remember { mutableStateOf(false) }
@@ -224,7 +225,16 @@ fun ShoppingListScreen(
             Spacer(Modifier.height(8.dp))
 
             if (shoppingListItems.isEmpty()) {
-                Text(stringResource(R.string.no_items_in_list))
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    EmptyState(
+                        icon = Icons.Outlined.ShoppingCartCheckout,
+                        title = stringResource(id = R.string.no_items_in_list_title),
+                        description = stringResource(id = R.string.no_items_in_list_description)
+                    )
+                }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {
                     items(shoppingListItems, key = { it.id }) { item ->

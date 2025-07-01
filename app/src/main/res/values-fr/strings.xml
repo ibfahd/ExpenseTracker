@@ -130,4 +130,14 @@
     <string name="setting_display_title">Options d\'Affichage</string>
     <string name="setting_home_filter_label">Vue par Défaut de l\'Accueil</string>
     <string name="delete_category_error_has_products">Impossible de supprimer : cette catégorie a des produits qui lui sont associés.</string>
+    <string name="no_categories_title">Aucune catégorie trouvée</string>
+    <string name="no_categories_description">Appuyez sur le bouton « + » pour ajouter votre première catégorie et commencer à organiser vos dépenses.</string>
+    <string name="no_suppliers_title">Aucun fournisseur trouvé</string>
+    <string name="no_suppliers_description">Appuyez sur le bouton « + » pour ajouter votre premier fournisseur.</string>
+    <string name="no_expenses_title">Pas de frais ici</string>
+    <string name="no_expenses_description">Une fois que vous avez ajouté une dépense, elle apparaîtra ici.</string>
+    <string name="no_expenses_match_filter_title">Aucune dépense correspondante</string>
+    <string name="no_expenses_match_filter_description">Essayez d\'ajuster ou d\'effacer vos filtres pour voir plus de résultats.</string>
+    <string name="no_items_in_list_title">Votre liste de courses est vide</string>
+    <string name="no_items_in_list_description">Sélectionnez un fournisseur et appuyez sur le bouton « + » pour ajouter des articles à votre liste.</string>
 </resources>

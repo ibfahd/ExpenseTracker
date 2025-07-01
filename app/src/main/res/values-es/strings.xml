@@ -130,4 +130,14 @@
     <string name="setting_display_title">Opciones de Visualización</string>
     <string name="setting_home_filter_label">Vista de Inicio Predeterminada</string>
     <string name="delete_category_error_has_products">No se puede eliminar: Esta categoría tiene productos asociados.</string>
+    <string name="no_categories_title">No se encontraron categorías</string>
+    <string name="no_categories_description">Toque el botón \'+\' para agregar su primera categoría y comenzar a organizar sus gastos.</string>
+    <string name="no_suppliers_title">No se encontraron proveedores</string>
+    <string name="no_suppliers_description">Toque el botón \'+\' para agregar su primer proveedor.</string>
+    <string name="no_expenses_title">No hay gastos aquí</string>
+    <string name="no_expenses_description">Una vez que agregue un gasto, aparecerá aquí.</string>
+    <string name="no_expenses_match_filter_title">Sin gastos coincidentes</string>
+    <string name="no_expenses_match_filter_description">Intente ajustar o borrar sus filtros para ver más resultados.</string>
+    <string name="no_items_in_list_title">Su lista de compras está vacía</string>
+    <string name="no_items_in_list_description">Seleccione un proveedor y toque el botón \'+\' para agregar artículos a su lista.</string>
 </resources>

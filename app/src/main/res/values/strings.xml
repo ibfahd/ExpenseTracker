@@ -132,4 +132,18 @@
 
     <string name="delete_category_error_has_products">Cannot delete: This category has products associated with it.</string>
 
+    <string name="no_categories_title">No Categories Found</string>
+    <string name="no_categories_description">Tap the \'+\' button to add your first category and start organizing your expenses.</string>
+
+    <string name="no_suppliers_title">No Suppliers Found</string>
+    <string name="no_suppliers_description">Tap the \'+\' button to add your first supplier.</string>
+
+    <string name="no_expenses_title">No Expenses Here</string>
+    <string name="no_expenses_description">Once you add an expense, it will show up here.</string>
+    <string name="no_expenses_match_filter_title">No Matching Expenses</string>
+    <string name="no_expenses_match_filter_description">Try adjusting or clearing your filters to see more results.</string>
+
+    <string name="no_items_in_list_title">Your Shopping List is Empty</string>
+    <string name="no_items_in_list_description">Select a supplier and tap the \'+\' button to add items to your list.</string>
+
 </resources>
