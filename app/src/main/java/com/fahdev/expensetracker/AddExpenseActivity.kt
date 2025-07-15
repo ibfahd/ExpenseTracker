@@ -2,6 +2,7 @@ package com.fahdev.expensetracker
 
 import android.app.Application
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -147,7 +148,7 @@ fun AddExpenseForm(
                     amount = newValue
                 }
             },
-            label = { Text("Amount") },
+            label = { Text(stringResource(R.string.amount)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
         )
@@ -165,7 +166,7 @@ fun AddExpenseForm(
                     selectedProduct = null
                     productDropdownExpanded = true
                 },
-                label = { Text("Select Product") },
+                label = { Text(stringResource(R.string.select_product)) },
                 readOnly = false,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = productDropdownExpanded) },
                 modifier = Modifier
@@ -182,7 +183,7 @@ fun AddExpenseForm(
                 }
                 if (filteredProducts.isEmpty() && productSearchQuery.isNotBlank()) {
                     DropdownMenuItem(
-                        text = { Text("Add new product: \"$productSearchQuery\"") },
+                        text = { Text(stringResource(R.string.add_new_product, productSearchQuery)) },
                         onClick = {
                             newProductName = productSearchQuery
                             newProductSelectedCategory = null
@@ -194,7 +195,7 @@ fun AddExpenseForm(
                     Spacer(Modifier.height(8.dp))
                 }
                 filteredProducts.forEach { product ->
-                    val productCategory = allCategories.find { it.id == product.categoryId }?.name ?: "Unknown Category"
+                    val productCategory = allCategories.find { it.id == product.categoryId }?.name ?: stringResource(R.string.unknown_category)
                     DropdownMenuItem(
                         text = { Text("${product.name} (${productCategory})") },
                         onClick = {
@@ -220,7 +221,7 @@ fun AddExpenseForm(
                     selectedSupplier = null
                     supplierDropdownExpanded = true
                 },
-                label = { Text("Select Supplier") },
+                label = { Text(stringResource(R.string.select_supplier_title)) },
                 readOnly = false,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = supplierDropdownExpanded) },
                 modifier = Modifier
@@ -237,7 +238,7 @@ fun AddExpenseForm(
                 }
                 if (filteredSuppliers.isEmpty() && supplierSearchQuery.isNotBlank()) {
                     DropdownMenuItem(
-                        text = { Text("Add new supplier: \"$supplierSearchQuery\"") },
+                        text = { Text(stringResource(R.string.add_new_supplier, supplierSearchQuery)) },
                         onClick = {
                             newSupplierName = supplierSearchQuery
                             showAddSupplierDialog = true
@@ -264,7 +265,7 @@ fun AddExpenseForm(
             onClick = {
                 val amountDouble = amount.toDoubleOrNull()
                 if (amountDouble == null || selectedProduct == null || selectedSupplier == null) {
-                    android.widget.Toast.makeText(context, "Please fill Amount, select Product and Supplier", android.widget.Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.please_fill_amount_product_supplier), Toast.LENGTH_SHORT).show()
                     return@Button
                 }
 
@@ -275,7 +276,7 @@ fun AddExpenseForm(
                         supplierId = selectedSupplier!!.id
                     )
                     expenseViewModel.addExpense(newExpense)
-                    android.widget.Toast.makeText(context, "Expense saved!", android.widget.Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.expense_saved), Toast.LENGTH_SHORT).show()
                     onSaveSuccess()
                 }
             },
@@ -283,7 +284,7 @@ fun AddExpenseForm(
                 .fillMaxWidth()
                 .height(48.dp),
         ) {
-            Text("Save Expense")
+            Text(stringResource(R.string.save_expense))
         }
     }
 
@@ -295,13 +296,13 @@ fun AddExpenseForm(
                 newProductSelectedCategory = null
                 newProductCategorySearchQuery = ""
             },
-            title = { Text("Add New Product") },
+            title = { Text(stringResource(R.string.add_new_product_title)) },
             text = {
                 Column {
                     OutlinedTextField(
                         value = newProductName,
                         onValueChange = { newProductName = it },
-                        label = { Text("Product Name") },
+                        label = { Text(stringResource(R.string.product_name_label)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(Modifier.height(8.dp))
@@ -319,7 +320,7 @@ fun AddExpenseForm(
                                 newProductCategoryDropdownExpanded = true
                             },
                             readOnly = false,
-                            label = { Text("Category") },
+                            label = { Text(stringResource(R.string.category)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = newProductCategoryDropdownExpanded) },
                             modifier = Modifier
                                 .menuAnchor(MenuAnchorType.PrimaryEditable, true)
@@ -334,7 +335,7 @@ fun AddExpenseForm(
                             }
                             if (filteredCategories.isEmpty() && newProductCategorySearchQuery.isNotBlank()) {
                                 DropdownMenuItem(
-                                    text = { Text("Add new category: \"$newProductCategorySearchQuery\"") },
+                                    text = { Text(stringResource(R.string.add_new_category, newProductCategorySearchQuery)) },
                                     onClick = {
                                         coroutineScope.launch {
                                             val existingCategory = expenseViewModel.getCategoryByName(newProductCategorySearchQuery)
@@ -344,9 +345,9 @@ fun AddExpenseForm(
                                             if (categoryId != -1L) {
                                                 newProductSelectedCategory = categoryToAdd.copy(id = categoryId.toInt())
                                                 newProductCategorySearchQuery = newProductSelectedCategory!!.name
-                                                android.widget.Toast.makeText(context, "Category added!", android.widget.Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, context.getString(R.string.category_added), Toast.LENGTH_SHORT).show()
                                             } else {
-                                                android.widget.Toast.makeText(context, "Failed to add category.", android.widget.Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, context.getString(R.string.failed_to_add_category), Toast.LENGTH_SHORT).show()
                                             }
                                             newProductCategoryDropdownExpanded = false
                                         }
@@ -388,14 +389,14 @@ fun AddExpenseForm(
                                             categoryId = newProductSelectedCategory!!.id
                                         )
                                         productSearchQuery = newProductName
-                                        android.widget.Toast.makeText(context, "Product added!", android.widget.Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.product_added), Toast.LENGTH_SHORT).show()
                                     } else {
-                                        android.widget.Toast.makeText(context, "Failed to add product.", android.widget.Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.failed_to_add_product), Toast.LENGTH_SHORT).show()
                                     }
                                 } else {
                                     selectedProduct = existingProduct
                                     productSearchQuery = existingProduct.name
-                                    android.widget.Toast.makeText(context, "Product already exists, selected.", android.widget.Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.product_exists), Toast.LENGTH_SHORT).show()
                                 }
                                 showAddProductDialog = false
                                 newProductName = ""
@@ -403,10 +404,10 @@ fun AddExpenseForm(
                                 newProductCategorySearchQuery = ""
                             }
                         } else {
-                            android.widget.Toast.makeText(context, "Product name and category cannot be empty.", android.widget.Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.product_name_and_category_empty), Toast.LENGTH_SHORT).show()
                         }
                     }
-                ) { Text("Add") }
+                ) { Text(stringResource(R.string.add_button)) }
             },
             dismissButton = {
                 TextButton(onClick = {
@@ -414,7 +415,7 @@ fun AddExpenseForm(
                     newProductName = ""
                     newProductSelectedCategory = null
                     newProductCategorySearchQuery = ""
-                }) { Text("Cancel") }
+                }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -422,12 +423,12 @@ fun AddExpenseForm(
     if (showAddSupplierDialog) {
         AlertDialog(
             onDismissRequest = { showAddSupplierDialog = false },
-            title = { Text("Add New Supplier") },
+            title = { Text(stringResource(R.string.add_new_supplier_title)) },
             text = {
                 OutlinedTextField(
                     value = newSupplierName,
                     onValueChange = { newSupplierName = it },
-                    label = { Text("Supplier Name") },
+                    label = { Text(stringResource(R.string.supplier_name_label)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             },
@@ -443,25 +444,25 @@ fun AddExpenseForm(
                                         selectedSupplier =
                                             Supplier(id = newId.toInt(), name = newSupplierName)
                                         supplierSearchQuery = newSupplierName
-                                        android.widget.Toast.makeText(context, "Supplier added!", android.widget.Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.supplier_added), Toast.LENGTH_SHORT).show()
                                     } else {
-                                        android.widget.Toast.makeText(context, "Failed to add supplier.", android.widget.Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.failed_to_add_supplier), Toast.LENGTH_SHORT).show()
                                     }
                                 } else {
                                     selectedSupplier = existingSupplier
                                     supplierSearchQuery = existingSupplier.name
-                                    android.widget.Toast.makeText(context, "Supplier already exists, selected.", android.widget.Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.supplier_exists), Toast.LENGTH_SHORT).show()
                                 }
                                 showAddSupplierDialog = false
                             }
                         } else {
-                            android.widget.Toast.makeText(context, "Supplier name cannot be empty.", android.widget.Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.supplier_name_empty), Toast.LENGTH_SHORT).show()
                         }
                     }
-                ) { Text("Add") }
+                ) { Text(stringResource(R.string.add_button)) }
             },
             dismissButton = {
-                TextButton(onClick = { showAddSupplierDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showAddSupplierDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }

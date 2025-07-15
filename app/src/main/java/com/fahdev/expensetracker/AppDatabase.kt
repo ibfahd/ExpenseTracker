@@ -51,8 +51,8 @@ abstract class AppDatabase : RoomDatabase() {
 
         // Migration from version 1 to 2 (existing)
         private val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name TEXT NOT NULL)")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name TEXT NOT NULL)")
             }
         }
 
@@ -60,11 +60,11 @@ abstract class AppDatabase : RoomDatabase() {
         // Note: If your previous ShoppingListItem table was created in version 3, this migration path is correct.
         // If ShoppingListItem was added in a different version, adjust the startVersion of MIGRATION_4_5.
         private val MIGRATION_3_4 = object : Migration(3, 4) {
-            override fun migrate(database: SupportSQLiteDatabase) {
+            override fun migrate(db: SupportSQLiteDatabase) {
                 // This migration should create the ShoppingListItem table as it was BEFORE your new fields.
                 // The schema here should match the 'ShoppingListItem' table structure at version 4.
                 // Based on your provided code, the 'quantity' field existed.
-                database.execSQL("""
+                db.execSQL("""
                     CREATE TABLE IF NOT EXISTS ShoppingListItem (
                         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                         productId INTEGER NOT NULL,

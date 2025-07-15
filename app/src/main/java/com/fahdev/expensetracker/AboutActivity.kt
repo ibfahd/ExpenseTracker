@@ -51,7 +51,7 @@ class AboutActivity : AppCompatActivity() {
                                 IconButton(onClick = { finish() }) {
                                     Icon(
                                         Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Back"
+                                        contentDescription = stringResource(id = R.string.back_button_desc)
                                     )
                                 }
                             },

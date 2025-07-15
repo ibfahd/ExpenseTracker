@@ -129,7 +129,7 @@ fun ShoppingListScreen(
                 title = { Text(stringResource(R.string.shopping_list_title)) },
                 navigationIcon = {
                     IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_button_desc))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -150,7 +150,7 @@ fun ShoppingListScreen(
                     newUnitForAddItemDialog = ""
                     expandedProductDropdownForAddItemDialog = false
                 }) {
-                    Icon(Icons.Default.Add, contentDescription = "Add new shopping item")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_new_shopping_item))
                 }
             }
         },
@@ -168,7 +168,7 @@ fun ShoppingListScreen(
                         onClick = { showConfirmValidateDialog = true },
                         enabled = shoppingListItems.any { it.purchasedQuantity > 0.0 && it.unitPrice != null }
                     ) {
-                        Text("Validate All Purchases")
+                        Text(stringResource(R.string.validate_all_purchases))
                     }
                 }
             }
@@ -255,10 +255,36 @@ fun ShoppingListScreen(
         }
     }
 
+    if (showConfirmValidateDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmValidateDialog = false },
+            title = { Text(stringResource(R.string.confirm_purchases)) },
+            text = { Text(stringResource(R.string.confirm_purchases_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            val recordedCount = shoppingListViewModel.recordAllPurchases()
+                            if (recordedCount > 0) {
+                                snackbarHostState.showSnackbar(context.getString(R.string.expenses_recorded_successfully, recordedCount))
+                            } else {
+                                snackbarHostState.showSnackbar(context.getString(R.string.no_valid_purchases_to_record))
+                            }
+                            showConfirmValidateDialog = false
+                        }
+                    }
+                ) { Text(stringResource(R.string.confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmValidateDialog = false }) { Text(stringResource(R.string.cancel)) }
+            }
+        )
+    }
+
     if (showAddShoppingItemDialog) {
         AlertDialog(
             onDismissRequest = { showAddShoppingItemDialog = false },
-            title = { Text("Add New Shopping Item") },
+            title = { Text(stringResource(R.string.add_new_item_title)) },
             text = {
                 Column {
                     ExposedDropdownMenuBox(
@@ -288,7 +314,7 @@ fun ShoppingListScreen(
                             }
                             if (filteredProducts.isEmpty() && newProductTextForAddItemDialog.isNotBlank()) {
                                 DropdownMenuItem(
-                                    text = { Text("Add new product: \"$newProductTextForAddItemDialog\"") },
+                                    text = { Text(stringResource(R.string.add_new_product, newProductTextForAddItemDialog)) },
                                     onClick = {
                                         newProductNameForAddProductDialog = newProductTextForAddItemDialog
                                         showAddProductDialog = true
@@ -338,21 +364,21 @@ fun ShoppingListScreen(
                         if (productId != null && plannedQuantity != null && plannedQuantity > 0) {
                             shoppingListViewModel.addShoppingItem(productId, newUnitForAddItemDialog.ifBlank { null }, plannedQuantity)
                             showAddShoppingItemDialog = false
-                            coroutineScope.launch { snackbarHostState.showSnackbar("Item added to shopping list!") }
+                            coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.item_added_to_shopping_list)) }
                         } else {
                             coroutineScope.launch {
                                 snackbarHostState.showSnackbar(
-                                    message = "Please select a product and enter a valid positive planned quantity.",
+                                    message = context.getString(R.string.select_product_and_enter_quantity),
                                     withDismissAction = true
                                 )
                             }
                         }
                     },
                     enabled = newProductIdForAddItemDialog != null && newPlannedQuantityForAddItemDialog.toDoubleOrNull() != null && (newPlannedQuantityForAddItemDialog.toDoubleOrNull() ?: 0.0) > 0
-                ) { Text("Add") }
+                ) { Text(stringResource(R.string.add_button)) }
             },
             dismissButton = {
-                TextButton(onClick = { showAddShoppingItemDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showAddShoppingItemDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -366,32 +392,6 @@ fun ShoppingListScreen(
             onProductAddedOrSelected = { productId, productName ->
                 newProductIdForAddItemDialog = productId
                 newProductTextForAddItemDialog = productName
-            }
-        )
-    }
-
-    if (showConfirmValidateDialog) {
-        AlertDialog(
-            onDismissRequest = { showConfirmValidateDialog = false },
-            title = { Text("Confirm Purchases") },
-            text = { Text("Are you sure you want to record all entered purchases as expenses?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            val recordedCount = shoppingListViewModel.recordAllPurchases()
-                            if (recordedCount > 0) {
-                                snackbarHostState.showSnackbar("$recordedCount expenses recorded successfully!")
-                            } else {
-                                snackbarHostState.showSnackbar("No valid purchases to record.")
-                            }
-                            showConfirmValidateDialog = false
-                        }
-                    }
-                ) { Text("Confirm") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showConfirmValidateDialog = false }) { Text("Cancel") }
             }
         )
     }
@@ -514,6 +514,7 @@ fun AddProductDialog(
     expenseViewModel: ExpenseViewModel,
     snackbarHostState: SnackbarHostState
 ) {
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
 
@@ -524,13 +525,13 @@ fun AddProductDialog(
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        title = { Text("Add New Product") },
+        title = { Text(stringResource(R.string.add_new_product_title)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = newProductNameDialog,
                     onValueChange = { newProductNameDialog = it },
-                    label = { Text("Product Name") },
+                    label = { Text(stringResource(R.string.product_name_label)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(8.dp))
@@ -547,7 +548,7 @@ fun AddProductDialog(
                             newProductCategoryDropdownExpanded = true
                         },
                         readOnly = false,
-                        label = { Text("Category") },
+                        label = { Text(stringResource(R.string.category)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = newProductCategoryDropdownExpanded) },
                         modifier = Modifier
                             .menuAnchor(MenuAnchorType.PrimaryEditable, true)
@@ -562,7 +563,7 @@ fun AddProductDialog(
                         }
                         if (filteredCategories.isEmpty() && newProductCategorySearchQuery.isNotBlank()) {
                             DropdownMenuItem(
-                                text = { Text("Add new category: \"$newProductCategorySearchQuery\"") },
+                                text = { Text(stringResource(R.string.add_new_category, newProductCategorySearchQuery)) },
                                 onClick = {
                                     coroutineScope.launch {
                                         val existingCategory = expenseViewModel.getCategoryByName(newProductCategorySearchQuery)
@@ -572,9 +573,9 @@ fun AddProductDialog(
                                         if (categoryId != -1L) {
                                             newProductSelectedCategory = categoryToAdd.copy(id = categoryId.toInt())
                                             newProductCategorySearchQuery = newProductSelectedCategory!!.name
-                                            snackbarHostState.showSnackbar("Category added!")
+                                            snackbarHostState.showSnackbar(context.getString(R.string.category_added))
                                         } else {
-                                            snackbarHostState.showSnackbar("Failed to add category.")
+                                            snackbarHostState.showSnackbar(context.getString(R.string.failed_to_add_category))
                                         }
                                         newProductCategoryDropdownExpanded = false
                                     }
@@ -611,24 +612,24 @@ fun AddProductDialog(
                                 )
                                 if (newId != -1L) {
                                     onProductAddedOrSelected(newId.toInt(), newProductNameDialog)
-                                    snackbarHostState.showSnackbar("Product added!")
+                                    snackbarHostState.showSnackbar(context.getString(R.string.product_added))
                                 } else {
-                                    snackbarHostState.showSnackbar("Failed to add product.")
+                                    snackbarHostState.showSnackbar(context.getString(R.string.failed_to_add_product))
                                 }
                             } else {
                                 onProductAddedOrSelected(existingProduct.id, existingProduct.name)
-                                snackbarHostState.showSnackbar("Product already exists, selected.")
+                                snackbarHostState.showSnackbar(context.getString(R.string.product_exists))
                             }
                             onDismissRequest()
                         }
                     } else {
-                        coroutineScope.launch { snackbarHostState.showSnackbar("Product name and category cannot be empty.") }
+                        coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.product_name_and_category_empty)) }
                     }
                 }
-            ) { Text("Add") }
+            ) { Text(stringResource(R.string.add_button)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismissRequest) { Text("Cancel") }
+            TextButton(onClick = onDismissRequest) { Text(stringResource(R.string.cancel)) }
         }
     )
 }

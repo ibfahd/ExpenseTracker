@@ -46,8 +46,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fahdev.expensetracker.data.CurrencyHelper
-import com.fahdev.expensetracker.data.LocaleHelper
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 
 class SettingsActivity : AppCompatActivity() {
@@ -216,7 +214,7 @@ fun CurrencySelector(settingsViewModel: SettingsViewModel) {
             modifier = Modifier.weight(1.5f) // Give more space to dropdown
         ) {
             TextField(
-                value = selectedCurrency?.displayName ?: "Select Currency",
+                value = selectedCurrency?.displayName ?: stringResource(R.string.select_currency),
                 onValueChange = {},
                 readOnly = true,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -268,7 +266,7 @@ fun LanguageSelector(settingsViewModel: SettingsViewModel) {
             modifier = Modifier.weight(1.5f)
         ) {
             TextField(
-                value = selectedLanguage?.nativeName ?: "System Default",
+                value = selectedLanguage?.nativeName ?: stringResource(R.string.system_default),
                 onValueChange = {},
                 readOnly = true,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },

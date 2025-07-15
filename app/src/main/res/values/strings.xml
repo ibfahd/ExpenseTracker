@@ -119,7 +119,7 @@
     <string name="edit_supplier_title">Edit Supplier</string>
     <string name="supplier_name_label">Supplier Name</string>
     <string name="delete_supplier_confirmation_message">Are you sure you want to delete supplier \'%1$s\'?</string>
-    <string name="delete_supplier_with_expenses_confirmation" translatable="false">Warning: \'%1$s\' has associated expenses. Deleting the supplier will also permanently delete all of its expense records. This action cannot be undone.</string>
+    <string name="delete_supplier_with_expenses_confirmation">Warning: \'%1$s\' has associated expenses. Deleting the supplier will also permanently delete all of its expense records. This action cannot be undone.</string>
     <string name="edit_supplier_desc">Edit %1$s</string>
     <string name="delete_supplier_desc">Delete %1$s</string>
     <string name="supplier_exists_error">Supplier with this name already exists!</string>
@@ -145,5 +145,57 @@
 
     <string name="no_items_in_list_title">Your Shopping List is Empty</string>
     <string name="no_items_in_list_description">Select a supplier and tap the \'+\' button to add items to your list.</string>
-
+    <string name="amount">Amount</string>
+    <string name="select_product">Select Product</string>
+    <string name="add_new_product">Add new product: \"%s\"</string>
+    <string name="unknown_category">Unknown Category</string>
+    <string name="select_supplier_title">Select Supplier</string>
+    <string name="add_new_supplier">Add new supplier: \"%s\"</string>
+    <string name="save_expense">Save Expense</string>
+    <string name="add_new_product_title">Add New Product</string>
+    <string name="add_new_category">Add new category: \"%s\"</string>
+    <string name="product_added">Product added!</string>
+    <string name="failed_to_add_product">Failed to add product.</string>
+    <string name="product_exists">Product already exists, selected.</string>
+    <string name="product_name_and_category_empty">Product name and category cannot be empty.</string>
+    <string name="add_new_supplier_title">Add New Supplier</string>
+    <string name="supplier_added">Supplier added!</string>
+    <string name="failed_to_add_supplier">Failed to add supplier.</string>
+    <string name="supplier_exists">Supplier already exists, selected.</string>
+    <string name="supplier_name_empty">Supplier name cannot be empty.</string>
+    <string name="edit_expense_title">Edit Expense</string>
+    <string name="loading_expense_details">Loading expense details…</string>
+    <string name="error_expense_not_found">Error: Expense not found or ID missing.</string>
+    <string name="product">Product</string>
+    <string name="select_product_icon">Select Product</string>
+    <string name="select_supplier_icon">Select Supplier</string>
+    <string name="date">Date</string>
+    <string name="select_date">Select Date</string>
+    <string name="confirm">Confirm</string>
+    <string name="save_changes">Save Changes</string>
+    <string name="delete_expense">Delete Expense</string>
+    <string name="expense_updated_successfully">Expense updated successfully!</string>
+    <string name="fill_all_fields">Please fill all fields correctly.</string>
+    <string name="are_you_sure_delete_expense">Are you sure you want to delete this expense?</string>
+    <string name="expense_deleted_successfully">Expense deleted successfully!</string>
+    <string name="unknown">Unknown</string>
+    <string name="add_product_title">Add Product</string>
+    <string name="edit_product_title">Edit Product</string>
+    <string name="product_name_exists_in_category">Product with this name already exists in this category.</string>
+    <string name="delete_product_confirmation">Are you sure you want to delete the product \'%s\'?</string>
+    <string name="cannot_delete_product_has_expenses">Cannot delete product. It has associated expenses.</string>
+    <string name="add_new_shopping_item">Add new shopping item</string>
+    <string name="validate_all_purchases">Validate All Purchases</string>
+    <string name="confirm_purchases">Confirm Purchases</string>
+    <string name="confirm_purchases_message">Are you sure you want to record all entered purchases as expenses?</string>
+    <string name="expenses_recorded_successfully">%d expenses recorded successfully!</string>
+    <string name="no_valid_purchases_to_record">No valid purchases to record.</string>
+    <string name="item_added_to_shopping_list">Item added to shopping list!</string>
+    <string name="select_product_and_enter_quantity">Please select a product and enter a valid positive planned quantity.</string>
+    <string name="category_added">Category added!</string>
+    <string name="failed_to_add_category">Failed to add category.</string>
+    <string name="select_currency">Select Currency</string>
+    <string name="system_default">System Default</string>
+    <string name="please_fill_amount_product_supplier">Please fill Amount, select Product and Supplier</string>
+    <string name="expense_saved">Expense saved!</string>
 </resources>

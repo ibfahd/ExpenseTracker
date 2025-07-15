@@ -1,10 +1,14 @@
 package com.fahdev.expensetracker
 
-import android.app.Application
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -12,8 +16,30 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -77,7 +103,7 @@ fun ProductManagementScreen(
                 title = { Text(text = categoryName) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_button_desc))
                     }
                 }
             )
@@ -88,7 +114,7 @@ fun ProductManagementScreen(
                 productNameInput = ""
                 showAddEditDialog = true
             }) {
-                Icon(Icons.Filled.Add, contentDescription = "Add Product")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_product_title))
             }
         }
     ) { innerPadding ->
@@ -126,7 +152,7 @@ fun ProductManagementScreen(
                 scope.launch {
                     val existingProduct = expenseViewModel.getProductByNameInCategory(productNameInput, categoryId)
                     if (existingProduct != null && existingProduct.id != productToEdit?.id) {
-                        snackbarHostState.showSnackbar("Product with this name already exists in this category.")
+                        snackbarHostState.showSnackbar(context.getString(R.string.product_name_exists_in_category))
                     } else {
                         if (productToEdit == null) {
                             expenseViewModel.addProduct(Product(name = productNameInput, categoryId = categoryId))
@@ -148,7 +174,7 @@ fun ProductManagementScreen(
                 productToDelete?.let { product ->
                     scope.launch {
                         if (expenseViewModel.productHasExpenses(product.id)) {
-                            snackbarHostState.showSnackbar("Cannot delete product. It has associated expenses.")
+                            snackbarHostState.showSnackbar(context.getString(R.string.cannot_delete_product_has_expenses))
                         } else {
                             expenseViewModel.deleteProduct(product)
                         }
@@ -175,10 +201,10 @@ fun ProductItem(
         ) {
             Text(text = product.name, modifier = Modifier.weight(1f))
             IconButton(onClick = onEditClick) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit Product")
+                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_product_title))
             }
             IconButton(onClick = onDeleteClick) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete Product")
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_button))
             }
         }
     }
@@ -194,12 +220,12 @@ fun AddEditProductDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (productToEdit == null) "Add Product" else "Edit Product") },
+        title = { Text(if (productToEdit == null) stringResource(R.string.add_product_title) else stringResource(R.string.edit_product_title)) },
         text = {
             TextField(
                 value = productName,
                 onValueChange = onNameChange,
-                label = { Text("Product Name") },
+                label = { Text(stringResource(R.string.product_name_label)) },
                 singleLine = true
             )
         },
@@ -209,12 +235,12 @@ fun AddEditProductDialog(
                     onConfirm()
                 }
             }) {
-                Text(if (productToEdit == null) "Add" else "Save")
+                Text(if (productToEdit == null) stringResource(R.string.add_button) else stringResource(R.string.save_button))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -229,19 +255,19 @@ fun DeleteProductDialog(
     if (productToDelete != null) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Confirm Deletion") },
-            text = { Text("Are you sure you want to delete the product '${productToDelete.name}'?") },
+            title = { Text(stringResource(R.string.confirm_deletion_title)) },
+            text = { Text(stringResource(R.string.delete_product_confirmation, productToDelete.name)) },
             confirmButton = {
                 Button(
                     onClick = onConfirm,
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete_button))
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

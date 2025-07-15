@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -92,8 +93,8 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
     var showSupplierPicker by remember { mutableStateOf(false) }
 
     // Get selected product and supplier names for display
-    val selectedProductName = allProducts.find { it.id == selectedProductId }?.name ?: "Select Product"
-    val selectedSupplierName = allSuppliers.find { it.id == selectedSupplierId }?.name ?: "Select Supplier"
+    val selectedProductName = allProducts.find { it.id == selectedProductId }?.name ?: stringResource(R.string.select_product)
+    val selectedSupplierName = allSuppliers.find { it.id == selectedSupplierId }?.name ?: stringResource(R.string.select_supplier)
 
     // State for delete confirmation dialog
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -102,14 +103,14 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Edit Expense") },
+                title = { Text(stringResource(R.string.edit_expense_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 navigationIcon = {
                     IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_button_desc))
                     }
                 }
             )
@@ -126,16 +127,16 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
             // Display a loading indicator or message until data is loaded
             if (currentExpenseWithDetails == null && expenseId != -1) {
                 CircularProgressIndicator() // Show a loading spinner
-                Text("Loading expense details...")
+                Text(stringResource(R.string.loading_expense_details))
             } else if (currentExpenseWithDetails == null && expenseId == -1) {
-                Text("Error: Expense not found or ID missing.")
+                Text(stringResource(R.string.error_expense_not_found))
             } else { // Data is loaded, display editable fields
                 TextField(
                     value = amount,
                     onValueChange = { newValue ->
                         amount = newValue.filter { it.isDigit() || it == '.' }
                     },
-                    label = { Text("Amount") },
+                    label = { Text(stringResource(R.string.amount)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -145,18 +146,18 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                 TextField(
                     value = selectedProductName,
                     onValueChange = { /* Read-only */ },
-                    label = { Text("Product") },
+                    label = { Text(stringResource(R.string.product)) },
                     readOnly = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { showProductPicker = true },
                     trailingIcon = {
-                        Icon(Icons.Filled.DateRange, contentDescription = "Select Product")
+                        Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.select_product_icon))
                     }
                 )
                 if (showProductPicker) {
                     ProductOrSupplierPickerDialog(
-                        title = "Select Product",
+                        title = stringResource(R.string.select_product),
                         items = allProducts,
                         onDismissRequest = { showProductPicker = false },
                         onItemClick = { product ->
@@ -171,18 +172,18 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                 TextField(
                     value = selectedSupplierName,
                     onValueChange = { /* Read-only */ },
-                    label = { Text("Supplier") },
+                    label = { Text(stringResource(R.string.supplier)) },
                     readOnly = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { showSupplierPicker = true },
                     trailingIcon = {
-                        Icon(Icons.Filled.DateRange, contentDescription = "Select Supplier")
+                        Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.select_supplier_icon))
                     }
                 )
                 if (showSupplierPicker) {
                     ProductOrSupplierPickerDialog(
-                        title = "Select Supplier",
+                        title = stringResource(R.string.select_supplier),
                         items = allSuppliers,
                         onDismissRequest = { showSupplierPicker = false },
                         onItemClick = { supplier ->
@@ -197,13 +198,13 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                 TextField(
                     value = SimpleDateFormat("MMM dd,yyyy", Locale.getDefault()).format(Date(selectedDate)),
                     onValueChange = { /* Read-only */ },
-                    label = { Text("Date") },
+                    label = { Text(stringResource(R.string.date)) },
                     readOnly = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { showDatePickerDialog = true },
                     trailingIcon = {
-                        Icon(Icons.Filled.DateRange, contentDescription = "Select Date")
+                        Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.select_date))
                     }
                 )
                 if (showDatePickerDialog) {
@@ -218,12 +219,12 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                                 }
                                 showDatePickerDialog = false
                             }) {
-                                Text("Confirm")
+                                Text(stringResource(R.string.confirm))
                             }
                         },
                         dismissButton = {
                             Button(onClick = { showDatePickerDialog = false }) {
-                                Text("Cancel")
+                                Text(stringResource(R.string.cancel))
                             }
                         }
                     ) {
@@ -245,18 +246,18 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                             )
                             scope.launch {
                                 expenseViewModel.updateExpense(updatedExpense)
-                                snackbarHostState.showSnackbar("Expense updated successfully!")
+                                snackbarHostState.showSnackbar(context.getString(R.string.expense_updated_successfully))
                                 (context as? ComponentActivity)?.finish() // Go back after update
                             }
                         } else {
                             scope.launch {
-                                snackbarHostState.showSnackbar("Please fill all fields correctly.")
+                                snackbarHostState.showSnackbar(context.getString(R.string.fill_all_fields))
                             }
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Save Changes")
+                    Text(stringResource(R.string.save_changes))
                 }
                 Spacer(Modifier.height(8.dp))
 
@@ -266,7 +267,7 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete Expense")
+                    Text(stringResource(R.string.delete_expense))
                 }
             }
         }
@@ -276,15 +277,15 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Confirm Deletion") },
-            text = { Text("Are you sure you want to delete this expense?") },
+            title = { Text(stringResource(R.string.confirm_deletion_title)) },
+            text = { Text(stringResource(R.string.are_you_sure_delete_expense)) },
             confirmButton = {
                 Button(
                     onClick = {
                         currentExpenseWithDetails?.expense?.let { expenseToDelete ->
                             scope.launch {
                                 expenseViewModel.deleteExpense(expenseToDelete)
-                                snackbarHostState.showSnackbar("Expense deleted successfully!")
+                                snackbarHostState.showSnackbar(context.getString(R.string.expense_deleted_successfully))
                                 (context as? ComponentActivity)?.finish() // Go back after delete
                             }
                         }
@@ -292,12 +293,12 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete_button))
                 }
             },
             dismissButton = {
                 Button(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -320,7 +321,7 @@ fun <T : Any> ProductOrSupplierPickerDialog(
             LazyColumn {
                 items(items) { item ->
                     Text(
-                        text = (item as? Product)?.name ?: (item as? Supplier)?.name ?: "Unknown",
+                        text = (item as? Product)?.name ?: (item as? Supplier)?.name ?: stringResource(R.string.unknown),
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onItemClick(item) }
@@ -331,7 +332,7 @@ fun <T : Any> ProductOrSupplierPickerDialog(
         },
         confirmButton = {
             Button(onClick = onDismissRequest) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
