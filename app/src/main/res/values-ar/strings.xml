@@ -193,4 +193,14 @@
     <string name="system_default">النظام الافتراضي</string>
     <string name="please_fill_amount_product_supplier">يرجى ملء المبلغ واختيار المنتج والمورد</string>
     <string name="expense_saved">تم حفظ المصروف!</string>
+    <string name="validation_summary">%1$d من %2$d عنصر جاهز للتحقق</string>
+    <string name="total_cost">الإجمالي: $%.2f</string>
+    <string name="processing_purchases">جاري المعالجة…</string>
+    <string name="complete_shopping">إتمام التسوق</string>
+    <string name="no_items_ready">لا توجد عناصر جاهزة</string>
+    <string name="complete_shopping_title">إتمام التسوق</string>
+    <string name="validation_summary_title">ملخص</string>
+    <string name="items_to_record">العناصر المسجلة: %d</string>
+    <string name="total_amount">المبلغ الإجمالي: $%.2f</string>
+    <string name="record_expenses">تسجيل المصروفات</string>
 </resources>

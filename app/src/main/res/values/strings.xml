@@ -198,4 +198,15 @@
     <string name="system_default">System Default</string>
     <string name="please_fill_amount_product_supplier">Please fill Amount, select Product and Supplier</string>
     <string name="expense_saved">Expense saved!</string>
+
+    <string name="validation_summary">%1$d of %2$d items ready to validate</string>
+    <string name="total_cost">Total: $%.2f</string>
+    <string name="processing_purchases">Processing…</string>
+    <string name="complete_shopping">Complete Shopping</string>
+    <string name="no_items_ready">No items ready</string>
+    <string name="complete_shopping_title">Complete Shopping</string>
+    <string name="validation_summary_title">Summary</string>
+    <string name="items_to_record">Items to record: %d</string>
+    <string name="total_amount">Total amount: $%.2f</string>
+    <string name="record_expenses">Record Expenses</string>
 </resources>

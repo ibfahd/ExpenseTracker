@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,13 +20,18 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.outlined.ShoppingCartCheckout
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -50,6 +55,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,6 +65,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -96,6 +103,13 @@ class ShoppingListActivity : AppCompatActivity() {
     }
 }
 
+data class ValidationStats(
+    val validItemsCount: Int,
+    val totalItems: Int,
+    val totalCost: Double,
+    val hasValidItems: Boolean
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShoppingListScreen(
@@ -122,6 +136,21 @@ fun ShoppingListScreen(
     var showAddProductDialog by remember { mutableStateOf(false) }
     var newProductNameForAddProductDialog by remember { mutableStateOf("") }
     var showConfirmValidateDialog by remember { mutableStateOf(false) }
+
+    var isValidating by remember { mutableStateOf(false) }
+
+    val validationStats = remember {
+        derivedStateOf {
+            val validItems = shoppingListItems.filter { it.purchasedQuantity > 0.0 && it.unitPrice != null }
+            val totalCost = validItems.sumOf { it.purchasedQuantity * (it.unitPrice ?: 0.0) }
+            ValidationStats(
+                validItemsCount = validItems.size,
+                totalItems = shoppingListItems.size,
+                totalCost = totalCost,
+                hasValidItems = validItems.isNotEmpty()
+            )
+        }
+    }.value
 
     Scaffold(
         topBar = {
@@ -159,16 +188,82 @@ fun ShoppingListScreen(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
+                    // Show validation summary
+                    if (validationStats.totalItems > 0) {
+                        Text(
+                            text = stringResource(
+                                R.string.validation_summary,
+                                validationStats.validItemsCount,
+                                validationStats.totalItems
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+
+                        if (validationStats.totalCost > 0) {
+                            Text(
+                                text = stringResource(R.string.total_cost, validationStats.totalCost),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                    }
+
+                    // Improved validation button
                     Button(
                         onClick = { showConfirmValidateDialog = true },
-                        enabled = shoppingListItems.any { it.purchasedQuantity > 0.0 && it.unitPrice != null }
+                        enabled = validationStats.hasValidItems && !isValidating,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(stringResource(R.string.validate_all_purchases))
+                        if (isValidating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.processing_purchases))
+                        } else {
+                            BadgedBox(
+                                badge = {
+                                    if (validationStats.validItemsCount > 0) {
+                                        Badge(
+                                            containerColor = MaterialTheme.colorScheme.secondary,
+                                            contentColor = MaterialTheme.colorScheme.onSecondary
+                                        ) {
+                                            Text(
+                                                text = validationStats.validItemsCount.toString(),
+                                                style = MaterialTheme.typography.labelSmall
+                                            )
+                                        }
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (validationStats.hasValidItems)
+                                        Icons.Default.CheckCircle
+                                    else
+                                        Icons.Default.ShoppingCart,
+                                    contentDescription = null
+                                )
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = if (validationStats.hasValidItems)
+                                    stringResource(R.string.complete_shopping)
+                                else
+                                    stringResource(R.string.no_items_ready),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }
@@ -258,25 +353,92 @@ fun ShoppingListScreen(
     if (showConfirmValidateDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmValidateDialog = false },
-            title = { Text(stringResource(R.string.confirm_purchases)) },
-            text = { Text(stringResource(R.string.confirm_purchases_message)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            val recordedCount = shoppingListViewModel.recordAllPurchases()
-                            if (recordedCount > 0) {
-                                snackbarHostState.showSnackbar(context.getString(R.string.expenses_recorded_successfully, recordedCount))
-                            } else {
-                                snackbarHostState.showSnackbar(context.getString(R.string.no_valid_purchases_to_record))
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.complete_shopping_title))
+                }
+            },
+            text = {
+                Column {
+                    Text(stringResource(R.string.confirm_purchases_message))
+                    Spacer(Modifier.height(8.dp))
+
+                    // Show validation summary in dialog
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = stringResource(R.string.validation_summary_title),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = stringResource(
+                                    R.string.items_to_record,
+                                    validationStats.validItemsCount
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            if (validationStats.totalCost > 0) {
+                                Text(
+                                    text = stringResource(R.string.total_amount, validationStats.totalCost),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
                             }
-                            showConfirmValidateDialog = false
                         }
                     }
-                ) { Text(stringResource(R.string.confirm)) }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            isValidating = true
+                            try {
+                                val recordedCount = shoppingListViewModel.recordAllPurchases()
+                                if (recordedCount > 0) {
+                                    snackbarHostState.showSnackbar(
+                                        context.getString(R.string.expenses_recorded_successfully, recordedCount)
+                                    )
+                                } else {
+                                    snackbarHostState.showSnackbar(
+                                        context.getString(R.string.no_valid_purchases_to_record)
+                                    )
+                                }
+                            } finally {
+                                isValidating = false
+                                showConfirmValidateDialog = false
+                            }
+                        }
+                    }
+                ) {
+                    Text(
+                        stringResource(R.string.record_expenses),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showConfirmValidateDialog = false }) { Text(stringResource(R.string.cancel)) }
+                TextButton(
+                    onClick = { showConfirmValidateDialog = false }
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
             }
         )
     }

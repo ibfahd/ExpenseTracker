@@ -193,4 +193,14 @@
     <string name="system_default">Predeterminado del sistema</string>
     <string name="please_fill_amount_product_supplier">Por favor, rellene la cantidad, seleccione el producto y el proveedor</string>
     <string name="expense_saved">¡Gasto guardado!</string>
+    <string name="validation_summary">%1$d de %2$d elementos listos para validar</string>
+    <string name="total_cost">Total: $%.2f</string>
+    <string name="processing_purchases">Procesando…</string>
+    <string name="complete_shopping">Completar compra</string>
+    <string name="no_items_ready">No hay elementos listos</string>
+    <string name="complete_shopping_title">Completar compra</string>
+    <string name="validation_summary_title">Resumen</string>
+    <string name="items_to_record">Elementos a registrar: %d</string>
+    <string name="total_amount">Monto total: $%.2f</string>
+    <string name="record_expenses">Registrar gastos</string>
 </resources>
