@@ -5,7 +5,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +31,7 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -124,13 +127,12 @@ fun ShoppingListScreen(
     val allSuppliers by shoppingListViewModel.allSuppliers.collectAsState(initial = emptyList())
     val shoppingListItems by shoppingListViewModel.shoppingListItems.collectAsState(initial = emptyList())
     val allProducts by shoppingListViewModel.allProducts.collectAsState(initial = emptyList())
-    //val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
 
     var expandedSupplierDropdown by remember { mutableStateOf(false) }
     var showAddShoppingItemDialog by remember { mutableStateOf(false) }
     var newProductIdForAddItemDialog by remember { mutableStateOf<Int?>(null) }
     var newProductTextForAddItemDialog by remember { mutableStateOf("") }
-    var newPlannedQuantityForAddItemDialog by remember { mutableStateOf("") } // Changed from newQuantity...
+    var newPlannedQuantityForAddItemDialog by remember { mutableStateOf("") }
     var newUnitForAddItemDialog by remember { mutableStateOf("") }
     var expandedProductDropdownForAddItemDialog by remember { mutableStateOf(false) }
     var showAddProductDialog by remember { mutableStateOf(false) }
@@ -139,7 +141,7 @@ fun ShoppingListScreen(
 
     var isValidating by remember { mutableStateOf(false) }
 
-    val validationStats = remember {
+    val validationStats by remember(shoppingListItems) {
         derivedStateOf {
             val validItems = shoppingListItems.filter { it.purchasedQuantity > 0.0 && it.unitPrice != null }
             val totalCost = validItems.sumOf { it.purchasedQuantity * (it.unitPrice ?: 0.0) }
@@ -150,7 +152,7 @@ fun ShoppingListScreen(
                 hasValidItems = validItems.isNotEmpty()
             )
         }
-    }.value
+    }
 
     Scaffold(
         topBar = {
@@ -175,7 +177,7 @@ fun ShoppingListScreen(
                     showAddShoppingItemDialog = true
                     newProductIdForAddItemDialog = null
                     newProductTextForAddItemDialog = ""
-                    newPlannedQuantityForAddItemDialog = "" // Reset planned quantity
+                    newPlannedQuantityForAddItemDialog = ""
                     newUnitForAddItemDialog = ""
                     expandedProductDropdownForAddItemDialog = false
                 }) {
@@ -184,86 +186,54 @@ fun ShoppingListScreen(
             }
         },
         bottomBar = {
+            // The BottomAppBar now only contains the button, ensuring it has a stable height.
             BottomAppBar(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                Button(
+                    onClick = { showConfirmValidateDialog = true },
+                    enabled = validationStats.hasValidItems && !isValidating,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
+                        disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    ),
+                    contentPadding = PaddingValues(vertical = 12.dp)
                 ) {
-                    // Show validation summary
-                    if (validationStats.totalItems > 0) {
-                        Text(
-                            text = stringResource(
-                                R.string.validation_summary,
-                                validationStats.validItemsCount,
-                                validationStats.totalItems
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
-                            modifier = Modifier.padding(bottom = 4.dp)
+                    if (isValidating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onSecondary
                         )
-
-                        if (validationStats.totalCost > 0) {
-                            Text(
-                                text = stringResource(R.string.total_cost, validationStats.totalCost),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                        }
-                    }
-
-                    // Improved validation button
-                    Button(
-                        onClick = { showConfirmValidateDialog = true },
-                        enabled = validationStats.hasValidItems && !isValidating,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        if (isValidating) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.processing_purchases))
-                        } else {
-                            BadgedBox(
-                                badge = {
-                                    if (validationStats.validItemsCount > 0) {
-                                        Badge(
-                                            containerColor = MaterialTheme.colorScheme.secondary,
-                                            contentColor = MaterialTheme.colorScheme.onSecondary
-                                        ) {
-                                            Text(
-                                                text = validationStats.validItemsCount.toString(),
-                                                style = MaterialTheme.typography.labelSmall
-                                            )
-                                        }
-                                    }
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            stringResource(R.string.processing_purchases),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    } else {
+                        BadgedBox(
+                            badge = {
+                                if (validationStats.validItemsCount > 0) {
+                                    Badge { Text(validationStats.validItemsCount.toString()) }
                                 }
-                            ) {
-                                Icon(
-                                    imageVector = if (validationStats.hasValidItems)
-                                        Icons.Default.CheckCircle
-                                    else
-                                        Icons.Default.ShoppingCart,
-                                    contentDescription = null
-                                )
                             }
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = if (validationStats.hasValidItems)
-                                    stringResource(R.string.complete_shopping)
-                                else
-                                    stringResource(R.string.no_items_ready),
-                                fontWeight = FontWeight.Medium
+                        ) {
+                            Icon(
+                                imageVector = if (validationStats.hasValidItems) Icons.Default.CheckCircle else Icons.Default.ShoppingCart,
+                                contentDescription = null
                             )
                         }
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = if (validationStats.hasValidItems) stringResource(R.string.complete_shopping) else stringResource(R.string.no_items_ready),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
@@ -273,10 +243,11 @@ fun ShoppingListScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
         ) {
+            // Top section with supplier selection
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(stringResource(R.string.supplier_label), style = MaterialTheme.typography.titleMedium)
@@ -319,10 +290,12 @@ fun ShoppingListScreen(
             Text(stringResource(R.string.current_shopping_list_title), style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(8.dp))
 
+            // Main content area for the list
             if (shoppingListItems.isEmpty()) {
                 Column(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     EmptyState(
                         icon = Icons.Outlined.ShoppingCartCheckout,
@@ -331,7 +304,7 @@ fun ShoppingListScreen(
                     )
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                LazyColumn(modifier = Modifier.weight(1f)) {
                     items(shoppingListItems, key = { it.id }) { item ->
                         ShoppingListItemCard(
                             item = item,
@@ -344,6 +317,33 @@ fun ShoppingListScreen(
                             allProducts = allProducts
                         )
                         Spacer(Modifier.height(8.dp))
+                    }
+                }
+            }
+
+            // The summary text is now here, at the bottom of the main content area,
+            // just above the BottomAppBar.
+            if (validationStats.totalItems > 0) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(
+                            R.string.validation_summary,
+                            validationStats.validItemsCount,
+                            validationStats.totalItems
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (validationStats.totalCost > 0) {
+                        Text(
+                            text = stringResource(R.string.total_cost, validationStats.totalCost),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }
@@ -369,8 +369,6 @@ fun ShoppingListScreen(
                 Column {
                     Text(stringResource(R.string.confirm_purchases_message))
                     Spacer(Modifier.height(8.dp))
-
-                    // Show validation summary in dialog
                     Card(
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -482,6 +480,7 @@ fun ShoppingListScreen(
                                         showAddProductDialog = true
                                         expandedProductDropdownForAddItemDialog = false
                                     }
+
                                 )
                                 Spacer(Modifier.height(8.dp))
                             }
@@ -499,13 +498,13 @@ fun ShoppingListScreen(
                     }
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
-                        value = newPlannedQuantityForAddItemDialog, // Use newPlannedQuantity...
+                        value = newPlannedQuantityForAddItemDialog,
                         onValueChange = { newValue ->
                             if (newValue.matches(Regex("""^\d*\.?\d*$"""))) {
                                 newPlannedQuantityForAddItemDialog = newValue
                             }
                         },
-                        label = { Text(stringResource(R.string.quantity_label)) }, // This label means "Planned Quantity"
+                        label = { Text(stringResource(R.string.quantity_label)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -522,7 +521,7 @@ fun ShoppingListScreen(
                 TextButton(
                     onClick = {
                         val productId = newProductIdForAddItemDialog
-                        val plannedQuantity = newPlannedQuantityForAddItemDialog.toDoubleOrNull() // Parse planned quantity
+                        val plannedQuantity = newPlannedQuantityForAddItemDialog.toDoubleOrNull()
                         if (productId != null && plannedQuantity != null && plannedQuantity > 0) {
                             shoppingListViewModel.addShoppingItem(productId, newUnitForAddItemDialog.ifBlank { null }, plannedQuantity)
                             showAddShoppingItemDialog = false
@@ -569,26 +568,21 @@ fun ShoppingListItemCard(
 ) {
     val productName = allProducts.find { it.id == item.productId }?.name ?: stringResource(R.string.unknown_product)
 
-    // State for purchased quantity text field. Keyed by item.id.
     var purchasedQuantityText by remember(item.id) {
         mutableStateOf(item.purchasedQuantity.toString().takeIf { it != "0.0" } ?: "")
     }
-    // State for unit price text field. Keyed by item.id.
     var unitPriceText by remember(item.id) {
         mutableStateOf(item.unitPrice?.toString() ?: "")
     }
 
-    // Effect to synchronize purchasedQuantityText with item.purchasedQuantity from the model
     LaunchedEffect(item.purchasedQuantity) {
         val modelPurchasedQty = item.purchasedQuantity
         val textAsDouble = purchasedQuantityText.toDoubleOrNull()
-        // Update text field if it doesn't match the model, avoiding overwrite of user's partial input like "."
         if (textAsDouble != modelPurchasedQty) {
             purchasedQuantityText = if (modelPurchasedQty > 0.0) modelPurchasedQty.toString() else ""
         }
     }
 
-    // Effect to synchronize unitPriceText with item.unitPrice from the model
     LaunchedEffect(item.unitPrice) {
         val modelPrice = item.unitPrice
         val textAsDouble = unitPriceText.toDoubleOrNull()
@@ -617,7 +611,6 @@ fun ShoppingListItemCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(4.dp))
-            // Display the PLANNED quantity
             Text(
                 text = "${stringResource(R.string.planned_quantity_display)}: ${item.plannedQuantity} ${item.unit.orEmpty()}",
                 style = MaterialTheme.typography.bodySmall
@@ -800,7 +793,6 @@ fun AddProductDialog(
 @Composable
 fun PreviewShoppingListScreen() {
     ExpenseTrackerTheme {
-        // Correctly create ViewModel for preview using the factory
         val context = LocalContext.current
         val application = context.applicationContext as Application
         val shoppingListViewModel: ShoppingListViewModel = viewModel(factory = ShoppingListViewModelFactory(application))
