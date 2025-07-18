@@ -9,23 +9,17 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
-import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 class ExpenseViewModel(
     application: Application,
-    userPreferencesRepository: UserPreferencesRepository // Inject repository
+    private val expenseRepository: ExpenseRepository, // Inject repository
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : AndroidViewModel(application) {
-    private val database = AppDatabase.getDatabase(application)
-    private val expenseDao: ExpenseDao = database.expenseDao()
-    private val productDao: ProductDao = database.productDao()
-    private val supplierDao: SupplierDao = database.supplierDao()
-    private val categoryDao: CategoryDao = database.categoryDao()
 
-    // ... other properties ...
-    val allProducts: Flow<List<Product>> = productDao.getAllProducts()
-    val allSuppliers: Flow<List<Supplier>> = supplierDao.getAllSuppliers()
-    val allCategories: Flow<List<Category>> = categoryDao.getAllCategories()
+    val allProducts: Flow<List<Product>> = expenseRepository.allProducts
+    val allSuppliers: Flow<List<Supplier>> = expenseRepository.allSuppliers
+    val allCategories: Flow<List<Category>> = expenseRepository.allCategories
 
     private val _selectedStartDate = MutableStateFlow<Long?>(null)
     val selectedStartDate: StateFlow<Long?> = _selectedStartDate.asStateFlow()
@@ -51,7 +45,7 @@ class ExpenseViewModel(
     ) { startDate, endDate, categoryId, supplierId, _ ->
         FilterParams(startDate, endDate, categoryId, supplierId)
     }.flatMapLatest { params ->
-        expenseDao.getFilteredExpensesWithDetails(
+        expenseRepository.getFilteredExpensesWithDetails(
             params.startDate,
             params.endDate,
             params.categoryId,
@@ -69,7 +63,7 @@ class ExpenseViewModel(
     ) { startDate, endDate, categoryId, supplierId, _ ->
         FilterParams(startDate, endDate, categoryId, supplierId)
     }.flatMapLatest { params ->
-        expenseDao.getTotalFilteredExpenses(
+        expenseRepository.getTotalFilteredExpenses(
             params.startDate,
             params.endDate,
             params.categoryId,
@@ -85,26 +79,26 @@ class ExpenseViewModel(
         val supplierId: Int?
     )
 
-    val totalExpensesAllTime: StateFlow<Double> = expenseDao.getTotalExpensesAllTime()
+    val totalExpensesAllTime: StateFlow<Double> = expenseRepository.totalExpensesAllTime
         .map { it ?: 0.0 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    val firstExpenseDate: StateFlow<Long?> = expenseDao.getFirstExpenseDate()
+    val firstExpenseDate: StateFlow<Long?> = expenseRepository.firstExpenseDate
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    val totalTransactionCount: StateFlow<Int> = expenseDao.getTotalTransactionCount()
+    val totalTransactionCount: StateFlow<Int> = expenseRepository.totalTransactionCount
         .map { it ?: 0 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
-    val spendingByCategory: StateFlow<List<CategorySpending>> = expenseDao.getSpendingByCategory()
+    val spendingByCategory: StateFlow<List<CategorySpending>> = expenseRepository.spendingByCategory
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val spendingBySupplier: StateFlow<List<SupplierSpending>> = expenseDao.getSpendingBySupplier()
+    val spendingBySupplier: StateFlow<List<SupplierSpending>> = expenseRepository.spendingBySupplier
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val averageDailyExpense: StateFlow<Double> = combine(totalExpensesAllTime, firstExpenseDate) { total, firstDateMs ->
         if (total > 0 && firstDateMs != null) {
-            val days = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - firstDateMs).coerceAtLeast(1)
+            val days = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - firstDateMs).coerceAtLeast(1)
             total / days
         } else {
             0.0
@@ -135,11 +129,11 @@ class ExpenseViewModel(
     ) { startDate, endDate, _ ->
         Pair(startDate, endDate)
     }.flatMapLatest { (startDate, endDate) ->
-        expenseDao.getProductSpendingReport(startDate, endDate).map { spendingList ->
+        expenseRepository.getProductSpendingReport(startDate, endDate).map { spendingList ->
             spendingList.map { spendingInfo ->
-                val lowestPriceInfo = expenseDao.getLowestPriceForProduct(spendingInfo.productId, startDate, endDate)
+                val lowestPriceInfo = expenseRepository.getLowestPriceForProduct(spendingInfo.productId, startDate, endDate)
                 val cheapestSupplierName = lowestPriceInfo?.supplierId?.let { id ->
-                    supplierDao.getSupplierById(id).first()?.name
+                    expenseRepository.getSupplierById(id).first()?.name
                 }
                 ProductReportDetail(
                     productId = spendingInfo.productId,
@@ -159,134 +153,125 @@ class ExpenseViewModel(
 
 
     init {
-        // Apply default filter on initialization
         viewModelScope.launch {
             val defaultFilter = userPreferencesRepository.homeScreenDefaultFilter.first()
             setDateRangeFilter(defaultFilter)
         }
 
-        // Populate initial categories if database is empty
         viewModelScope.launch {
-            if (allCategories.first().isEmpty()) {
-                val initialCategories = listOf(
-                    application.getString(R.string.category_food_drinks),
-                    application.getString(R.string.category_housing),
-                    application.getString(R.string.category_transportation),
-                    application.getString(R.string.category_utilities),
-                    application.getString(R.string.category_healthcare),
-                    application.getString(R.string.category_personal_care),
-                    application.getString(R.string.category_shopping),
-                    application.getString(R.string.category_entertainment),
-                    application.getString(R.string.category_travel),
-                    application.getString(R.string.category_education),
-                    application.getString(R.string.category_savings_investments),
-                    application.getString(R.string.category_miscellaneous)
-                )
-                initialCategories.forEach { name ->
-                    categoryDao.insertCategory(Category(name = name))
-                }
-            }
+            val initialCategories = listOf(
+                Category(name = application.getString(R.string.category_food_drinks)),
+                Category(name = application.getString(R.string.category_housing)),
+                Category(name = application.getString(R.string.category_transportation)),
+                Category(name = application.getString(R.string.category_utilities)),
+                Category(name = application.getString(R.string.category_healthcare)),
+                Category(name = application.getString(R.string.category_personal_care)),
+                Category(name = application.getString(R.string.category_shopping)),
+                Category(name = application.getString(R.string.category_entertainment)),
+                Category(name = application.getString(R.string.category_travel)),
+                Category(name = application.getString(R.string.category_education)),
+                Category(name = application.getString(R.string.category_savings_investments)),
+                Category(name = application.getString(R.string.category_miscellaneous))
+            )
+            expenseRepository.insertInitialCategories(initialCategories)
         }
     }
 
-    // ... other ViewModel functions (addExpense, updateExpense, etc.) remain unchanged ...
     fun addExpense(expense: Expense) {
         viewModelScope.launch {
-            expenseDao.insertExpense(expense)
+            expenseRepository.addExpense(expense)
             _refreshTrigger.value++
         }
     }
 
     fun updateExpense(expense: Expense) {
         viewModelScope.launch {
-            expenseDao.updateExpense(expense)
+            expenseRepository.updateExpense(expense)
             _refreshTrigger.value++
         }
     }
 
     fun deleteExpense(expense: Expense) {
         viewModelScope.launch {
-            expenseDao.deleteExpense(expense)
+            expenseRepository.deleteExpense(expense)
             _refreshTrigger.value++
         }
     }
 
     fun getExpenseWithDetailsById(id: Int): Flow<ExpenseWithDetails?> {
-        return expenseDao.getExpenseWithDetailsById(id)
+        return expenseRepository.getExpenseWithDetailsById(id)
     }
 
     suspend fun addProduct(product: Product): Long {
-        return productDao.insertProduct(product)
+        return expenseRepository.addProduct(product)
     }
 
     suspend fun getProductByName(name: String): Product? {
-        return productDao.getProductByName(name)
+        return expenseRepository.getProductByName(name)
     }
 
     suspend fun addSupplier(supplier: Supplier): Long {
-        return supplierDao.insertSupplier(supplier)
+        return expenseRepository.addSupplier(supplier)
     }
 
     suspend fun getSupplierByName(name: String): Supplier? {
-        return supplierDao.getSupplierByName(name)
+        return expenseRepository.getSupplierByName(name)
     }
 
     suspend fun addCategory(category: Category): Long {
-        return categoryDao.insertCategory(category)
+        return expenseRepository.addCategory(category)
     }
 
     suspend fun getCategoryByName(name: String): Category? {
-        return categoryDao.getCategoryByName(name)
+        return expenseRepository.getCategoryByName(name)
     }
 
     suspend fun hasProductsInCategory(categoryId: Int): Boolean {
-        return productDao.getProductCountForCategory(categoryId) > 0
+        return expenseRepository.hasProductsInCategory(categoryId)
     }
 
     fun updateCategory(category: Category) {
         viewModelScope.launch {
-            categoryDao.updateCategory(category)
+            expenseRepository.updateCategory(category)
             _refreshTrigger.value++
         }
     }
 
     fun deleteCategory(category: Category) {
         viewModelScope.launch {
-            categoryDao.deleteCategory(category)
+            expenseRepository.deleteCategory(category)
             _refreshTrigger.value++
         }
     }
 
     fun getCategoryById(id: Int): Flow<Category?> {
-        return categoryDao.getCategoryById(id)
+        return expenseRepository.getCategoryById(id)
     }
 
     fun updateSupplier(supplier: Supplier) {
         viewModelScope.launch {
-            supplierDao.updateSupplier(supplier)
+            expenseRepository.updateSupplier(supplier)
             _refreshTrigger.value++
         }
     }
 
     fun deleteSupplier(supplier: Supplier) {
         viewModelScope.launch {
-            supplierDao.deleteSupplier(supplier)
+            expenseRepository.deleteSupplier(supplier)
             _refreshTrigger.value++
         }
     }
 
     fun getSupplierById(id: Int): Flow<Supplier?> {
-        return supplierDao.getSupplierById(id)
+        return expenseRepository.getSupplierById(id)
     }
 
     fun setCategoryFilter(categoryId: Int?) {
         _selectedCategoryId.value = categoryId
-        _refreshTrigger.value++
     }
 
     fun setSupplierFilter(supplierId: Int?) {
         _selectedSupplierId.value = supplierId
-        _refreshTrigger.value++
     }
 
     fun setDateRangeFilter(rangeType: String) {
@@ -330,12 +315,10 @@ class ExpenseViewModel(
         }
         _selectedStartDate.value = startDate
         _selectedEndDate.value = endDate
-        _refreshTrigger.value++
     }
     fun setCustomDateRangeFilter(startDate: Long?, endDate: Long?) {
         _selectedStartDate.value = startDate
         _selectedEndDate.value = endDate
-        _refreshTrigger.value++
     }
 
     fun resetFilters() {
@@ -344,44 +327,38 @@ class ExpenseViewModel(
         _selectedSupplierId.value = null
     }
 
-    // Function to get products for a specific category
     fun getProductsForCategory(categoryId: Int): Flow<List<Product>> {
-        return productDao.getProductsForCategory(categoryId)
+        return expenseRepository.getProductsForCategory(categoryId)
     }
 
-    // Function to check for duplicate product names within the same category
     suspend fun getProductByNameInCategory(name: String, categoryId: Int): Product? {
-        return productDao.getProductByNameInCategory(name, categoryId)
+        return expenseRepository.getProductByNameInCategory(name, categoryId)
     }
 
-    // Function to update a product
     fun updateProduct(product: Product) {
         viewModelScope.launch {
-            productDao.updateProduct(product)
+            expenseRepository.updateProduct(product)
         }
     }
 
-    // Function to delete a product
     fun deleteProduct(product: Product) {
         viewModelScope.launch {
-            productDao.deleteProduct(product)
+            expenseRepository.deleteProduct(product)
         }
     }
 
-    // Function to check if a product has associated expenses
     suspend fun productHasExpenses(productId: Int): Boolean {
-        return expenseDao.getExpenseCountForProduct(productId) > 0
+        return expenseRepository.productHasExpenses(productId)
     }
 
     suspend fun supplierHasExpenses(supplierId: Int): Boolean {
-        return expenseDao.getExpenseCountForSupplier(supplierId) > 0
+        return expenseRepository.supplierHasExpenses(supplierId)
     }
 
     fun deleteSupplierAndExpenses(supplier: Supplier) {
         viewModelScope.launch {
-            expenseDao.deleteExpensesBySupplierId(supplier.id)
-            supplierDao.deleteSupplier(supplier)
-            _refreshTrigger.value++ // Ensure UI updates
+            expenseRepository.deleteSupplierAndExpenses(supplier)
+            _refreshTrigger.value++
         }
     }
 }

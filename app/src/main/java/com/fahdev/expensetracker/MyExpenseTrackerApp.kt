@@ -3,10 +3,12 @@ package com.fahdev.expensetracker
 import android.app.Application
 import com.fahdev.expensetracker.data.LocaleHelper
 import com.fahdev.expensetracker.data.UserPreferencesRepository
+import dagger.hilt.android.HiltAndroidApp
 
 /**
  * Custom Application class to handle app-wide initialization.
  */
+@HiltAndroidApp
 class MyExpenseTrackerApp : Application() {
     override fun onCreate() {
         super.onCreate()
