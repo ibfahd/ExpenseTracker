@@ -34,9 +34,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class AboutActivity : AppCompatActivity() {
-    // Add the OptIn annotation here to cover all experimental APIs used within this Activity
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,9 +97,7 @@ fun AboutScreenContent(modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-
         Spacer(modifier = Modifier.height(24.dp))
-
         AboutSectionCard(
             title = stringResource(R.string.about_section_disclaimer)
         ) {
@@ -107,9 +106,7 @@ fun AboutScreenContent(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodyLarge
             )
         }
-
         Spacer(modifier = Modifier.height(16.dp))
-
         AboutSectionCard(
             title = stringResource(R.string.about_section_privacy)
         ) {
@@ -118,9 +115,7 @@ fun AboutScreenContent(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodyLarge
             )
         }
-
         Spacer(modifier = Modifier.height(16.dp))
-
         AboutSectionCard(
             title = stringResource(R.string.about_section_contact)
         ) {

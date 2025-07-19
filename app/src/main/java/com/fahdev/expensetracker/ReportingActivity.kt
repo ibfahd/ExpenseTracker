@@ -1,9 +1,9 @@
 package com.fahdev.expensetracker
 
-import android.app.Application
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -67,24 +67,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.CurrencyHelper
 import com.fahdev.expensetracker.data.ProductReportDetail
 import com.fahdev.expensetracker.data.UserPreferencesRepository
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import dagger.hilt.android.AndroidEntryPoint
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+@AndroidEntryPoint
 class ReportingActivity : AppCompatActivity() {
+    private val expenseViewModel: ExpenseViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ExpenseTrackerTheme {
-                val expenseViewModel: ExpenseViewModel = viewModel(factory = ExpenseViewModelFactory(application))
                 ReportingScreenWithTabs(expenseViewModel = expenseViewModel)
             }
         }
@@ -96,7 +97,6 @@ fun ProductReportItem(productDetail: ProductReportDetail, currencyFormatter: Num
     Column(modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)) {
         Text(productDetail.productName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(6.dp))
-        // Safely handle nullable Double values by providing a default of 0.0 for formatting.
         ProductStatRow(
             label = stringResource(R.string.report_product_total_spent),
             value = currencyFormatter.format(productDetail.totalAmountSpent ?: 0.0)
@@ -105,15 +105,12 @@ fun ProductReportItem(productDetail: ProductReportDetail, currencyFormatter: Num
             label = stringResource(R.string.report_product_lowest_price),
             value = currencyFormatter.format(productDetail.lowestTransactionAmount ?: 0.0)
         )
-        // Safely handle nullable String value by providing a fallback resource.
         ProductStatRow(
             label = stringResource(R.string.report_product_cheapest_supplier),
             value = productDetail.cheapestSupplierName ?: stringResource(R.string.report_not_available)
         )
     }
 }
-
-// ... The rest of the file remains the same, included for completeness ...
 
 enum class ReportTab(val titleResId: Int, val icon: ImageVector) {
     SUMMARY(R.string.report_tab_summary, Icons.Filled.Info),
@@ -126,13 +123,11 @@ fun ReportingScreenWithTabs(expenseViewModel: ExpenseViewModel) {
     val context = LocalContext.current
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = ReportTab.entries.toTypedArray()
-
     val userPrefsRepo = remember { UserPreferencesRepository.getInstance(context.applicationContext) }
     val currencyCode by userPrefsRepo.currencyCode.collectAsState()
     val currencyFormatter = remember(currencyCode) {
         CurrencyHelper.getCurrencyFormatter(currencyCode)
     }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -178,7 +173,6 @@ fun SummaryReportContent(expenseViewModel: ExpenseViewModel, currencyFormatter: 
     val totalTransactionCount by expenseViewModel.totalTransactionCount.collectAsState()
     val spendingByCategory by expenseViewModel.spendingByCategory.collectAsState()
     val spendingBySupplier by expenseViewModel.spendingBySupplier.collectAsState()
-
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -258,7 +252,6 @@ fun ProductDetailsReportContent(expenseViewModel: ExpenseViewModel, currencyForm
             onResetFilters = { expenseViewModel.resetFilters() }
         )
         HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
-
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
@@ -301,7 +294,6 @@ fun ProductDetailsReportContent(expenseViewModel: ExpenseViewModel, currencyForm
             }
             item { Spacer(modifier = Modifier.height(16.dp)) }
         }
-
         if (showDatePicker) {
             DatePickerDialog(
                 onDismissRequest = { showDatePicker = false },
@@ -357,7 +349,6 @@ fun ReportDateFilterControls(
     val strDateRangeLabel = stringResource(R.string.date_range_label)
     val strClearFilters = stringResource(R.string.clear_filters)
     val strSelectCustomDateRange = stringResource(R.string.select_custom_date_range)
-
     var expanded by remember { mutableStateOf(false) }
     val dateOptions = listOf(
         "ThisMonth" to strThisMonth,
@@ -366,7 +357,6 @@ fun ReportDateFilterControls(
         "ThisYear" to strThisYear,
         "All" to strAllTime
     )
-
     val currentSelectionText = remember(selectedStartDate, selectedEndDate) {
         if (selectedStartDate == null && selectedEndDate == null) strAllTime
         else {
@@ -376,7 +366,6 @@ fun ReportDateFilterControls(
             if (startStr == endStr) startStr else "$startStr - $endStr"
         }
     }
-
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             ExposedDropdownMenuBox(
@@ -507,11 +496,10 @@ fun ProductStatRow(label: String, value: String) {
 @Composable
 fun ReportingScreenWithTabsPreview() {
     ExpenseTrackerTheme {
-        // Correctly create ViewModel for preview using the factory
-        val context = LocalContext.current
-        val application = context.applicationContext as Application
-        val factory = ExpenseViewModelFactory(application)
-        val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
-        ReportingScreenWithTabs(expenseViewModel = expenseViewModel)
+        //val context = LocalContext.current
+        //val application = context.applicationContext as Application
+        //val factory = ExpenseViewModelFactory(application)
+        //val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
+        //ReportingScreenWithTabs(expenseViewModel = expenseViewModel)
     }
 }

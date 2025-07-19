@@ -1,28 +1,26 @@
 package com.fahdev.expensetracker
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.data.ShoppingListItem
 import com.fahdev.expensetracker.data.ShoppingRepository
 import com.fahdev.expensetracker.data.Supplier
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
-class ShoppingListViewModel(
-    application: Application,
-    private val shoppingRepository: ShoppingRepository // Inject repository
-) : AndroidViewModel(application) {
-
+class ShoppingListViewModel @Inject constructor(
+    private val shoppingRepository: ShoppingRepository
+) : ViewModel() {
     private val _currentSupplierId = MutableStateFlow<Int?>(null)
     val currentSupplierId: StateFlow<Int?> = _currentSupplierId.asStateFlow()
-
-    private val _currentShoppingDate = MutableStateFlow<Long>(0L)
-
+    private val _currentShoppingDate = MutableStateFlow(0L)
     val shoppingListItems: StateFlow<List<ShoppingListItem>> = combine(
         _currentSupplierId,
         _currentShoppingDate
@@ -35,14 +33,10 @@ class ShoppingListViewModel(
             flowOf(emptyList())
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-
     val allSuppliers: Flow<List<Supplier>> = shoppingRepository.allSuppliers
     val allProducts: Flow<List<Product>> = shoppingRepository.allProducts
-
     init {
         viewModelScope.launch {
-            // Automatically select the first supplier if one exists
             allSuppliers.firstOrNull()?.firstOrNull()?.id?.let { firstSupplierId ->
                 selectSupplier(firstSupplierId)
             }
@@ -52,7 +46,6 @@ class ShoppingListViewModel(
     fun selectSupplier(supplierId: Int) {
         viewModelScope.launch {
             _currentSupplierId.value = supplierId
-            // Load the latest shopping list for this supplier, or create a new one.
             val latestDate = shoppingRepository.getLatestShoppingDateForSupplier(supplierId)
             _currentShoppingDate.value = latestDate ?: System.currentTimeMillis()
         }

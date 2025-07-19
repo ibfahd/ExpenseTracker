@@ -2,6 +2,7 @@ package com.fahdev.expensetracker
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -45,26 +46,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class ProductManagementActivity : AppCompatActivity() {
-    @OptIn(ExperimentalMaterial3Api::class)
+    private val expenseViewModel: ExpenseViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val categoryId = intent.getIntExtra("CATEGORY_ID", -1)
         val categoryName = intent.getStringExtra("CATEGORY_NAME") ?: "Products"
 
         if (categoryId == -1) {
-            finish() // Close if the category ID is invalid
+            finish()
             return
         }
-
         setContent {
             ExpenseTrackerTheme {
-                val expenseViewModel: ExpenseViewModel = viewModel(factory = ExpenseViewModelFactory(application))
                 ProductManagementScreen(
                     expenseViewModel = expenseViewModel,
                     categoryId = categoryId,
@@ -88,14 +88,11 @@ fun ProductManagementScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val products by expenseViewModel.getProductsForCategory(categoryId).collectAsState(initial = emptyList())
-
     var showAddEditDialog by remember { mutableStateOf(false) }
     var productToEdit by remember { mutableStateOf<Product?>(null) }
     var productNameInput by remember { mutableStateOf("") }
-
     var showDeleteDialog by remember { mutableStateOf(false) }
     var productToDelete by remember { mutableStateOf<Product?>(null) }
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -141,7 +138,6 @@ fun ProductManagementScreen(
             }
         }
     }
-
     if (showAddEditDialog) {
         AddEditProductDialog(
             productToEdit = productToEdit,
@@ -165,7 +161,6 @@ fun ProductManagementScreen(
             }
         )
     }
-
     if (showDeleteDialog) {
         DeleteProductDialog(
             productToDelete = productToDelete,

@@ -1,21 +1,51 @@
 package com.fahdev.expensetracker
 
-import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -23,22 +53,24 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.data.Supplier
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
+@AndroidEntryPoint
 class EditExpenseActivity : AppCompatActivity() {
+    private val expenseViewModel: ExpenseViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ExpenseTrackerTheme {
-                val expenseViewModel: ExpenseViewModel = viewModel(factory = ExpenseViewModelFactory(application))
                 val expenseId = intent.getIntExtra("EXPENSE_ID", -1)
                 EditExpenseScreen(
                     expenseViewModel = expenseViewModel,
@@ -55,50 +87,32 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-
-    // State for the expense details, initialized to null
     var currentExpenseWithDetails by remember { mutableStateOf<ExpenseWithDetails?>(null) }
-
-    // Initial states for editable fields, will be updated once data loads
     var amount by remember { mutableStateOf("") }
     var selectedProductId by remember { mutableStateOf<Int?>(null) }
     var selectedSupplierId by remember { mutableStateOf<Int?>(null) }
-    var selectedDate by remember { mutableStateOf(System.currentTimeMillis()) } // Milliseconds
-
+    var selectedDate by remember { mutableLongStateOf(System.currentTimeMillis()) } // Milliseconds
     var showDatePickerDialog by remember { mutableStateOf(false) }
-
-    // Collect all products, suppliers, and the specific expense
     val allProducts by expenseViewModel.allProducts.collectAsState(initial = emptyList())
     val allSuppliers by expenseViewModel.allSuppliers.collectAsState(initial = emptyList())
-
-    // Fetch the expense details once when the screen is launched
     LaunchedEffect(expenseId) {
         if (expenseId != -1) {
             expenseViewModel.getExpenseWithDetailsById(expenseId)
                 .filterNotNull() // Ensure we only proceed if expense is found
                 .collect { expenseDetails ->
                     currentExpenseWithDetails = expenseDetails
-                    // Populate UI states with fetched data
-                    amount = "%.2f".format(expenseDetails.expense.amount) // Format for TextField
+                    amount = "%.2f".format(expenseDetails.expense.amount)
                     selectedProductId = expenseDetails.expense.productId
                     selectedSupplierId = expenseDetails.expense.supplierId
                     selectedDate = expenseDetails.expense.timestamp
-                    // No need for setSelection here, it's handled when dialog is opened
                 }
         }
     }
-
-    // State for showing product/supplier pickers
     var showProductPicker by remember { mutableStateOf(false) }
     var showSupplierPicker by remember { mutableStateOf(false) }
-
-    // Get selected product and supplier names for display
     val selectedProductName = allProducts.find { it.id == selectedProductId }?.name ?: stringResource(R.string.select_product)
     val selectedSupplierName = allSuppliers.find { it.id == selectedSupplierId }?.name ?: stringResource(R.string.select_supplier)
-
-    // State for delete confirmation dialog
     var showDeleteDialog by remember { mutableStateOf(false) }
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -126,11 +140,11 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
         ) {
             // Display a loading indicator or message until data is loaded
             if (currentExpenseWithDetails == null && expenseId != -1) {
-                CircularProgressIndicator() // Show a loading spinner
+                CircularProgressIndicator()
                 Text(stringResource(R.string.loading_expense_details))
             } else if (currentExpenseWithDetails == null && expenseId == -1) {
                 Text(stringResource(R.string.error_expense_not_found))
-            } else { // Data is loaded, display editable fields
+            } else {
                 TextField(
                     value = amount,
                     onValueChange = { newValue ->
@@ -141,7 +155,6 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(16.dp))
-
                 // Product Picker
                 TextField(
                     value = selectedProductName,
@@ -167,7 +180,6 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                     )
                 }
                 Spacer(Modifier.height(16.dp))
-
                 // Supplier Picker
                 TextField(
                     value = selectedSupplierName,
@@ -193,7 +205,6 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                     )
                 }
                 Spacer(Modifier.height(16.dp))
-
                 // Date Picker
                 TextField(
                     value = SimpleDateFormat("MMM dd,yyyy", Locale.getDefault()).format(Date(selectedDate)),
@@ -208,14 +219,13 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                     }
                 )
                 if (showDatePickerDialog) {
-                    // Correct: Create DatePickerState here so it's initialized with the latest selectedDate
                     val dialogDatePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDate) // <<< CORRECTED LINE
                     DatePickerDialog(
                         onDismissRequest = { showDatePickerDialog = false },
                         confirmButton = {
                             Button(onClick = {
                                 dialogDatePickerState.selectedDateMillis?.let {
-                                    selectedDate = it // Update your source of truth (selectedDate)
+                                    selectedDate = it
                                 }
                                 showDatePickerDialog = false
                             }) {
@@ -232,7 +242,6 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                     }
                 }
                 Spacer(Modifier.height(32.dp))
-
                 // Save Changes Button
                 Button(
                     onClick = {
@@ -260,7 +269,6 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                     Text(stringResource(R.string.save_changes))
                 }
                 Spacer(Modifier.height(8.dp))
-
                 // Delete Expense Button
                 Button(
                     onClick = { showDeleteDialog = true }, // Show confirmation dialog
@@ -272,7 +280,6 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
             }
         }
     }
-
     // Delete Confirmation Dialog
     if (showDeleteDialog) {
         AlertDialog(
@@ -286,7 +293,7 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                             scope.launch {
                                 expenseViewModel.deleteExpense(expenseToDelete)
                                 snackbarHostState.showSnackbar(context.getString(R.string.expense_deleted_successfully))
-                                (context as? ComponentActivity)?.finish() // Go back after delete
+                                (context as? ComponentActivity)?.finish()
                             }
                         }
                         showDeleteDialog = false
@@ -305,7 +312,6 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
     }
 }
 
-// Reusing ProductOrSupplierPickerDialog from AddExpenseActivity
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T : Any> ProductOrSupplierPickerDialog(
@@ -338,16 +344,14 @@ fun <T : Any> ProductOrSupplierPickerDialog(
     )
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun EditExpenseScreenPreview() {
     ExpenseTrackerTheme {
-        // Correctly create ViewModel for preview using the factory
-        val context = LocalContext.current
-        val application = context.applicationContext as Application
-        val factory = ExpenseViewModelFactory(application)
-        val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
-        EditExpenseScreen(expenseViewModel = expenseViewModel, expenseId = -1)
+        //val context = LocalContext.current
+        //val application = context.applicationContext as Application
+        //val factory = ExpenseViewModelFactory(application)
+        //val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
+        //EditExpenseScreen(expenseViewModel = expenseViewModel, expenseId = -1)
     }
 }

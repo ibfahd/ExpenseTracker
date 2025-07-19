@@ -1,10 +1,10 @@
 package com.fahdev.expensetracker
 
-import android.app.Application
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -76,13 +76,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.CurrencyHelper
 import com.fahdev.expensetracker.data.Supplier
 import com.fahdev.expensetracker.data.UserPreferencesRepository
 import com.fahdev.expensetracker.ui.components.EmptyState
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -90,33 +90,31 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-// Changed from ComponentActivity to AppCompatActivity
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+    private val expenseViewModel: ExpenseViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ExpenseTrackerTheme {
-                val expenseViewModel: ExpenseViewModel = viewModel(factory = ExpenseViewModelFactory(application))
                 MainAppScreen(expenseViewModel = expenseViewModel)
             }
         }
     }
 }
 
-
 @Composable
 fun MainAppScreen(expenseViewModel: ExpenseViewModel) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-
     val userPrefsRepo = remember { UserPreferencesRepository.getInstance(context.applicationContext) }
     val currencyCode by userPrefsRepo.currencyCode.collectAsState()
     val currencyFormatter = remember(currencyCode) {
         CurrencyHelper.getCurrencyFormatter(currencyCode)
     }
-
     val navigationActions = mapOf(
         stringResource(R.string.manage_categories) to { context.startActivity(Intent(context, CategoryManagementActivity::class.java)) },
         stringResource(R.string.manage_suppliers) to { context.startActivity(Intent(context, SupplierManagementActivity::class.java)) },
@@ -125,7 +123,6 @@ fun MainAppScreen(expenseViewModel: ExpenseViewModel) {
         stringResource(R.string.settings) to { context.startActivity(Intent(context, SettingsActivity::class.java)) },
         stringResource(R.string.about) to { context.startActivity(Intent(context, AboutActivity::class.java)) }
     )
-
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -149,10 +146,6 @@ fun MainAppScreen(expenseViewModel: ExpenseViewModel) {
     }
 }
 
-// ... All other composable functions in this file remain the same
-// The only change was MainActivity extending AppCompatActivity.
-// The rest of the file is included for completeness.
-
 data class DrawerMenuItem(val key: String, val icon: ImageVector)
 @Composable
 fun AppDrawerContent(onNavigate: (String) -> Unit) {
@@ -165,7 +158,6 @@ fun AppDrawerContent(onNavigate: (String) -> Unit) {
         DrawerMenuItem(context.getString(R.string.settings), Icons.Default.Settings),
         DrawerMenuItem(context.getString(R.string.about), Icons.Default.Info)
     )
-
     ModalDrawerSheet {
         Column {
             Text(
@@ -188,7 +180,6 @@ fun AppDrawerContent(onNavigate: (String) -> Unit) {
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpenseTrackerApp(
@@ -197,20 +188,15 @@ fun ExpenseTrackerApp(
     onMenuClick: () -> Unit
 ) {
     val context = LocalContext.current
-
     val filteredExpenses by expenseViewModel.filteredExpenses.collectAsState(initial = emptyList())
     val totalFilteredExpenses by expenseViewModel.totalFilteredExpenses.collectAsState(initial = 0.0)
-
     val selectedStartDate by expenseViewModel.selectedStartDate.collectAsState(initial = null)
     val selectedEndDate by expenseViewModel.selectedEndDate.collectAsState(initial = null)
     val selectedCategoryId by expenseViewModel.selectedCategoryId.collectAsState(initial = null)
     val selectedSupplierId by expenseViewModel.selectedSupplierId.collectAsState(initial = null)
-
     val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
     val allSuppliers by expenseViewModel.allSuppliers.collectAsState(initial = emptyList())
-
     var showFilterDialog by remember { mutableStateOf(false) }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -307,7 +293,6 @@ fun ExpenseTrackerApp(
             }
         }
     }
-
     if (showFilterDialog) {
         FilterDialog(
             expenseViewModel = expenseViewModel,
@@ -469,8 +454,6 @@ fun FilterStatusRow(
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                         )
                     }
-
-
                     if (selectedCategory != null) {
                         Text(
                             text = context.getString(R.string.category_filter, selectedCategory.name),
@@ -510,15 +493,12 @@ fun FilterDialog(
     val selectedEndDate by expenseViewModel.selectedEndDate.collectAsState(initial = null)
     val selectedCategoryId by expenseViewModel.selectedCategoryId.collectAsState(initial = null)
     val selectedSupplierId by expenseViewModel.selectedSupplierId.collectAsState(initial = null)
-
     var showDatePicker by remember { mutableStateOf(false) }
-
     val dateRangePickerState = rememberDateRangePickerState(
         initialSelectedStartDateMillis = selectedStartDate,
         initialSelectedEndDateMillis = selectedEndDate
     )
     val context = LocalContext.current
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(context.getString(R.string.filter_expenses)) },
@@ -542,7 +522,6 @@ fun FilterDialog(
                     Text(context.getString(R.string.select_custom_date_range))
                 }
                 Spacer(Modifier.height(8.dp))
-
                 Text(context.getString(R.string.filter_by_category), style = MaterialTheme.typography.titleSmall)
                 CategoryFilterDropdown(
                     allCategories = allCategories,
@@ -552,7 +531,6 @@ fun FilterDialog(
                     }
                 )
                 Spacer(Modifier.height(8.dp))
-
                 Text(context.getString(R.string.filter_by_supplier), style = MaterialTheme.typography.titleSmall)
                 SupplierFilterDropdown(
                     allSuppliers = allSuppliers,
@@ -562,7 +540,6 @@ fun FilterDialog(
                     }
                 )
                 Spacer(Modifier.height(16.dp))
-
                 Button(
                     onClick = {
                         expenseViewModel.resetFilters()
@@ -585,7 +562,6 @@ fun FilterDialog(
             }
         }
     )
-
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -594,7 +570,6 @@ fun FilterDialog(
                     onClick = {
                         val startDateMillis = dateRangePickerState.selectedStartDateMillis
                         var endDateMillis = dateRangePickerState.selectedEndDateMillis
-
                         if (startDateMillis != null && endDateMillis == null) {
                             val cal = Calendar.getInstance().apply { timeInMillis = startDateMillis }
                             cal.set(Calendar.HOUR_OF_DAY, 23)
@@ -621,7 +596,6 @@ fun FilterDialog(
                                 set(Calendar.MILLISECOND, 999)
                             }.timeInMillis
                         }
-
                         expenseViewModel.setCustomDateRangeFilter(normalizedStartDate, normalizedEndDate)
                         showDatePicker = false
                     }
@@ -656,7 +630,6 @@ fun DateFilterDropdown(
         "ThisYear" to context.getString(R.string.this_year),
         "All" to context.getString(R.string.all_time)
     )
-
     val currentSelectionText = remember(selectedStartDate, selectedEndDate) {
         when {
             selectedStartDate == null && selectedEndDate == null -> context.getString(R.string.all_time)
@@ -674,8 +647,6 @@ fun DateFilterDropdown(
             }
         }
     }
-
-
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
@@ -718,7 +689,6 @@ fun CategoryFilterDropdown(
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val selectedCategoryName = allCategories.find { it.id == selectedCategoryId }?.name ?: context.getString(R.string.all_categories)
-
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
@@ -768,7 +738,6 @@ fun SupplierFilterDropdown(
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val selectedSupplierName = allSuppliers.find { it.id == selectedSupplierId }?.name ?: context.getString(R.string.all_suppliers)
-
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
@@ -812,12 +781,10 @@ fun SupplierFilterDropdown(
 @Composable
 fun MainAppScreenPreview() {
     ExpenseTrackerTheme {
-        // Correctly create ViewModel for preview using the factory
-        val context = LocalContext.current
-        val application = context.applicationContext as Application
-        val factory = ExpenseViewModelFactory(application)
-        val mockViewModel: ExpenseViewModel = viewModel(factory = factory)
-        MainAppScreen(expenseViewModel = mockViewModel)
+        //val context = LocalContext.current
+        //val application = context.applicationContext as Application
+        //val factory = ExpenseViewModelFactory(application)
+        //val mockViewModel: ExpenseViewModel = viewModel(factory = factory)
+        //MainAppScreen(expenseViewModel = mockViewModel)
     }
 }
-

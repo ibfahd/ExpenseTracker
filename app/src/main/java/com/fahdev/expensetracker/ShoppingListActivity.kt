@@ -1,9 +1,9 @@
 package com.fahdev.expensetracker
 
-import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -72,15 +72,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.data.ShoppingListItem
 import com.fahdev.expensetracker.ui.components.EmptyState
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class ShoppingListActivity : AppCompatActivity() {
+    private val shoppingListViewModel: ShoppingListViewModel by viewModels()
+    private val expenseViewModel: ExpenseViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -89,13 +92,6 @@ class ShoppingListActivity : AppCompatActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val app = application
-                    val shoppingListViewModel: ShoppingListViewModel = viewModel(
-                        factory = ShoppingListViewModelFactory(app)
-                    )
-                    val expenseViewModel: ExpenseViewModel = viewModel(
-                        factory = ExpenseViewModelFactory(app)
-                    )
                     ShoppingListScreen(
                         shoppingListViewModel = shoppingListViewModel,
                         expenseViewModel = expenseViewModel
@@ -122,12 +118,10 @@ fun ShoppingListScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-
     val currentSupplierId by shoppingListViewModel.currentSupplierId.collectAsState()
     val allSuppliers by shoppingListViewModel.allSuppliers.collectAsState(initial = emptyList())
     val shoppingListItems by shoppingListViewModel.shoppingListItems.collectAsState(initial = emptyList())
     val allProducts by shoppingListViewModel.allProducts.collectAsState(initial = emptyList())
-
     var expandedSupplierDropdown by remember { mutableStateOf(false) }
     var showAddShoppingItemDialog by remember { mutableStateOf(false) }
     var newProductIdForAddItemDialog by remember { mutableStateOf<Int?>(null) }
@@ -138,9 +132,7 @@ fun ShoppingListScreen(
     var showAddProductDialog by remember { mutableStateOf(false) }
     var newProductNameForAddProductDialog by remember { mutableStateOf("") }
     var showConfirmValidateDialog by remember { mutableStateOf(false) }
-
     var isValidating by remember { mutableStateOf(false) }
-
     val validationStats by remember(shoppingListItems) {
         derivedStateOf {
             val validItems = shoppingListItems.filter { it.purchasedQuantity > 0.0 && it.unitPrice != null }
@@ -153,7 +145,6 @@ fun ShoppingListScreen(
             )
         }
     }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -186,7 +177,6 @@ fun ShoppingListScreen(
             }
         },
         bottomBar = {
-            // The BottomAppBar now only contains the button, ensuring it has a stable height.
             BottomAppBar(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -282,14 +272,11 @@ fun ShoppingListScreen(
                     }
                 }
             }
-
             Spacer(Modifier.height(16.dp))
             HorizontalDivider()
             Spacer(Modifier.height(16.dp))
-
             Text(stringResource(R.string.current_shopping_list_title), style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(8.dp))
-
             // Main content area for the list
             if (shoppingListItems.isEmpty()) {
                 Column(
@@ -320,7 +307,6 @@ fun ShoppingListScreen(
                     }
                 }
             }
-
             // The summary text is now here, at the bottom of the main content area,
             // just above the BottomAppBar.
             if (validationStats.totalItems > 0) {
@@ -349,7 +335,6 @@ fun ShoppingListScreen(
             }
         }
     }
-
     if (showConfirmValidateDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmValidateDialog = false },
@@ -440,7 +425,6 @@ fun ShoppingListScreen(
             }
         )
     }
-
     if (showAddShoppingItemDialog) {
         AlertDialog(
             onDismissRequest = { showAddShoppingItemDialog = false },
@@ -543,7 +527,6 @@ fun ShoppingListScreen(
             }
         )
     }
-
     if (showAddProductDialog) {
         AddProductDialog(
             onDismissRequest = { showAddProductDialog = false },
@@ -567,14 +550,12 @@ fun ShoppingListItemCard(
     modifier: Modifier = Modifier
 ) {
     val productName = allProducts.find { it.id == item.productId }?.name ?: stringResource(R.string.unknown_product)
-
     var purchasedQuantityText by remember(item.id) {
         mutableStateOf(item.purchasedQuantity.toString().takeIf { it != "0.0" } ?: "")
     }
     var unitPriceText by remember(item.id) {
         mutableStateOf(item.unitPrice?.toString() ?: "")
     }
-
     LaunchedEffect(item.purchasedQuantity) {
         val modelPurchasedQty = item.purchasedQuantity
         val textAsDouble = purchasedQuantityText.toDoubleOrNull()
@@ -582,7 +563,6 @@ fun ShoppingListItemCard(
             purchasedQuantityText = if (modelPurchasedQty > 0.0) modelPurchasedQty.toString() else ""
         }
     }
-
     LaunchedEffect(item.unitPrice) {
         val modelPrice = item.unitPrice
         val textAsDouble = unitPriceText.toDoubleOrNull()
@@ -596,7 +576,6 @@ fun ShoppingListItemCard(
             }
         }
     }
-
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -616,7 +595,6 @@ fun ShoppingListItemCard(
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(8.dp))
-
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = purchasedQuantityText,
@@ -672,12 +650,10 @@ fun AddProductDialog(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
-
     var newProductNameDialog by remember { mutableStateOf(initialProductName) }
     var newProductSelectedCategory by remember { mutableStateOf<Category?>(null) }
     var newProductCategorySearchQuery by remember { mutableStateOf("") }
     var newProductCategoryDropdownExpanded by remember { mutableStateOf(false) }
-
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.add_new_product_title)) },
@@ -793,14 +769,13 @@ fun AddProductDialog(
 @Composable
 fun PreviewShoppingListScreen() {
     ExpenseTrackerTheme {
-        val context = LocalContext.current
-        val application = context.applicationContext as Application
-        val shoppingListViewModel: ShoppingListViewModel = viewModel(factory = ShoppingListViewModelFactory(application))
-        val expenseViewModel: ExpenseViewModel = viewModel(factory = ExpenseViewModelFactory(application))
-
-        ShoppingListScreen(
+        //val context = LocalContext.current
+        //val application = context.applicationContext as Application
+        //val shoppingListViewModel: ShoppingListViewModel = viewModel(factory = ShoppingListViewModelFactory(application))
+        //val expenseViewModel: ExpenseViewModel = viewModel(factory = ExpenseViewModelFactory(application))
+        /*ShoppingListScreen(
             shoppingListViewModel = shoppingListViewModel,
             expenseViewModel = expenseViewModel
-        )
+        )*/
     }
 }

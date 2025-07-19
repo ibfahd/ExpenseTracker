@@ -1,40 +1,34 @@
 package com.fahdev.expensetracker
 
-import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fahdev.expensetracker.data.*
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import javax.inject.Inject
 import kotlin.math.max
 
-class ExpenseViewModel(
-    application: Application,
-    private val expenseRepository: ExpenseRepository, // Inject repository
+@HiltViewModel
+class ExpenseViewModel @Inject constructor( // <-- ADD @Inject
+    private val expenseRepository: ExpenseRepository,
     private val userPreferencesRepository: UserPreferencesRepository
-) : AndroidViewModel(application) {
-
+) : ViewModel() {
     val allProducts: Flow<List<Product>> = expenseRepository.allProducts
     val allSuppliers: Flow<List<Supplier>> = expenseRepository.allSuppliers
     val allCategories: Flow<List<Category>> = expenseRepository.allCategories
-
     private val _selectedStartDate = MutableStateFlow<Long?>(null)
     val selectedStartDate: StateFlow<Long?> = _selectedStartDate.asStateFlow()
-
     private val _selectedEndDate = MutableStateFlow<Long?>(null)
     val selectedEndDate: StateFlow<Long?> = _selectedEndDate.asStateFlow()
-
     private val _selectedCategoryId = MutableStateFlow<Int?>(null)
     val selectedCategoryId: StateFlow<Int?> = _selectedCategoryId.asStateFlow()
-
     private val _selectedSupplierId = MutableStateFlow<Int?>(null)
     val selectedSupplierId: StateFlow<Int?> = _selectedSupplierId.asStateFlow()
-
     private val _refreshTrigger = MutableStateFlow(0)
-
     @OptIn(ExperimentalCoroutinesApi::class)
     val filteredExpenses: Flow<List<ExpenseWithDetails>> = combine(
         _selectedStartDate,
@@ -82,20 +76,15 @@ class ExpenseViewModel(
     val totalExpensesAllTime: StateFlow<Double> = expenseRepository.totalExpensesAllTime
         .map { it ?: 0.0 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
-
     val firstExpenseDate: StateFlow<Long?> = expenseRepository.firstExpenseDate
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-
     val totalTransactionCount: StateFlow<Int> = expenseRepository.totalTransactionCount
         .map { it ?: 0 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
-
     val spendingByCategory: StateFlow<List<CategorySpending>> = expenseRepository.spendingByCategory
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
     val spendingBySupplier: StateFlow<List<SupplierSpending>> = expenseRepository.spendingBySupplier
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
     val averageDailyExpense: StateFlow<Double> = combine(totalExpensesAllTime, firstExpenseDate) { total, firstDateMs ->
         if (total > 0 && firstDateMs != null) {
             val days = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - firstDateMs).coerceAtLeast(1)
@@ -104,7 +93,6 @@ class ExpenseViewModel(
             0.0
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
-
     val averageMonthlyExpense: StateFlow<Double> = combine(totalExpensesAllTime, firstExpenseDate) { total, firstDateMs ->
         if (total > 0 && firstDateMs != null) {
             val firstCal = Calendar.getInstance().apply { timeInMillis = firstDateMs }
@@ -150,30 +138,10 @@ class ExpenseViewModel(
         Log.e("ExpenseViewModel", "Error fetching product report details", e)
         emit(emptyList())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-
     init {
         viewModelScope.launch {
             val defaultFilter = userPreferencesRepository.homeScreenDefaultFilter.first()
             setDateRangeFilter(defaultFilter)
-        }
-
-        viewModelScope.launch {
-            val initialCategories = listOf(
-                Category(name = application.getString(R.string.category_food_drinks)),
-                Category(name = application.getString(R.string.category_housing)),
-                Category(name = application.getString(R.string.category_transportation)),
-                Category(name = application.getString(R.string.category_utilities)),
-                Category(name = application.getString(R.string.category_healthcare)),
-                Category(name = application.getString(R.string.category_personal_care)),
-                Category(name = application.getString(R.string.category_shopping)),
-                Category(name = application.getString(R.string.category_entertainment)),
-                Category(name = application.getString(R.string.category_travel)),
-                Category(name = application.getString(R.string.category_education)),
-                Category(name = application.getString(R.string.category_savings_investments)),
-                Category(name = application.getString(R.string.category_miscellaneous))
-            )
-            expenseRepository.insertInitialCategories(initialCategories)
         }
     }
 
@@ -278,7 +246,6 @@ class ExpenseViewModel(
         val calendar = Calendar.getInstance()
         var startDate: Long? = null
         var endDate: Long? = System.currentTimeMillis()
-
         when (rangeType) {
             "ThisMonth" -> {
                 calendar.set(Calendar.DAY_OF_MONTH, 1)

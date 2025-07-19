@@ -1,10 +1,10 @@
 package com.fahdev.expensetracker
 
-import android.app.Application
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,20 +51,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.ui.components.EmptyState
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class CategoryManagementActivity : AppCompatActivity() {
-    @OptIn(ExperimentalMaterial3Api::class)
+    private val expenseViewModel: ExpenseViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ExpenseTrackerTheme {
-                val expenseViewModel: ExpenseViewModel = viewModel(factory = ExpenseViewModelFactory(application))
                 CategoryManagementScreen(expenseViewModel = expenseViewModel)
             }
         }
@@ -77,17 +77,12 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-
     val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
-
     var showAddEditDialog by remember { mutableStateOf(false) }
     var categoryToEdit by remember { mutableStateOf<Category?>(null) }
     var categoryNameInput by remember { mutableStateOf("") }
-
     var showDeleteDialog by remember { mutableStateOf(false) }
     var categoryToDelete by remember { mutableStateOf<Category?>(null) }
-
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -152,7 +147,6 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
             }
         }
     }
-
     if (showAddEditDialog) {
         AlertDialog(
             onDismissRequest = { showAddEditDialog = false },
@@ -180,11 +174,9 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
                             } else {
                                 if (categoryToEdit == null) {
                                     expenseViewModel.addCategory(Category(name = categoryNameInput))
-                                    //snackbarHostState.showSnackbar(context.getString(R.string.category_added_success))
                                 } else {
                                     val updatedCategory = categoryToEdit!!.copy(name = categoryNameInput)
                                     expenseViewModel.updateCategory(updatedCategory)
-                                    //snackbarHostState.showSnackbar(context.getString(R.string.category_updated_success))
                                 }
                             }
                         }
@@ -203,7 +195,6 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
             }
         )
     }
-
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -221,7 +212,6 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
                                     // Otherwise, proceed with the deletion
                                     expenseViewModel.deleteCategory(category)
                                 }
-                                //snackbarHostState.showSnackbar(context.getString(R.string.category_deleted_success))
                             }
                         }
                         showDeleteDialog = false
@@ -247,7 +237,7 @@ fun CategoryItem(
     onEditClick: (Category) -> Unit,
     onDeleteClick: (Category) -> Unit
 ) {
-    val context = LocalContext.current // Get context for the Intent
+    val context = LocalContext.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -305,11 +295,10 @@ fun CategoryItem(
 @Composable
 fun CategoryManagementScreenPreview() {
     ExpenseTrackerTheme {
-        // Correctly create ViewModel for preview using the factory
-        val context = LocalContext.current
-        val application = context.applicationContext as Application
-        val factory = ExpenseViewModelFactory(application)
-        val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
-        CategoryManagementScreen(expenseViewModel = expenseViewModel)
+        //val context = LocalContext.current
+        //val application = context.applicationContext as Application
+        //val factory = ExpenseViewModelFactory(application)
+        //val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
+        //CategoryManagementScreen(expenseViewModel = expenseViewModel)
     }
 }

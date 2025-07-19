@@ -1,9 +1,9 @@
 package com.fahdev.expensetracker
 
-import android.app.Application
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,19 +45,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class SettingsActivity : AppCompatActivity() {
-    @OptIn(ExperimentalMaterial3Api::class)
+    private val settingsViewModel: SettingsViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ExpenseTrackerTheme {
-                val settingsViewModel: SettingsViewModel = viewModel(
-                    factory = SettingsViewModelFactory(application)
-                )
                 SettingsScreen(settingsViewModel = settingsViewModel)
             }
         }
@@ -186,18 +184,15 @@ fun DefaultHomeFilterSelector(settingsViewModel: SettingsViewModel) {
     }
 }
 
-// Preview and other composables for currency/language remain the same
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CurrencySelector(settingsViewModel: SettingsViewModel) {
     val selectedCurrencyCode by settingsViewModel.selectedCurrencyCode.collectAsState()
     val availableCurrencies = settingsViewModel.availableCurrencies
     var expanded by remember { mutableStateOf(false) }
-
     val selectedCurrency = remember(selectedCurrencyCode) {
         availableCurrencies.find { it.code == selectedCurrencyCode }
     }
-
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
@@ -220,7 +215,6 @@ fun CurrencySelector(settingsViewModel: SettingsViewModel) {
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
             )
-
             ExposedDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
@@ -245,7 +239,6 @@ fun LanguageSelector(settingsViewModel: SettingsViewModel) {
     val selectedLanguageTag by settingsViewModel.selectedLanguage.collectAsState()
     val availableLanguages = settingsViewModel.availableLanguages
     var expanded by remember { mutableStateOf(false) }
-
     val selectedLanguage = remember(selectedLanguageTag) {
         availableLanguages.find { it.tag == selectedLanguageTag }
     }
@@ -259,7 +252,6 @@ fun LanguageSelector(settingsViewModel: SettingsViewModel) {
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyLarge
         )
-
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded },
@@ -272,7 +264,6 @@ fun LanguageSelector(settingsViewModel: SettingsViewModel) {
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
             )
-
             ExposedDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
@@ -295,7 +286,7 @@ fun LanguageSelector(settingsViewModel: SettingsViewModel) {
 @Composable
 fun SettingsScreenPreview() {
     ExpenseTrackerTheme {
-        val app = LocalContext.current.applicationContext as Application
-        SettingsScreen(settingsViewModel = SettingsViewModel(app))
+        //val app = LocalContext.current.applicationContext as Application
+        //SettingsScreen(settingsViewModel = SettingsViewModel(app))
     }
 }

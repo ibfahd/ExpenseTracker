@@ -1,10 +1,10 @@
 package com.fahdev.expensetracker
 
-import android.app.Application
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -44,23 +44,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.Expense
 import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.data.Supplier
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class AddExpenseActivity : AppCompatActivity() {
+    private val expenseViewModel: ExpenseViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ExpenseTrackerTheme {
-                // Correctly use the ViewModelFactory which now handles dependencies
-                val expenseViewModel: ExpenseViewModel = viewModel(factory = ExpenseViewModelFactory(application))
-
                 AddExpenseScreen(
                     expenseViewModel = expenseViewModel,
                     onBackClick = { finish() }
@@ -69,8 +68,6 @@ class AddExpenseActivity : AppCompatActivity() {
         }
     }
 }
-
-// The old, redundant ExpenseViewModelFactory class has been removed from this file.
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,26 +113,20 @@ fun AddExpenseForm(
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
     var productSearchQuery by remember { mutableStateOf("") }
     var productDropdownExpanded by remember { mutableStateOf(false) }
-
     val allSuppliers by expenseViewModel.allSuppliers.collectAsState(initial = emptyList())
     var selectedSupplier by remember { mutableStateOf<Supplier?>(null) }
     var supplierSearchQuery by remember { mutableStateOf("") }
     var supplierDropdownExpanded by remember { mutableStateOf(false) }
-
     val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
     var showAddProductDialog by remember { mutableStateOf(false) }
     var newProductName by remember { mutableStateOf("") }
     var newProductSelectedCategory by remember { mutableStateOf<Category?>(null) }
     var newProductCategorySearchQuery by remember { mutableStateOf("") }
     var newProductCategoryDropdownExpanded by remember { mutableStateOf(false) }
-
     var showAddSupplierDialog by remember { mutableStateOf(false) }
     var newSupplierName by remember { mutableStateOf("") }
-
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-
-
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -153,7 +144,6 @@ fun AddExpenseForm(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(16.dp))
-
         ExposedDropdownMenuBox(
             expanded = productDropdownExpanded,
             onExpandedChange = { productDropdownExpanded = !productDropdownExpanded },
@@ -173,7 +163,6 @@ fun AddExpenseForm(
                     .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                     .fillMaxWidth()
             )
-
             ExposedDropdownMenu(
                 expanded = productDropdownExpanded,
                 onDismissRequest = { productDropdownExpanded = false }
@@ -208,7 +197,6 @@ fun AddExpenseForm(
             }
         }
         Spacer(Modifier.height(16.dp))
-
         ExposedDropdownMenuBox(
             expanded = supplierDropdownExpanded,
             onExpandedChange = { supplierDropdownExpanded = !supplierDropdownExpanded },
@@ -228,7 +216,6 @@ fun AddExpenseForm(
                     .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                     .fillMaxWidth()
             )
-
             ExposedDropdownMenu(
                 expanded = supplierDropdownExpanded,
                 onDismissRequest = { supplierDropdownExpanded = false }
@@ -260,7 +247,6 @@ fun AddExpenseForm(
             }
         }
         Spacer(Modifier.height(32.dp))
-
         Button(
             onClick = {
                 val amountDouble = amount.toDoubleOrNull()
@@ -268,7 +254,6 @@ fun AddExpenseForm(
                     Toast.makeText(context, context.getString(R.string.please_fill_amount_product_supplier), Toast.LENGTH_SHORT).show()
                     return@Button
                 }
-
                 coroutineScope.launch {
                     val newExpense = Expense(
                         amount = amountDouble,
@@ -287,7 +272,6 @@ fun AddExpenseForm(
             Text(stringResource(R.string.save_expense))
         }
     }
-
     if (showAddProductDialog) {
         AlertDialog(
             onDismissRequest = {
@@ -419,7 +403,6 @@ fun AddExpenseForm(
             }
         )
     }
-
     if (showAddSupplierDialog) {
         AlertDialog(
             onDismissRequest = { showAddSupplierDialog = false },
@@ -468,19 +451,15 @@ fun AddExpenseForm(
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun AddExpenseScreenPreview() {
     ExpenseTrackerTheme {
-        // Correctly get application context for preview
-        val context = LocalContext.current
-        val application = context.applicationContext as Application
-        // Use the factory to create the ViewModel instance for the preview
-        val factory = ExpenseViewModelFactory(application)
-        val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
-
-        AddExpenseScreen(expenseViewModel = expenseViewModel, onBackClick = {})
+        //val context = LocalContext.current
+        //val application = context.applicationContext as Application
+        //val factory = ExpenseViewModelFactory(application)
+        //val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
+        //AddExpenseScreen(expenseViewModel = expenseViewModel, onBackClick = {})
     }
 }
 
@@ -488,13 +467,10 @@ fun AddExpenseScreenPreview() {
 @Composable
 fun AddExpenseFormPreview() {
     ExpenseTrackerTheme {
-        // Correctly get application context for preview
-        val context = LocalContext.current
-        val application = context.applicationContext as Application
-        // Use the factory to create the ViewModel instance for the preview
-        val factory = ExpenseViewModelFactory(application)
-        val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
-
-        AddExpenseForm(expenseViewModel = expenseViewModel, onSaveSuccess = {})
+        //val context = LocalContext.current
+        //val application = context.applicationContext as Application
+        //val factory = ExpenseViewModelFactory(application)
+        //val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
+        //AddExpenseForm(expenseViewModel = expenseViewModel, onSaveSuccess = {})
     }
 }
