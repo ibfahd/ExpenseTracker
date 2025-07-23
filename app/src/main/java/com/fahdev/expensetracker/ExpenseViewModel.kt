@@ -13,22 +13,39 @@ import javax.inject.Inject
 import kotlin.math.max
 
 @HiltViewModel
-class ExpenseViewModel @Inject constructor( // <-- ADD @Inject
+class ExpenseViewModel @Inject constructor(
     private val expenseRepository: ExpenseRepository,
     private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
+
+    // --- Data Flows for UI ---
     val allProducts: Flow<List<Product>> = expenseRepository.allProducts
     val allSuppliers: Flow<List<Supplier>> = expenseRepository.allSuppliers
     val allCategories: Flow<List<Category>> = expenseRepository.allCategories
+
+    // --- Filtering State ---
     private val _selectedStartDate = MutableStateFlow<Long?>(null)
     val selectedStartDate: StateFlow<Long?> = _selectedStartDate.asStateFlow()
+
     private val _selectedEndDate = MutableStateFlow<Long?>(null)
     val selectedEndDate: StateFlow<Long?> = _selectedEndDate.asStateFlow()
+
     private val _selectedCategoryId = MutableStateFlow<Int?>(null)
     val selectedCategoryId: StateFlow<Int?> = _selectedCategoryId.asStateFlow()
+
     private val _selectedSupplierId = MutableStateFlow<Int?>(null)
     val selectedSupplierId: StateFlow<Int?> = _selectedSupplierId.asStateFlow()
+
     private val _refreshTrigger = MutableStateFlow(0)
+
+    private data class FilterParams(
+        val startDate: Long?,
+        val endDate: Long?,
+        val categoryId: Int?,
+        val supplierId: Int?
+    )
+
+    // --- Combined Flows for Filtered Data ---
     @OptIn(ExperimentalCoroutinesApi::class)
     val filteredExpenses: Flow<List<ExpenseWithDetails>> = combine(
         _selectedStartDate,
@@ -66,25 +83,25 @@ class ExpenseViewModel @Inject constructor( // <-- ADD @Inject
     }.map { it ?: 0.0 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    private data class FilterParams(
-        val startDate: Long?,
-        val endDate: Long?,
-        val categoryId: Int?,
-        val supplierId: Int?
-    )
 
+    // --- Reporting Data ---
     val totalExpensesAllTime: StateFlow<Double> = expenseRepository.totalExpensesAllTime
         .map { it ?: 0.0 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
     val firstExpenseDate: StateFlow<Long?> = expenseRepository.firstExpenseDate
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     val totalTransactionCount: StateFlow<Int> = expenseRepository.totalTransactionCount
         .map { it ?: 0 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
     val spendingByCategory: StateFlow<List<CategorySpending>> = expenseRepository.spendingByCategory
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val spendingBySupplier: StateFlow<List<SupplierSpending>> = expenseRepository.spendingBySupplier
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val averageDailyExpense: StateFlow<Double> = combine(totalExpensesAllTime, firstExpenseDate) { total, firstDateMs ->
         if (total > 0 && firstDateMs != null) {
             val days = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - firstDateMs).coerceAtLeast(1)
@@ -93,6 +110,7 @@ class ExpenseViewModel @Inject constructor( // <-- ADD @Inject
             0.0
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
     val averageMonthlyExpense: StateFlow<Double> = combine(totalExpensesAllTime, firstExpenseDate) { total, firstDateMs ->
         if (total > 0 && firstDateMs != null) {
             val firstCal = Calendar.getInstance().apply { timeInMillis = firstDateMs }
@@ -138,6 +156,32 @@ class ExpenseViewModel @Inject constructor( // <-- ADD @Inject
         Log.e("ExpenseViewModel", "Error fetching product report details", e)
         emit(emptyList())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+
+    // --- State and Logic for Add Expense Screen ---
+    private val _selectedCategoryIdForAdd = MutableStateFlow<Int?>(null)
+    val selectedCategoryIdForAdd: StateFlow<Int?> = _selectedCategoryIdForAdd.asStateFlow()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val productsInCategory: StateFlow<List<Product>> = _selectedCategoryIdForAdd
+        .flatMapLatest { categoryId ->
+            if (categoryId != null) {
+                expenseRepository.getProductsForCategory(categoryId)
+            } else {
+                flowOf(emptyList())
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun selectCategoryForAdd(categoryId: Int) {
+        if (_selectedCategoryIdForAdd.value == categoryId) {
+            _selectedCategoryIdForAdd.value = null // Deselect if tapped again
+        } else {
+            _selectedCategoryIdForAdd.value = categoryId
+        }
+    }
+
+    // --- ViewModel Initialization ---
     init {
         viewModelScope.launch {
             val defaultFilter = userPreferencesRepository.homeScreenDefaultFilter.first()
@@ -145,6 +189,7 @@ class ExpenseViewModel @Inject constructor( // <-- ADD @Inject
         }
     }
 
+    // --- Public Functions to Modify Data (delegated to repository) ---
     fun addExpense(expense: Expense) {
         viewModelScope.launch {
             expenseRepository.addExpense(expense)
@@ -246,6 +291,7 @@ class ExpenseViewModel @Inject constructor( // <-- ADD @Inject
         val calendar = Calendar.getInstance()
         var startDate: Long? = null
         var endDate: Long? = System.currentTimeMillis()
+
         when (rangeType) {
             "ThisMonth" -> {
                 calendar.set(Calendar.DAY_OF_MONTH, 1)

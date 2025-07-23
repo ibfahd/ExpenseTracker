@@ -203,4 +203,5 @@
     <string name="items_to_record">Éléments à enregistrer : %d</string>
     <string name="total_amount">Montant total : %.2f $</string>
     <string name="record_expenses">Enregistrer les dépenses</string>
+    <string name="add_new_product_short">Nouveau produit</string>
 </resources>
