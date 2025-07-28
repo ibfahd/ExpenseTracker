@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class Supplier(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val name: String // e.g., "Carrefour", "Local Market", "Amazon"
+    val name: String,
+    val colorHex: String? = null
 )

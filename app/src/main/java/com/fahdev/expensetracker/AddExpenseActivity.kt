@@ -9,32 +9,39 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.Expense
 import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.data.Supplier
+import com.fahdev.expensetracker.ui.components.LetterAvatar
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import com.fahdev.expensetracker.ui.utils.IconAndColorUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -46,6 +53,7 @@ class AddExpenseActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        expenseViewModel.resetAddExpenseFlow()
         setContent {
             ExpenseTrackerTheme {
                 AddExpenseScreen(
@@ -78,43 +86,36 @@ fun AddExpenseScreen(
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
-        },
-        modifier = Modifier.fillMaxSize()
+        }
     ) { innerPadding ->
-        AddExpenseForm(
-            expenseViewModel = expenseViewModel,
+        AddExpenseFlow(
             modifier = Modifier.padding(innerPadding),
+            expenseViewModel = expenseViewModel,
             onSaveSuccess = onBackClick
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddExpenseForm(
-    expenseViewModel: ExpenseViewModel,
+fun AddExpenseFlow(
     modifier: Modifier = Modifier,
+    expenseViewModel: ExpenseViewModel,
     onSaveSuccess: () -> Unit
 ) {
-    var amount by remember { mutableStateOf("") }
-    var selectedProduct by remember { mutableStateOf<Product?>(null) }
-    var selectedSupplier by remember { mutableStateOf<Supplier?>(null) }
-    var supplierSearchQuery by remember { mutableStateOf("") }
-    var supplierDropdownExpanded by remember { mutableStateOf(false) }
-
-    val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
-    val selectedCategoryId by expenseViewModel.selectedCategoryIdForAdd.collectAsState()
-    val productsInCategory by expenseViewModel.productsInCategory.collectAsState()
-
-    val allSuppliers by expenseViewModel.allSuppliers.collectAsState(initial = emptyList())
-
-    var showAddProductDialog by remember { mutableStateOf(false) }
-
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    // Reset product selection if category changes
-    LaunchedEffect(selectedCategoryId) {
+    var amount by remember { mutableStateOf("") }
+    var selectedProduct by remember { mutableStateOf<Product?>(null) }
+    var showAddProductDialog by remember { mutableStateOf(false) }
+
+    val allSuppliers by expenseViewModel.allSuppliers.collectAsState(initial = emptyList())
+    val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
+    val selectedSupplier by expenseViewModel.selectedSupplierForAdd.collectAsState()
+    val selectedCategory by expenseViewModel.selectedCategoryForAdd.collectAsState()
+    val products by expenseViewModel.productsForAddScreen.collectAsState()
+
+    LaunchedEffect(selectedCategory) {
         selectedProduct = null
     }
 
@@ -124,151 +125,99 @@ fun AddExpenseForm(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        // Amount
-        OutlinedTextField(
-            value = amount,
-            onValueChange = { newValue ->
-                if (newValue.matches(Regex("""^\d*\.?\d{0,2}$"""))) {
-                    amount = newValue
-                }
-            },
-            label = { Text(stringResource(R.string.amount)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
+        SelectionGrid(
+            title = stringResource(R.string.supplier),
+            items = allSuppliers,
+            selectedItem = selectedSupplier,
+            onItemSelected = { expenseViewModel.onSupplierSelected(it) },
+            defaultIcon = Icons.Outlined.Storefront
         )
-        Spacer(Modifier.height(24.dp))
 
-        // Category Selection
-        Text(stringResource(R.string.category), style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 4.dp)
-        ) {
-            items(allCategories) { category ->
-                val isSelected = category.id == selectedCategoryId
-                Button(
-                    onClick = { expenseViewModel.selectCategoryForAdd(category.id) },
-                    colors = if (isSelected) ButtonDefaults.buttonColors() else ButtonDefaults.outlinedButtonColors(),
-                    border = if (isSelected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
-                ) {
-                    Text(category.name)
-                }
+        AnimatedVisibility(visible = selectedSupplier != null) {
+            Column {
+                Spacer(Modifier.height(24.dp))
+                SelectionGrid(
+                    title = stringResource(R.string.category),
+                    items = allCategories,
+                    selectedItem = selectedCategory,
+                    onItemSelected = { expenseViewModel.onCategorySelected(it) },
+                    defaultIcon = Icons.Outlined.Category
+                )
             }
         }
-        Spacer(Modifier.height(24.dp))
 
-        // Product Selection
-        AnimatedVisibility(visible = selectedCategoryId != null) {
+        AnimatedVisibility(visible = selectedCategory != null) {
             Column {
-                Text(stringResource(R.string.product), style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(8.dp))
-                // Use a fixed height for the grid area to prevent scroll conflicts
-                Box(modifier = Modifier.height(200.dp)) {
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 120.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(4.dp)
-                    ) {
-                        items(productsInCategory) { product ->
-                            val isSelected = product.id == selectedProduct?.id
-                            OutlinedButton(
-                                onClick = { selectedProduct = product },
-                                colors = if (isSelected) ButtonDefaults.outlinedButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                                ) else ButtonDefaults.outlinedButtonColors(),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
-                            ) {
-                                Text(product.name, textAlign = TextAlign.Center)
-                            }
-                        }
-                        item {
-                            Button(
-                                onClick = { showAddProductDialog = true },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(4.dp))
-                                Text(stringResource(R.string.add_new_product_short))
-                            }
-                        }
+                Spacer(Modifier.height(24.dp))
+                Text(stringResource(R.string.product), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(12.dp))
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 100.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 350.dp)
+                ) {
+                    item {
+                        AddNewItemCard(
+                            text = stringResource(R.string.add_new_product_short),
+                            onClick = { showAddProductDialog = true }
+                        )
+                    }
+                    items(products) { product ->
+                        val isSelected = product == selectedProduct
+                        GridItem(
+                            item = product,
+                            isSelected = isSelected,
+                            onClick = { selectedProduct = product },
+                            defaultIcon = Icons.AutoMirrored.Outlined.Label
+                        )
                     }
                 }
             }
         }
-        Spacer(Modifier.height(24.dp))
 
-        // Supplier Selection
-        ExposedDropdownMenuBox(
-            expanded = supplierDropdownExpanded,
-            onExpandedChange = { supplierDropdownExpanded = !supplierDropdownExpanded },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            OutlinedTextField(
-                value = selectedSupplier?.name ?: supplierSearchQuery,
-                onValueChange = { newValue ->
-                    supplierSearchQuery = newValue
-                    selectedSupplier = null
-                    supplierDropdownExpanded = true
-                },
-                label = { Text(stringResource(R.string.select_supplier_title)) },
-                readOnly = false,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = supplierDropdownExpanded) },
-                modifier = Modifier
-                    .menuAnchor(MenuAnchorType.PrimaryEditable, true)
-                    .fillMaxWidth()
-            )
-
-            ExposedDropdownMenu(
-                expanded = supplierDropdownExpanded,
-                onDismissRequest = { supplierDropdownExpanded = false }
-            ) {
-                val filteredSuppliers = allSuppliers.filter {
-                    it.name.contains(supplierSearchQuery, ignoreCase = true)
-                }
-                filteredSuppliers.forEach { supplier ->
-                    DropdownMenuItem(
-                        text = { Text(supplier.name) },
-                        onClick = {
-                            selectedSupplier = supplier
-                            supplierSearchQuery = supplier.name
-                            supplierDropdownExpanded = false
+        AnimatedVisibility(visible = selectedProduct != null) {
+            Column {
+                Spacer(Modifier.height(24.dp))
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { newValue ->
+                        if (newValue.matches(Regex("""^\d*\.?\d{0,2}$"""))) {
+                            amount = newValue
                         }
-                    )
+                    },
+                    label = { Text(stringResource(R.string.amount)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(32.dp))
+                Button(
+                    onClick = {
+                        val amountDouble = amount.toDoubleOrNull()
+                        if (amountDouble == null || amountDouble <= 0) {
+                            Toast.makeText(context, "Please enter a valid amount.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        coroutineScope.launch {
+                            val newExpense = Expense(
+                                amount = amountDouble,
+                                productId = selectedProduct!!.id,
+                                supplierId = selectedSupplier!!.id
+                            )
+                            expenseViewModel.addExpense(newExpense)
+                            Toast.makeText(context, context.getString(R.string.expense_saved), Toast.LENGTH_SHORT).show()
+                            onSaveSuccess()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Text(stringResource(R.string.save_expense), fontSize = 16.sp)
                 }
             }
-        }
-        Spacer(Modifier.height(32.dp))
-
-        // Save Button
-        Button(
-            onClick = {
-                val amountDouble = amount.toDoubleOrNull()
-                if (amountDouble == null || selectedProduct == null || selectedSupplier == null) {
-                    Toast.makeText(context, context.getString(R.string.please_fill_amount_product_supplier), Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-
-                coroutineScope.launch {
-                    val newExpense = Expense(
-                        amount = amountDouble,
-                        productId = selectedProduct!!.id,
-                        supplierId = selectedSupplier!!.id
-                    )
-                    expenseViewModel.addExpense(newExpense)
-                    Toast.makeText(context, context.getString(R.string.expense_saved), Toast.LENGTH_SHORT).show()
-                    onSaveSuccess()
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-        ) {
-            Text(stringResource(R.string.save_expense))
         }
     }
 
@@ -276,12 +225,146 @@ fun AddExpenseForm(
         AddProductDialog(
             onDismiss = { showAddProductDialog = false },
             onProductAdded = { newProduct ->
-                selectedProduct = newProduct // Automatically select the new product
+                selectedProduct = newProduct
                 showAddProductDialog = false
             },
-            selectedCategoryId = selectedCategoryId,
+            selectedCategory = selectedCategory,
             expenseViewModel = expenseViewModel
         )
+    }
+}
+
+@Composable
+fun <T> SelectionGrid(
+    title: String,
+    items: List<T>,
+    selectedItem: T?,
+    onItemSelected: (T) -> Unit,
+    defaultIcon: ImageVector
+) where T : Any {
+    Column {
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(12.dp))
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 100.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 350.dp)
+        ) {
+            items(items) { item ->
+                val isSelected = item == selectedItem
+                GridItem(
+                    item = item,
+                    isSelected = isSelected,
+                    onClick = { onItemSelected(item) },
+                    defaultIcon = defaultIcon
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+fun <T> GridItem(
+    item: T,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    defaultIcon: ImageVector
+) where T : Any {
+    val name: String
+    val iconName: String?
+    val colorHex: String?
+
+    when (item) {
+        is Supplier -> {
+            name = item.name
+            iconName = null // Suppliers will always use the LetterAvatar
+            colorHex = item.colorHex
+        }
+        is Category -> { name = item.name; iconName = item.iconName; colorHex = item.colorHex }
+        is Product -> { name = item.name; iconName = item.iconName; colorHex = item.colorHex }
+        else -> throw IllegalArgumentException("Unsupported type for GridItem")
+    }
+
+    val itemColor = colorHex?.let { IconAndColorUtils.colorMap[it] } ?: MaterialTheme.colorScheme.surfaceVariant
+    val onColor = if (itemColor == MaterialTheme.colorScheme.surfaceVariant) MaterialTheme.colorScheme.onSurfaceVariant else Color.White
+
+    Card(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primary else itemColor),
+        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.onPrimary) else null,
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 8.dp else 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            if (!iconName.isNullOrBlank()) {
+                val icon = IconAndColorUtils.iconMap[iconName] ?: defaultIcon
+                Icon(
+                    imageVector = icon,
+                    contentDescription = name,
+                    modifier = Modifier.size(36.dp),
+                    tint = if (isSelected) Color.White else onColor
+                )
+            } else {
+                LetterAvatar(
+                    name = name,
+                    size = 36.dp,
+                    backgroundColor = if (isSelected) Color.White.copy(alpha = 0.2f) else onColor.copy(alpha = 0.2f),
+                    contentColor = if (isSelected) Color.White else onColor
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = name,
+                textAlign = TextAlign.Center,
+                color = if (isSelected) Color.White else onColor,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun AddNewItemCard(text: String, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSecondaryContainer)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = text,
+                modifier = Modifier.size(36.dp),
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = text,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp
+            )
+        }
     }
 }
 
@@ -289,15 +372,14 @@ fun AddExpenseForm(
 fun AddProductDialog(
     onDismiss: () -> Unit,
     onProductAdded: (Product) -> Unit,
-    selectedCategoryId: Int?,
+    selectedCategory: Category?,
     expenseViewModel: ExpenseViewModel
 ) {
     var newProductName by remember { mutableStateOf("") }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    if (selectedCategoryId == null) {
-        // This should not happen if the button is only visible when a category is selected
+    if (selectedCategory == null) {
         Toast.makeText(context, "Please select a category first.", Toast.LENGTH_SHORT).show()
         onDismiss()
         return
@@ -319,11 +401,11 @@ fun AddProductDialog(
                 onClick = {
                     if (newProductName.isNotBlank()) {
                         coroutineScope.launch {
-                            val existingProduct = expenseViewModel.getProductByNameInCategory(newProductName, selectedCategoryId)
+                            val existingProduct = expenseViewModel.getProductByNameInCategory(newProductName, selectedCategory.id)
                             if (existingProduct != null) {
                                 Toast.makeText(context, context.getString(R.string.product_name_exists_in_category), Toast.LENGTH_SHORT).show()
                             } else {
-                                val newProduct = Product(name = newProductName, categoryId = selectedCategoryId)
+                                val newProduct = Product(name = newProductName, categoryId = selectedCategory.id)
                                 val newId = expenseViewModel.addProduct(newProduct)
                                 if (newId != -1L) {
                                     onProductAdded(newProduct.copy(id = newId.toInt()))

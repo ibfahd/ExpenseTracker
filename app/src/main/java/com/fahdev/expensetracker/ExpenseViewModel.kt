@@ -23,7 +23,7 @@ class ExpenseViewModel @Inject constructor(
     val allSuppliers: Flow<List<Supplier>> = expenseRepository.allSuppliers
     val allCategories: Flow<List<Category>> = expenseRepository.allCategories
 
-    // --- Filtering State ---
+    // --- Filtering State for Main Screen ---
     private val _selectedStartDate = MutableStateFlow<Long?>(null)
     val selectedStartDate: StateFlow<Long?> = _selectedStartDate.asStateFlow()
 
@@ -158,28 +158,47 @@ class ExpenseViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
-    // --- State and Logic for Add Expense Screen ---
-    private val _selectedCategoryIdForAdd = MutableStateFlow<Int?>(null)
-    val selectedCategoryIdForAdd: StateFlow<Int?> = _selectedCategoryIdForAdd.asStateFlow()
+    // --- State and Logic for the NEW Add Expense Screen Flow ---
+    private val _selectedSupplierForAdd = MutableStateFlow<Supplier?>(null)
+    val selectedSupplierForAdd: StateFlow<Supplier?> = _selectedSupplierForAdd.asStateFlow()
+
+    private val _selectedCategoryForAdd = MutableStateFlow<Category?>(null)
+    val selectedCategoryForAdd: StateFlow<Category?> = _selectedCategoryForAdd.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val productsInCategory: StateFlow<List<Product>> = _selectedCategoryIdForAdd
-        .flatMapLatest { categoryId ->
-            if (categoryId != null) {
-                expenseRepository.getProductsForCategory(categoryId)
+    val productsForAddScreen: StateFlow<List<Product>> = _selectedCategoryForAdd
+        .flatMapLatest { category ->
+            if (category != null) {
+                expenseRepository.getProductsForCategory(category.id)
             } else {
                 flowOf(emptyList())
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun selectCategoryForAdd(categoryId: Int) {
-        if (_selectedCategoryIdForAdd.value == categoryId) {
-            _selectedCategoryIdForAdd.value = null // Deselect if tapped again
+    fun onSupplierSelected(supplier: Supplier) {
+        if (_selectedSupplierForAdd.value?.id == supplier.id) {
+            _selectedSupplierForAdd.value = null
+            _selectedCategoryForAdd.value = null
         } else {
-            _selectedCategoryIdForAdd.value = categoryId
+            _selectedSupplierForAdd.value = supplier
+            _selectedCategoryForAdd.value = null
         }
     }
+
+    fun onCategorySelected(category: Category) {
+        if (_selectedCategoryForAdd.value?.id == category.id) {
+            _selectedCategoryForAdd.value = null
+        } else {
+            _selectedCategoryForAdd.value = category
+        }
+    }
+
+    fun resetAddExpenseFlow() {
+        _selectedSupplierForAdd.value = null
+        _selectedCategoryForAdd.value = null
+    }
+
 
     // --- ViewModel Initialization ---
     init {

@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Expense::class, Product::class, Supplier::class, Category::class, ShoppingListItem::class],
-    version = 5,
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -36,6 +36,7 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -43,13 +44,15 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "expense_database"
                 )
-                    .addCallback(AppDatabaseCallback(context)) // <-- ADDED THIS CALLBACK
-                    .addMigrations(MIGRATION_1_2, MIGRATION_3_4, MIGRATION_4_5)
+                    .addCallback(AppDatabaseCallback(context))
+                    .addMigrations(MIGRATION_1_2, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .build()
                 INSTANCE = instance
                 instance
             }
         }
+
+        // --- Existing Migrations ---
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name TEXT NOT NULL)")
@@ -97,10 +100,35 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE ShoppingListItem_new RENAME TO ShoppingListItem")
             }
         }
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE categories ADD COLUMN iconName TEXT")
+                db.execSQL("ALTER TABLE categories ADD COLUMN colorHex TEXT")
+                db.execSQL("ALTER TABLE suppliers ADD COLUMN colorHex TEXT")
+                db.execSQL("ALTER TABLE products ADD COLUMN iconName TEXT")
+                db.execSQL("ALTER TABLE products ADD COLUMN colorHex TEXT")
+            }
+        }
+
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE suppliers_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        colorHex TEXT
+                    )
+                """)
+                db.execSQL("""
+                    INSERT INTO suppliers_new (id, name, colorHex)
+                    SELECT id, name, colorHex FROM suppliers
+                """)
+                db.execSQL("DROP TABLE suppliers")
+                db.execSQL("ALTER TABLE suppliers_new RENAME TO suppliers")
+            }
+        }
     }
-    /**
-     * Callback for creating the database. This is where we can insert initial data.
-     */
+
     private class AppDatabaseCallback(private val context: Context) : Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
@@ -110,6 +138,7 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
         }
+
         suspend fun populateInitialCategories(categoryDao: CategoryDao) {
             val initialCategories = listOf(
                 Category(name = context.getString(R.string.category_food_drinks)),

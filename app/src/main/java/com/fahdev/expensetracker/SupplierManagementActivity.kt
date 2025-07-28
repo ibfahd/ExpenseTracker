@@ -5,59 +5,40 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Storefront
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.fahdev.expensetracker.data.Supplier
 import com.fahdev.expensetracker.ui.components.EmptyState
+import com.fahdev.expensetracker.ui.components.LetterAvatar
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import com.fahdev.expensetracker.ui.utils.IconAndColorUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class SupplierManagementActivity : AppCompatActivity() {
+
     private val expenseViewModel: ExpenseViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -75,13 +56,18 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+
     val allSuppliers by expenseViewModel.allSuppliers.collectAsState(initial = emptyList())
+
     var showAddEditDialog by remember { mutableStateOf(false) }
     var supplierToEdit by remember { mutableStateOf<Supplier?>(null) }
     var supplierNameInput by remember { mutableStateOf("") }
+    var selectedColorHex by remember { mutableStateOf<String?>(null) }
+
     var showDeleteDialog by remember { mutableStateOf(false) }
     var supplierToDelete by remember { mutableStateOf<Supplier?>(null) }
     var showDeleteWithExpensesDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -89,7 +75,8 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
                 title = { Text(stringResource(R.string.manage_suppliers)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 navigationIcon = {
                     IconButton(onClick = { (context as? AppCompatActivity)?.finish() }) {
@@ -103,6 +90,7 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
                 onClick = {
                     supplierToEdit = null
                     supplierNameInput = ""
+                    selectedColorHex = null
                     showAddEditDialog = true
                 },
                 containerColor = MaterialTheme.colorScheme.tertiary,
@@ -127,13 +115,17 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
                     description = stringResource(id = R.string.no_suppliers_description)
                 )
             } else {
-                LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    items(allSuppliers) { supplier ->
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(allSuppliers, key = { it.id }) { supplier ->
                         SupplierItem(
                             supplier = supplier,
                             onEditClick = {
                                 supplierToEdit = it
                                 supplierNameInput = it.name
+                                selectedColorHex = it.colorHex
                                 showAddEditDialog = true
                             },
                             onDeleteClick = {
@@ -146,56 +138,39 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
             }
         }
     }
+
     if (showAddEditDialog) {
-        AlertDialog(
-            onDismissRequest = { showAddEditDialog = false },
-            title = {
-                val titleRes = if (supplierToEdit == null) R.string.add_supplier_title else R.string.edit_supplier_title
-                Text(stringResource(titleRes))
-            },
-            text = {
-                TextField(
-                    value = supplierNameInput,
-                    onValueChange = { supplierNameInput = it },
-                    label = { Text(stringResource(R.string.supplier_name_label)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                Button(onClick = {
-                    if (supplierNameInput.isNotBlank()) {
-                        showAddEditDialog = false
-                        scope.launch {
-                            val existingSupplier = expenseViewModel.getSupplierByName(supplierNameInput)
-                            if (existingSupplier != null && existingSupplier.id != supplierToEdit?.id) {
-                                snackbarHostState.showSnackbar(context.getString(R.string.supplier_exists_error))
-                            } else {
-                                if (supplierToEdit == null) {
-                                    expenseViewModel.addSupplier(Supplier(name = supplierNameInput))
-                                    //snackbarHostState.showSnackbar(context.getString(R.string.supplier_added_success))
-                                } else {
-                                    val updatedSupplier = supplierToEdit!!.copy(name = supplierNameInput)
-                                    expenseViewModel.updateSupplier(updatedSupplier)
-                                    //snackbarHostState.showSnackbar(context.getString(R.string.supplier_updated_success))
-                                }
-                            }
-                        }
+        AddEditSupplierDialog(
+            supplierToEdit = supplierToEdit,
+            supplierName = supplierNameInput,
+            onNameChange = { supplierNameInput = it },
+            selectedColorHex = selectedColorHex,
+            onColorChange = { selectedColorHex = it },
+            onDismiss = { showAddEditDialog = false },
+            onConfirm = {
+                scope.launch {
+                    val existingSupplier = expenseViewModel.getSupplierByName(supplierNameInput)
+                    if (existingSupplier != null && existingSupplier.id != supplierToEdit?.id) {
+                        snackbarHostState.showSnackbar(context.getString(R.string.supplier_exists_error))
                     } else {
-                        scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.supplier_name_empty_error)) }
+                        if (supplierToEdit == null) {
+                            expenseViewModel.addSupplier(
+                                Supplier(name = supplierNameInput, colorHex = selectedColorHex)
+                            )
+                        } else {
+                            val updatedSupplier = supplierToEdit!!.copy(
+                                name = supplierNameInput,
+                                colorHex = selectedColorHex
+                            )
+                            expenseViewModel.updateSupplier(updatedSupplier)
+                        }
+                        showAddEditDialog = false
                     }
-                }) {
-                    val textRes = if (supplierToEdit == null) R.string.add_button else R.string.save_button
-                    Text(stringResource(textRes))
-                }
-            },
-            dismissButton = {
-                Button(onClick = { showAddEditDialog = false }) {
-                    Text(stringResource(R.string.cancel))
                 }
             }
         )
     }
+
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -233,7 +208,6 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
         AlertDialog(
             onDismissRequest = { showDeleteWithExpensesDialog = false },
             title = { Text(stringResource(R.string.confirm_deletion_title)) },
-            // Use the new, more descriptive warning message
             text = { Text(stringResource(id = R.string.delete_supplier_with_expenses_confirmation, supplierToDelete?.name ?: "")) },
             confirmButton = {
                 Button(
@@ -256,19 +230,19 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
     }
 }
 
+
 @Composable
 fun SupplierItem(
     supplier: Supplier,
     onEditClick: (Supplier) -> Unit,
     onDeleteClick: (Supplier) -> Unit
 ) {
+    val supplierColor = supplier.colorHex?.let { IconAndColorUtils.colorMap[it] } ?: MaterialTheme.colorScheme.surfaceVariant
+    val onSupplierColor = if (supplierColor == MaterialTheme.colorScheme.surfaceVariant) MaterialTheme.colorScheme.onSurfaceVariant else Color.White
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = supplierColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -278,29 +252,31 @@ fun SupplierItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            LetterAvatar(
+                name = supplier.name,
+                backgroundColor = onSupplierColor.copy(alpha = 0.2f),
+                contentColor = onSupplierColor
+            )
+            Spacer(Modifier.width(16.dp))
             Text(
                 text = supplier.name,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = onSupplierColor,
                 modifier = Modifier.weight(1f)
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                IconButton(
-                    onClick = { onEditClick(supplier) }
-                ) {
+                IconButton(onClick = { onEditClick(supplier) }) {
                     Icon(
                         imageVector = Icons.Filled.Edit,
                         contentDescription = stringResource(R.string.edit_supplier_desc, supplier.name),
-                        tint = MaterialTheme.colorScheme.secondary
+                        tint = onSupplierColor
                     )
                 }
-                IconButton(
-                    onClick = { onDeleteClick(supplier) }
-                ) {
+                IconButton(onClick = { onDeleteClick(supplier) }) {
                     Icon(
                         imageVector = Icons.Filled.Delete,
                         contentDescription = stringResource(R.string.delete_supplier_desc, supplier.name),
-                        tint = MaterialTheme.colorScheme.error
+                        tint = onSupplierColor.copy(alpha = 0.8f)
                     )
                 }
             }
@@ -308,14 +284,74 @@ fun SupplierItem(
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun SupplierManagementScreenPreview() {
-    ExpenseTrackerTheme {
-        //val context = LocalContext.current
-        //val application = context.applicationContext as Application
-        //val factory = ExpenseViewModelFactory(application)
-        //val expenseViewModel: ExpenseViewModel = viewModel(factory = factory)
-        //SupplierManagementScreen(expenseViewModel = expenseViewModel)
-    }
+fun AddEditSupplierDialog(
+    supplierToEdit: Supplier?,
+    supplierName: String,
+    onNameChange: (String) -> Unit,
+    selectedColorHex: String?,
+    onColorChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (supplierToEdit == null) stringResource(R.string.add_supplier_title) else stringResource(R.string.edit_supplier_title)) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = supplierName,
+                    onValueChange = onNameChange,
+                    label = { Text(stringResource(R.string.supplier_name_label)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(16.dp))
+                Text("Color", style = MaterialTheme.typography.labelLarge)
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(IconAndColorUtils.colorList) { colorInfo ->
+                        val isSelected = colorInfo.hex == selectedColorHex
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(colorInfo.color)
+                                .clickable { onColorChange(colorInfo.hex) }
+                                .border(
+                                    width = if (isSelected) 2.dp else 0.dp,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                if (supplierName.isNotBlank()) {
+                    onConfirm()
+                }
+            }) {
+                Text(if (supplierToEdit == null) stringResource(R.string.add_button) else stringResource(R.string.save_button))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }

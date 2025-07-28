@@ -7,6 +7,8 @@ import androidx.room.PrimaryKey
 data class Product(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val name: String, // e.g., "Milk", "Bread", "Eggs"
-    val categoryId: Int // Link to Category entity
+    val name: String,
+    val categoryId: Int,
+    val iconName: String? = null,
+    val colorHex: String? = null
 )

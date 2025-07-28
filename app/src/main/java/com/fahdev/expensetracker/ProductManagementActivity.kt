@@ -4,17 +4,30 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
@@ -27,12 +40,12 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -43,17 +56,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
+import com.fahdev.expensetracker.ui.utils.IconAndColorUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class ProductManagementActivity : AppCompatActivity() {
+
     private val expenseViewModel: ExpenseViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val categoryId = intent.getIntExtra("CATEGORY_ID", -1)
@@ -63,6 +82,7 @@ class ProductManagementActivity : AppCompatActivity() {
             finish()
             return
         }
+
         setContent {
             ExpenseTrackerTheme {
                 ProductManagementScreen(
@@ -88,11 +108,16 @@ fun ProductManagementScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val products by expenseViewModel.getProductsForCategory(categoryId).collectAsState(initial = emptyList())
+
     var showAddEditDialog by remember { mutableStateOf(false) }
     var productToEdit by remember { mutableStateOf<Product?>(null) }
     var productNameInput by remember { mutableStateOf("") }
+    var selectedIconName by remember { mutableStateOf<String?>(null) }
+    var selectedColorHex by remember { mutableStateOf<String?>(null) }
+
     var showDeleteDialog by remember { mutableStateOf(false) }
     var productToDelete by remember { mutableStateOf<Product?>(null) }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -109,6 +134,8 @@ fun ProductManagementScreen(
             FloatingActionButton(onClick = {
                 productToEdit = null
                 productNameInput = ""
+                selectedIconName = null
+                selectedColorHex = null
                 showAddEditDialog = true
             }) {
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_product_title))
@@ -128,6 +155,8 @@ fun ProductManagementScreen(
                     onEditClick = {
                         productToEdit = product
                         productNameInput = product.name
+                        selectedIconName = product.iconName
+                        selectedColorHex = product.colorHex
                         showAddEditDialog = true
                     },
                     onDeleteClick = {
@@ -138,11 +167,16 @@ fun ProductManagementScreen(
             }
         }
     }
+
     if (showAddEditDialog) {
         AddEditProductDialog(
             productToEdit = productToEdit,
             productName = productNameInput,
             onNameChange = { productNameInput = it },
+            selectedIconName = selectedIconName,
+            onIconChange = { selectedIconName = it },
+            selectedColorHex = selectedColorHex,
+            onColorChange = { selectedColorHex = it },
             onDismiss = { showAddEditDialog = false },
             onConfirm = {
                 scope.launch {
@@ -151,9 +185,22 @@ fun ProductManagementScreen(
                         snackbarHostState.showSnackbar(context.getString(R.string.product_name_exists_in_category))
                     } else {
                         if (productToEdit == null) {
-                            expenseViewModel.addProduct(Product(name = productNameInput, categoryId = categoryId))
+                            expenseViewModel.addProduct(
+                                Product(
+                                    name = productNameInput,
+                                    categoryId = categoryId,
+                                    iconName = selectedIconName,
+                                    colorHex = selectedColorHex
+                                )
+                            )
                         } else {
-                            expenseViewModel.updateProduct(productToEdit!!.copy(name = productNameInput))
+                            expenseViewModel.updateProduct(
+                                productToEdit!!.copy(
+                                    name = productNameInput,
+                                    iconName = selectedIconName,
+                                    colorHex = selectedColorHex
+                                )
+                            )
                         }
                         showAddEditDialog = false
                     }
@@ -161,6 +208,7 @@ fun ProductManagementScreen(
             }
         )
     }
+
     if (showDeleteDialog) {
         DeleteProductDialog(
             productToDelete = productToDelete,
@@ -187,19 +235,38 @@ fun ProductItem(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
-    Card(elevation = CardDefaults.cardElevation(2.dp)) {
+    val productColor = product.colorHex?.let { IconAndColorUtils.colorMap[it] } ?: MaterialTheme.colorScheme.surfaceVariant
+    val onProductColor = if (productColor == MaterialTheme.colorScheme.surfaceVariant) MaterialTheme.colorScheme.onSurfaceVariant else Color.White
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = productColor),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = product.name, modifier = Modifier.weight(1f))
+            val icon: ImageVector = product.iconName?.let { IconAndColorUtils.iconMap[it] } ?: Icons.AutoMirrored.Outlined.Label
+            Icon(
+                imageVector = icon,
+                contentDescription = product.name,
+                tint = onProductColor,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(Modifier.width(16.dp))
+            Text(
+                text = product.name,
+                modifier = Modifier.weight(1f),
+                color = onProductColor,
+                style = MaterialTheme.typography.bodyLarge
+            )
             IconButton(onClick = onEditClick) {
-                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_product_title))
+                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_product_title), tint = onProductColor)
             }
             IconButton(onClick = onDeleteClick) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_button))
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_button), tint = onProductColor.copy(alpha = 0.8f))
             }
         }
     }
@@ -210,6 +277,10 @@ fun AddEditProductDialog(
     productToEdit: Product?,
     productName: String,
     onNameChange: (String) -> Unit,
+    selectedIconName: String?,
+    onIconChange: (String) -> Unit,
+    selectedColorHex: String?,
+    onColorChange: (String) -> Unit,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -217,12 +288,64 @@ fun AddEditProductDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (productToEdit == null) stringResource(R.string.add_product_title) else stringResource(R.string.edit_product_title)) },
         text = {
-            TextField(
-                value = productName,
-                onValueChange = onNameChange,
-                label = { Text(stringResource(R.string.product_name_label)) },
-                singleLine = true
-            )
+            Column {
+                OutlinedTextField(
+                    value = productName,
+                    onValueChange = onNameChange,
+                    label = { Text(stringResource(R.string.product_name_label)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(16.dp))
+                Text("Icon", style = MaterialTheme.typography.labelLarge)
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(IconAndColorUtils.iconList) { iconInfo ->
+                        val isSelected = iconInfo.name == selectedIconName
+                        IconButton(
+                            onClick = { onIconChange(iconInfo.name) },
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
+                        ) {
+                            Icon(imageVector = iconInfo.icon, contentDescription = iconInfo.name)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                Text("Color", style = MaterialTheme.typography.labelLarge)
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(IconAndColorUtils.colorList) { colorInfo ->
+                        val isSelected = colorInfo.hex == selectedColorHex
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(colorInfo.color)
+                                .clickable { onColorChange(colorInfo.hex) }
+                                .border(
+                                    width = if (isSelected) 2.dp else 0.dp,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         },
         confirmButton = {
             Button(onClick = {
