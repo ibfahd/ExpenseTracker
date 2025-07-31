@@ -2,14 +2,7 @@ package com.fahdev.expensetracker.di
 
 import android.content.Context
 import com.fahdev.expensetracker.AppDatabase
-import com.fahdev.expensetracker.data.CategoryDao
-import com.fahdev.expensetracker.data.ExpenseDao
-import com.fahdev.expensetracker.data.ExpenseRepository
-import com.fahdev.expensetracker.data.ProductDao
-import com.fahdev.expensetracker.data.ShoppingListItemDao
-import com.fahdev.expensetracker.data.ShoppingRepository
-import com.fahdev.expensetracker.data.SupplierDao
-import com.fahdev.expensetracker.data.UserPreferencesRepository
+import com.fahdev.expensetracker.data.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,29 +23,22 @@ object AppModule {
     }
 
     @Provides
-    fun provideExpenseDao(appDatabase: AppDatabase): ExpenseDao {
-        return appDatabase.expenseDao()
-    }
+    fun provideExpenseDao(appDatabase: AppDatabase): ExpenseDao = appDatabase.expenseDao()
 
     @Provides
-    fun provideProductDao(appDatabase: AppDatabase): ProductDao {
-        return appDatabase.productDao()
-    }
+    fun provideProductDao(appDatabase: AppDatabase): ProductDao = appDatabase.productDao()
 
     @Provides
-    fun provideSupplierDao(appDatabase: AppDatabase): SupplierDao {
-        return appDatabase.supplierDao()
-    }
+    fun provideSupplierDao(appDatabase: AppDatabase): SupplierDao = appDatabase.supplierDao()
 
     @Provides
-    fun provideCategoryDao(appDatabase: AppDatabase): CategoryDao {
-        return appDatabase.categoryDao()
-    }
+    fun provideCategoryDao(appDatabase: AppDatabase): CategoryDao = appDatabase.categoryDao()
 
     @Provides
-    fun provideShoppingListItemDao(appDatabase: AppDatabase): ShoppingListItemDao {
-        return appDatabase.shoppingListItemDao()
-    }
+    fun provideShoppingListItemDao(appDatabase: AppDatabase): ShoppingListItemDao = appDatabase.shoppingListItemDao()
+
+    @Provides
+    fun provideCategorySupplierDao(appDatabase: AppDatabase): CategorySupplierDao = appDatabase.categorySupplierDao() // <-- ADDED
 
     // --- Repository Providers ---
 
@@ -62,9 +48,10 @@ object AppModule {
         expenseDao: ExpenseDao,
         productDao: ProductDao,
         supplierDao: SupplierDao,
-        categoryDao: CategoryDao
+        categoryDao: CategoryDao,
+        categorySupplierDao: CategorySupplierDao // <-- ADDED
     ): ExpenseRepository {
-        return ExpenseRepository(expenseDao, productDao, supplierDao, categoryDao)
+        return ExpenseRepository(expenseDao, productDao, supplierDao, categoryDao, categorySupplierDao) // <-- ADDED
     }
 
     @Provides

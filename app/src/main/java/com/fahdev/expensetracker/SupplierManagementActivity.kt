@@ -12,10 +12,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.Supplier
 import com.fahdev.expensetracker.ui.components.EmptyState
 import com.fahdev.expensetracker.ui.components.LetterAvatar
@@ -58,11 +62,10 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     val allSuppliers by expenseViewModel.allSuppliers.collectAsState(initial = emptyList())
+    val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
 
     var showAddEditDialog by remember { mutableStateOf(false) }
     var supplierToEdit by remember { mutableStateOf<Supplier?>(null) }
-    var supplierNameInput by remember { mutableStateOf("") }
-    var selectedColorHex by remember { mutableStateOf<String?>(null) }
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var supplierToDelete by remember { mutableStateOf<Supplier?>(null) }
@@ -89,8 +92,6 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
             FloatingActionButton(
                 onClick = {
                     supplierToEdit = null
-                    supplierNameInput = ""
-                    selectedColorHex = null
                     showAddEditDialog = true
                 },
                 containerColor = MaterialTheme.colorScheme.tertiary,
@@ -124,8 +125,6 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
                             supplier = supplier,
                             onEditClick = {
                                 supplierToEdit = it
-                                supplierNameInput = it.name
-                                selectedColorHex = it.colorHex
                                 showAddEditDialog = true
                             },
                             onDeleteClick = {
@@ -142,32 +141,10 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
     if (showAddEditDialog) {
         AddEditSupplierDialog(
             supplierToEdit = supplierToEdit,
-            supplierName = supplierNameInput,
-            onNameChange = { supplierNameInput = it },
-            selectedColorHex = selectedColorHex,
-            onColorChange = { selectedColorHex = it },
+            allCategories = allCategories,
+            expenseViewModel = expenseViewModel,
             onDismiss = { showAddEditDialog = false },
-            onConfirm = {
-                scope.launch {
-                    val existingSupplier = expenseViewModel.getSupplierByName(supplierNameInput)
-                    if (existingSupplier != null && existingSupplier.id != supplierToEdit?.id) {
-                        snackbarHostState.showSnackbar(context.getString(R.string.supplier_exists_error))
-                    } else {
-                        if (supplierToEdit == null) {
-                            expenseViewModel.addSupplier(
-                                Supplier(name = supplierNameInput, colorHex = selectedColorHex)
-                            )
-                        } else {
-                            val updatedSupplier = supplierToEdit!!.copy(
-                                name = supplierNameInput,
-                                colorHex = selectedColorHex
-                            )
-                            expenseViewModel.updateSupplier(updatedSupplier)
-                        }
-                        showAddEditDialog = false
-                    }
-                }
-            }
+            snackbarHostState = snackbarHostState
         )
     }
 
@@ -287,21 +264,39 @@ fun SupplierItem(
 @Composable
 fun AddEditSupplierDialog(
     supplierToEdit: Supplier?,
-    supplierName: String,
-    onNameChange: (String) -> Unit,
-    selectedColorHex: String?,
-    onColorChange: (String) -> Unit,
+    allCategories: List<Category>,
+    expenseViewModel: ExpenseViewModel,
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    snackbarHostState: SnackbarHostState
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    var supplierName by remember { mutableStateOf(supplierToEdit?.name ?: "") }
+    var selectedColorHex by remember { mutableStateOf(supplierToEdit?.colorHex) }
+
+    val linkedCategoryIds by if (supplierToEdit != null) {
+        expenseViewModel.getLinkedCategoryIds(supplierToEdit.id).collectAsState(initial = emptyList())
+    } else {
+        remember { mutableStateOf(emptyList()) }
+    }
+    val checkedCategoryIds = remember { mutableStateMapOf<Int, Boolean>() }
+
+    LaunchedEffect(linkedCategoryIds) {
+        checkedCategoryIds.clear()
+        linkedCategoryIds.forEach { id ->
+            checkedCategoryIds[id] = true
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (supplierToEdit == null) stringResource(R.string.add_supplier_title) else stringResource(R.string.edit_supplier_title)) },
         text = {
-            Column {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 OutlinedTextField(
                     value = supplierName,
-                    onValueChange = onNameChange,
+                    onValueChange = { supplierName = it },
                     label = { Text(stringResource(R.string.supplier_name_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -319,7 +314,7 @@ fun AddEditSupplierDialog(
                                 .size(40.dp)
                                 .clip(CircleShape)
                                 .background(colorInfo.color)
-                                .clickable { onColorChange(colorInfo.hex) }
+                                .clickable { selectedColorHex = colorInfo.hex }
                                 .border(
                                     width = if (isSelected) 2.dp else 0.dp,
                                     color = MaterialTheme.colorScheme.onSurface,
@@ -337,14 +332,77 @@ fun AddEditSupplierDialog(
                         }
                     }
                 }
+
+                if (allCategories.isNotEmpty()) {
+                    Spacer(Modifier.height(24.dp))
+                    Text("Link Categories", style = MaterialTheme.typography.titleMedium)
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    Box(modifier = Modifier.heightIn(max = 200.dp)) {
+                        LazyColumn {
+                            items(allCategories, key = { it.id }) { category ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            val isChecked = checkedCategoryIds[category.id] ?: false
+                                            checkedCategoryIds[category.id] = !isChecked
+                                        }
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = checkedCategoryIds[category.id] ?: false,
+                                        onCheckedChange = { isChecked ->
+                                            checkedCategoryIds[category.id] = isChecked
+                                        }
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Icon(
+                                        imageVector = category.iconName?.let { IconAndColorUtils.iconMap[it] } ?: Icons.Outlined.Category,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(text = category.name, style = MaterialTheme.typography.bodyLarge)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
-            Button(onClick = {
-                if (supplierName.isNotBlank()) {
-                    onConfirm()
+            Button(
+                onClick = {
+                    if (supplierName.isBlank()) {
+                        scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.supplier_name_empty_error)) }
+                        return@Button
+                    }
+                    scope.launch {
+                        val existingSupplier = expenseViewModel.getSupplierByName(supplierName)
+                        if (existingSupplier != null && existingSupplier.id != supplierToEdit?.id) {
+                            snackbarHostState.showSnackbar(context.getString(R.string.supplier_exists_error))
+                        } else {
+                            // --- FIX IS HERE ---
+                            val newOrUpdatedSupplier = (supplierToEdit ?: Supplier(name = "")).copy(
+                                name = supplierName,
+                                colorHex = selectedColorHex
+                            )
+
+                            val linkedIds = checkedCategoryIds.filter { it.value }.keys.toList()
+
+                            if (supplierToEdit == null) {
+                                val newId = expenseViewModel.addSupplier(newOrUpdatedSupplier)
+                                expenseViewModel.saveCategoryLinksForSupplier(newId.toInt(), linkedIds)
+                            } else {
+                                expenseViewModel.updateSupplier(newOrUpdatedSupplier)
+                                expenseViewModel.saveCategoryLinksForSupplier(newOrUpdatedSupplier.id, linkedIds)
+                            }
+                            onDismiss()
+                        }
+                    }
                 }
-            }) {
+            ) {
                 Text(if (supplierToEdit == null) stringResource(R.string.add_button) else stringResource(R.string.save_button))
             }
         },

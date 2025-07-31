@@ -110,9 +110,12 @@ fun AddExpenseFlow(
     var showAddProductDialog by remember { mutableStateOf(false) }
 
     val allSuppliers by expenseViewModel.allSuppliers.collectAsState(initial = emptyList())
-    val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
     val selectedSupplier by expenseViewModel.selectedSupplierForAdd.collectAsState()
+
+    // This is the key change: we now use the filtered list of categories.
+    val categoriesForSupplier by expenseViewModel.categoriesForSelectedSupplier.collectAsState()
     val selectedCategory by expenseViewModel.selectedCategoryForAdd.collectAsState()
+
     val products by expenseViewModel.productsForAddScreen.collectAsState()
 
     LaunchedEffect(selectedCategory) {
@@ -138,7 +141,7 @@ fun AddExpenseFlow(
                 Spacer(Modifier.height(24.dp))
                 SelectionGrid(
                     title = stringResource(R.string.category),
-                    items = allCategories,
+                    items = categoriesForSupplier, // Use the filtered list here
                     selectedItem = selectedCategory,
                     onItemSelected = { expenseViewModel.onCategorySelected(it) },
                     defaultIcon = Icons.Outlined.Category

@@ -6,23 +6,21 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.fahdev.expensetracker.data.Category
-import com.fahdev.expensetracker.data.CategoryDao
-import com.fahdev.expensetracker.data.Expense
-import com.fahdev.expensetracker.data.ExpenseDao
-import com.fahdev.expensetracker.data.Product
-import com.fahdev.expensetracker.data.ProductDao
-import com.fahdev.expensetracker.data.ShoppingListItem
-import com.fahdev.expensetracker.data.ShoppingListItemDao
-import com.fahdev.expensetracker.data.Supplier
-import com.fahdev.expensetracker.data.SupplierDao
+import com.fahdev.expensetracker.data.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [Expense::class, Product::class, Supplier::class, Category::class, ShoppingListItem::class],
-    version = 7,
+    entities = [
+        Expense::class,
+        Product::class,
+        Supplier::class,
+        Category::class,
+        ShoppingListItem::class,
+        CategorySupplierCrossRef::class
+    ],
+    version = 8,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -32,6 +30,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun supplierDao(): SupplierDao
     abstract fun categoryDao(): CategoryDao
     abstract fun shoppingListItemDao(): ShoppingListItemDao
+    abstract fun categorySupplierDao(): CategorySupplierDao
 
     companion object {
         @Volatile
@@ -45,14 +44,13 @@ abstract class AppDatabase : RoomDatabase() {
                     "expense_database"
                 )
                     .addCallback(AppDatabaseCallback(context))
-                    .addMigrations(MIGRATION_1_2, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                     .build()
                 INSTANCE = instance
                 instance
             }
         }
 
-        // --- Existing Migrations ---
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name TEXT NOT NULL)")
@@ -125,6 +123,22 @@ abstract class AppDatabase : RoomDatabase() {
                 """)
                 db.execSQL("DROP TABLE suppliers")
                 db.execSQL("ALTER TABLE suppliers_new RENAME TO suppliers")
+            }
+        }
+
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `category_supplier_cross_ref` (
+                        `categoryId` INTEGER NOT NULL, 
+                        `supplierId` INTEGER NOT NULL, 
+                        PRIMARY KEY(`categoryId`, `supplierId`), 
+                        FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, 
+                        FOREIGN KEY(`supplierId`) REFERENCES `suppliers`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                """)
+                // Create indices for the foreign keys for better performance
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_category_supplier_cross_ref_supplierId` ON `category_supplier_cross_ref` (`supplierId`)")
             }
         }
     }

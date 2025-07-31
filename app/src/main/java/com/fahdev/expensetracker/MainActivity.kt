@@ -116,8 +116,8 @@ fun MainAppScreen(expenseViewModel: ExpenseViewModel) {
         CurrencyHelper.getCurrencyFormatter(currencyCode)
     }
     val navigationActions = mapOf(
-        stringResource(R.string.manage_categories) to { context.startActivity(Intent(context, CategoryManagementActivity::class.java)) },
         stringResource(R.string.manage_suppliers) to { context.startActivity(Intent(context, SupplierManagementActivity::class.java)) },
+        stringResource(R.string.manage_categories) to { context.startActivity(Intent(context, CategoryManagementActivity::class.java)) },
         stringResource(R.string.shopping_list_title) to { context.startActivity(Intent(context, ShoppingListActivity::class.java)) },
         stringResource(R.string.title_activity_reporting) to { context.startActivity(Intent(context, ReportingActivity::class.java)) },
         stringResource(R.string.settings) to { context.startActivity(Intent(context, SettingsActivity::class.java)) },
