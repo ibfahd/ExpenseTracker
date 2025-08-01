@@ -194,14 +194,18 @@
     <string name="please_fill_amount_product_supplier">Veuillez remplir le montant, sélectionner le produit et le fournisseur</string>
     <string name="expense_saved">Dépense enregistrée !</string>
     <string name="validation_summary">%1$d sur %2$d éléments prêts à valider</string>
-    <string name="total_cost">Total : %.2f $</string>
+    <string name="total_cost">Total : %.2f</string>
     <string name="processing_purchases">Traitement en cours…</string>
     <string name="complete_shopping">Finaliser les achats</string>
     <string name="no_items_ready">Aucun élément prêt</string>
+    <string name="confirm_changes">Confirmer</string>
+    <string name="item_validated_desc">L\'élément a été rempli</string>
     <string name="complete_shopping_title">Finaliser les achats</string>
     <string name="validation_summary_title">Résumé</string>
     <string name="items_to_record">Éléments à enregistrer : %d</string>
-    <string name="total_amount">Montant total : %.2f $</string>
+    <string name="total_amount">Montant total : %s</string>
     <string name="record_expenses">Enregistrer les dépenses</string>
     <string name="add_new_product_short">Nouveau produit</string>
+    <string name="validate_purchases_action">Valider les achats</string>
+    <string name="edit_item_title">Modifier l\'article d\'achat</string>
 </resources>

@@ -60,9 +60,10 @@ object AppModule {
         shoppingListItemDao: ShoppingListItemDao,
         expenseDao: ExpenseDao,
         productDao: ProductDao,
-        supplierDao: SupplierDao
+        supplierDao: SupplierDao,
+        categorySupplierDao: CategorySupplierDao
     ): ShoppingRepository {
-        return ShoppingRepository(shoppingListItemDao, expenseDao, productDao, supplierDao)
+        return ShoppingRepository(shoppingListItemDao, expenseDao, productDao, supplierDao, categorySupplierDao)
     }
 
     @Provides

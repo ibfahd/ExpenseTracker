@@ -62,7 +62,7 @@
     <string name="planned_quantity_display">Planned</string>
     <string name="purchased_quantity_label">Purchased Quantity</string>
     <string name="unit_price_label">Unit Price</string>
-    <string name="delete_item">Delete Item</string>
+    <string name="delete_item">Delete item: %1$s</string>
     <string name="title_activity_reporting">Expense Report</string>
     <string name="back_button_desc">Back</string>
     <string name="report_section_summary">Overall Summary (All Time)</string>
@@ -111,7 +111,7 @@
     <string name="category_added_success">Category added!</string>
     <string name="category_updated_success">Category updated!</string>
     <string name="category_deleted_success">Category deleted!</string>
-    <string name="category_name_empty_error">Category name cannot be empty.</string>
+    <string name="category_name_empty_error">Validate Purchases</string>
 
     <string name="add_new_supplier_desc">Add new supplier</string>
     <string name="no_suppliers_placeholder">No suppliers yet. Tap \'+\' to add one!</string>
@@ -199,16 +199,20 @@
     <string name="please_fill_amount_product_supplier">Please fill Amount, select Product and Supplier</string>
     <string name="expense_saved">Expense saved!</string>
 
-    <string name="validation_summary">%1$d of %2$d items ready to validate</string>
-    <string name="total_cost">Total: $%.2f</string>
-    <string name="processing_purchases">Processing…</string>
-    <string name="complete_shopping">Complete Shopping</string>
-    <string name="no_items_ready">No items ready</string>
+    <!-- NEW/MODIFIED STRINGS FOR SHOPPING LIST -->
+    <string name="validate_purchases_action">Validate Purchases</string>
+    <string name="edit_item_title">Edit Shopping Item</string>
+    <string name="confirm_changes">Confirm</string>
+    <string name="item_validated_desc">Item has been filled out</string>
     <string name="complete_shopping_title">Complete Shopping</string>
     <string name="validation_summary_title">Summary</string>
     <string name="items_to_record">Items to record: %d</string>
-    <string name="total_amount">Total amount: $%.2f</string>
+    <string name="total_amount">Total amount: %s</string>
     <string name="record_expenses">Record Expenses</string>
-
     <string name="add_new_product_short">New Product</string>
+    <string name="validation_summary">%1$d of %2$d items ready to validate</string>
+    <string name="total_cost">Total : %.2f</string>
+    <string name="processing_purchases">Processing in progress…</string>
+    <string name="no_items_ready">No items ready</string>
+    <string name="complete_shopping">Complete Shopping</string>
 </resources>

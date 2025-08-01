@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -24,14 +25,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.outlined.ShoppingCartCheckout
+import androidx.compose.material.icons.filled.ShoppingCartCheckout
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -70,15 +69,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.fahdev.expensetracker.data.Category
+import com.fahdev.expensetracker.data.CurrencyHelper
 import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.data.ShoppingListItem
+import com.fahdev.expensetracker.data.UserPreferencesRepository
 import com.fahdev.expensetracker.ui.components.EmptyState
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
 
 @AndroidEntryPoint
 class ShoppingListActivity : AppCompatActivity() {
@@ -118,21 +121,28 @@ fun ShoppingListScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // State from ViewModels
     val currentSupplierId by shoppingListViewModel.currentSupplierId.collectAsState()
     val allSuppliers by shoppingListViewModel.allSuppliers.collectAsState(initial = emptyList())
     val shoppingListItems by shoppingListViewModel.shoppingListItems.collectAsState(initial = emptyList())
     val allProducts by shoppingListViewModel.allProducts.collectAsState(initial = emptyList())
+    val userPrefsRepo = remember { UserPreferencesRepository.getInstance(context.applicationContext) }
+    val currencyCode by userPrefsRepo.currencyCode.collectAsState()
+    val currencyFormatter = remember(currencyCode) {
+        CurrencyHelper.getCurrencyFormatter(currencyCode)
+    }
+
+
+    // UI State
     var expandedSupplierDropdown by remember { mutableStateOf(false) }
     var showAddShoppingItemDialog by remember { mutableStateOf(false) }
-    var newProductIdForAddItemDialog by remember { mutableStateOf<Int?>(null) }
-    var newProductTextForAddItemDialog by remember { mutableStateOf("") }
-    var newPlannedQuantityForAddItemDialog by remember { mutableStateOf("") }
-    var newUnitForAddItemDialog by remember { mutableStateOf("") }
-    var expandedProductDropdownForAddItemDialog by remember { mutableStateOf(false) }
-    var showAddProductDialog by remember { mutableStateOf(false) }
-    var newProductNameForAddProductDialog by remember { mutableStateOf("") }
+    var showEditShoppingItemDialog by remember { mutableStateOf(false) }
+    var itemToEdit by remember { mutableStateOf<ShoppingListItem?>(null) }
     var showConfirmValidateDialog by remember { mutableStateOf(false) }
     var isValidating by remember { mutableStateOf(false) }
+
+    // Derived state for validation summary
     val validationStats by remember(shoppingListItems) {
         derivedStateOf {
             val validItems = shoppingListItems.filter { it.purchasedQuantity > 0.0 && it.unitPrice != null }
@@ -145,6 +155,7 @@ fun ShoppingListScreen(
             )
         }
     }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -154,77 +165,33 @@ fun ShoppingListScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_button_desc))
                     }
                 },
+                actions = {
+                    if (validationStats.hasValidItems) {
+                        IconButton(onClick = { showConfirmValidateDialog = true }, enabled = !isValidating) {
+                            BadgedBox(
+                                badge = { Badge { Text(validationStats.validItemsCount.toString()) } }
+                            ) {
+                                Icon(
+                                    Icons.Default.ShoppingCartCheckout,
+                                    contentDescription = stringResource(R.string.validate_purchases_action)
+                                )
+                            }
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (currentSupplierId != null) {
-                FloatingActionButton(onClick = {
-                    showAddShoppingItemDialog = true
-                    newProductIdForAddItemDialog = null
-                    newProductTextForAddItemDialog = ""
-                    newPlannedQuantityForAddItemDialog = ""
-                    newUnitForAddItemDialog = ""
-                    expandedProductDropdownForAddItemDialog = false
-                }) {
+                FloatingActionButton(onClick = { showAddShoppingItemDialog = true }) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_new_shopping_item))
-                }
-            }
-        },
-        bottomBar = {
-            BottomAppBar(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Button(
-                    onClick = { showConfirmValidateDialog = true },
-                    enabled = validationStats.hasValidItems && !isValidating,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary,
-                        disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                    ),
-                    contentPadding = PaddingValues(vertical = 12.dp)
-                ) {
-                    if (isValidating) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onSecondary
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            stringResource(R.string.processing_purchases),
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    } else {
-                        BadgedBox(
-                            badge = {
-                                if (validationStats.validItemsCount > 0) {
-                                    Badge { Text(validationStats.validItemsCount.toString()) }
-                                }
-                            }
-                        ) {
-                            Icon(
-                                imageVector = if (validationStats.hasValidItems) Icons.Default.CheckCircle else Icons.Default.ShoppingCart,
-                                contentDescription = null
-                            )
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = if (validationStats.hasValidItems) stringResource(R.string.complete_shopping) else stringResource(R.string.no_items_ready),
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
                 }
             }
         }
@@ -235,7 +202,7 @@ fun ShoppingListScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
-            // Top section with supplier selection
+            // Supplier selection dropdown
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -252,9 +219,7 @@ fun ShoppingListScreen(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSupplierDropdown) },
-                        modifier = Modifier
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                            .fillMaxWidth()
+                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
                     )
                     ExposedDropdownMenu(
                         expanded = expandedSupplierDropdown,
@@ -274,115 +239,83 @@ fun ShoppingListScreen(
             }
             Spacer(Modifier.height(16.dp))
             HorizontalDivider()
-            Spacer(Modifier.height(16.dp))
-            Text(stringResource(R.string.current_shopping_list_title), style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(8.dp))
+
             // Main content area for the list
             if (shoppingListItems.isEmpty()) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    EmptyState(
-                        icon = Icons.Outlined.ShoppingCartCheckout,
-                        title = stringResource(id = R.string.no_items_in_list_title),
-                        description = stringResource(id = R.string.no_items_in_list_description)
-                    )
-                }
+                EmptyState(
+                    icon = Icons.Outlined.ShoppingCart,
+                    title = stringResource(id = R.string.no_items_in_list_title),
+                    description = stringResource(id = R.string.no_items_in_list_description)
+                )
             } else {
-                LazyColumn(modifier = Modifier.weight(1f)) {
+                LazyColumn(
+                    contentPadding = PaddingValues(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     items(shoppingListItems, key = { it.id }) { item ->
                         ShoppingListItemCard(
                             item = item,
-                            onUpdate = { updatedItem ->
-                                shoppingListViewModel.updateShoppingItem(updatedItem)
+                            productName = allProducts.find { it.id == item.productId }?.name ?: stringResource(R.string.unknown_product),
+                            currencyFormatter = currencyFormatter,
+                            onClick = {
+                                itemToEdit = item
+                                showEditShoppingItemDialog = true
                             },
                             onDelete = { itemToDelete ->
                                 shoppingListViewModel.deleteShoppingItem(itemToDelete)
-                            },
-                            allProducts = allProducts
-                        )
-                        Spacer(Modifier.height(8.dp))
-                    }
-                }
-            }
-            // The summary text is now here, at the bottom of the main content area,
-            // just above the BottomAppBar.
-            if (validationStats.totalItems > 0) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = stringResource(
-                            R.string.validation_summary,
-                            validationStats.validItemsCount,
-                            validationStats.totalItems
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (validationStats.totalCost > 0) {
-                        Text(
-                            text = stringResource(R.string.total_cost, validationStats.totalCost),
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            }
                         )
                     }
                 }
             }
         }
     }
+
+    // --- Dialogs ---
+
+    if (showAddShoppingItemDialog) {
+        AddShoppingItemDialog(
+            allProducts = allProducts,
+            expenseViewModel = expenseViewModel,
+            shoppingListViewModel = shoppingListViewModel,
+            onDismiss = { showAddShoppingItemDialog = false },
+            onConfirm = { productId, unit, quantity ->
+                shoppingListViewModel.addShoppingItem(productId, unit, quantity)
+                coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.item_added_to_shopping_list)) }
+            },
+            snackbarHostState = snackbarHostState
+        )
+    }
+
+    if (showEditShoppingItemDialog && itemToEdit != null) {
+        EditShoppingItemDialog(
+            item = itemToEdit!!,
+            currencyFormatter = currencyFormatter,
+            onDismiss = { showEditShoppingItemDialog = false },
+            onConfirm = { updatedItem ->
+                shoppingListViewModel.updateShoppingItem(updatedItem)
+                showEditShoppingItemDialog = false
+            }
+        )
+    }
+
     if (showConfirmValidateDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmValidateDialog = false },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.complete_shopping_title))
-                }
-            },
+            title = { Text(stringResource(R.string.complete_shopping_title)) },
             text = {
                 Column {
                     Text(stringResource(R.string.confirm_purchases_message))
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(12.dp))
                     Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        ),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(
-                                text = stringResource(R.string.validation_summary_title),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                text = stringResource(
-                                    R.string.items_to_record,
-                                    validationStats.validItemsCount
-                                ),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            if (validationStats.totalCost > 0) {
-                                Text(
-                                    text = stringResource(R.string.total_amount, validationStats.totalCost),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(stringResource(R.string.validation_summary_title), style = MaterialTheme.typography.titleSmall)
+                            Text(stringResource(R.string.items_to_record, validationStats.validItemsCount))
+                            Text(stringResource(R.string.total_amount, currencyFormatter.format(validationStats.totalCost)), fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -394,148 +327,27 @@ fun ShoppingListScreen(
                             isValidating = true
                             try {
                                 val recordedCount = shoppingListViewModel.recordAllPurchases()
-                                if (recordedCount > 0) {
-                                    snackbarHostState.showSnackbar(
-                                        context.getString(R.string.expenses_recorded_successfully, recordedCount)
-                                    )
-                                } else {
-                                    snackbarHostState.showSnackbar(
-                                        context.getString(R.string.no_valid_purchases_to_record)
-                                    )
-                                }
+                                snackbarHostState.showSnackbar(
+                                    if (recordedCount > 0) context.getString(R.string.expenses_recorded_successfully, recordedCount)
+                                    else context.getString(R.string.no_valid_purchases_to_record)
+                                )
                             } finally {
                                 isValidating = false
                                 showConfirmValidateDialog = false
                             }
                         }
-                    }
-                ) {
-                    Text(
-                        stringResource(R.string.record_expenses),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showConfirmValidateDialog = false }
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
-    }
-    if (showAddShoppingItemDialog) {
-        AlertDialog(
-            onDismissRequest = { showAddShoppingItemDialog = false },
-            title = { Text(stringResource(R.string.add_new_item_title)) },
-            text = {
-                Column {
-                    ExposedDropdownMenuBox(
-                        expanded = expandedProductDropdownForAddItemDialog,
-                        onExpandedChange = { expandedProductDropdownForAddItemDialog = !expandedProductDropdownForAddItemDialog },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        TextField(
-                            value = newProductTextForAddItemDialog,
-                            onValueChange = { newValue ->
-                                newProductTextForAddItemDialog = newValue
-                                newProductIdForAddItemDialog = null
-                                expandedProductDropdownForAddItemDialog = true
-                            },
-                            label = { Text(stringResource(R.string.product_name_label)) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedProductDropdownForAddItemDialog) },
-                            modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryEditable, true)
-                                .fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expandedProductDropdownForAddItemDialog,
-                            onDismissRequest = { expandedProductDropdownForAddItemDialog = false }
-                        ) {
-                            val filteredProducts = allProducts.filter {
-                                it.name.contains(newProductTextForAddItemDialog, ignoreCase = true)
-                            }
-                            if (filteredProducts.isEmpty() && newProductTextForAddItemDialog.isNotBlank()) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.add_new_product, newProductTextForAddItemDialog)) },
-                                    onClick = {
-                                        newProductNameForAddProductDialog = newProductTextForAddItemDialog
-                                        showAddProductDialog = true
-                                        expandedProductDropdownForAddItemDialog = false
-                                    }
-
-                                )
-                                Spacer(Modifier.height(8.dp))
-                            }
-                            filteredProducts.forEach { product ->
-                                DropdownMenuItem(
-                                    text = { Text(product.name) },
-                                    onClick = {
-                                        newProductTextForAddItemDialog = product.name
-                                        newProductIdForAddItemDialog = product.id
-                                        expandedProductDropdownForAddItemDialog = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = newPlannedQuantityForAddItemDialog,
-                        onValueChange = { newValue ->
-                            if (newValue.matches(Regex("""^\d*\.?\d*$"""))) {
-                                newPlannedQuantityForAddItemDialog = newValue
-                            }
-                        },
-                        label = { Text(stringResource(R.string.quantity_label)) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = newUnitForAddItemDialog,
-                        onValueChange = { newUnitForAddItemDialog = it },
-                        label = { Text(stringResource(R.string.unit_label)) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val productId = newProductIdForAddItemDialog
-                        val plannedQuantity = newPlannedQuantityForAddItemDialog.toDoubleOrNull()
-                        if (productId != null && plannedQuantity != null && plannedQuantity > 0) {
-                            shoppingListViewModel.addShoppingItem(productId, newUnitForAddItemDialog.ifBlank { null }, plannedQuantity)
-                            showAddShoppingItemDialog = false
-                            coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.item_added_to_shopping_list)) }
-                        } else {
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = context.getString(R.string.select_product_and_enter_quantity),
-                                    withDismissAction = true
-                                )
-                            }
-                        }
                     },
-                    enabled = newProductIdForAddItemDialog != null && newPlannedQuantityForAddItemDialog.toDoubleOrNull() != null && (newPlannedQuantityForAddItemDialog.toDoubleOrNull() ?: 0.0) > 0
-                ) { Text(stringResource(R.string.add_button)) }
+                    enabled = !isValidating
+                ) {
+                    if (isValidating) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(R.string.record_expenses))
+                    }
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showAddShoppingItemDialog = false }) { Text(stringResource(R.string.cancel)) }
-            }
-        )
-    }
-    if (showAddProductDialog) {
-        AddProductDialog(
-            onDismissRequest = { showAddProductDialog = false },
-            initialProductName = newProductNameForAddProductDialog,
-            expenseViewModel = expenseViewModel,
-            snackbarHostState = snackbarHostState,
-            onProductAddedOrSelected = { productId, productName ->
-                newProductIdForAddItemDialog = productId
-                newProductTextForAddItemDialog = productName
+                TextButton(onClick = { showConfirmValidateDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -544,100 +356,290 @@ fun ShoppingListScreen(
 @Composable
 fun ShoppingListItemCard(
     item: ShoppingListItem,
-    onUpdate: (ShoppingListItem) -> Unit,
+    productName: String,
+    currencyFormatter: NumberFormat,
+    onClick: () -> Unit,
     onDelete: (ShoppingListItem) -> Unit,
-    allProducts: List<Product>,
     modifier: Modifier = Modifier
 ) {
-    val productName = allProducts.find { it.id == item.productId }?.name ?: stringResource(R.string.unknown_product)
-    var purchasedQuantityText by remember(item.id) {
-        mutableStateOf(item.purchasedQuantity.toString().takeIf { it != "0.0" } ?: "")
-    }
-    var unitPriceText by remember(item.id) {
-        mutableStateOf(item.unitPrice?.toString() ?: "")
-    }
-    LaunchedEffect(item.purchasedQuantity) {
-        val modelPurchasedQty = item.purchasedQuantity
-        val textAsDouble = purchasedQuantityText.toDoubleOrNull()
-        if (textAsDouble != modelPurchasedQty) {
-            purchasedQuantityText = if (modelPurchasedQty > 0.0) modelPurchasedQty.toString() else ""
-        }
-    }
-    LaunchedEffect(item.unitPrice) {
-        val modelPrice = item.unitPrice
-        val textAsDouble = unitPriceText.toDoubleOrNull()
-        if (modelPrice == null) {
-            if (unitPriceText.isNotEmpty() && unitPriceText != ".") {
-                unitPriceText = ""
-            }
-        } else {
-            if (textAsDouble != modelPrice) {
-                unitPriceText = modelPrice.toString()
-            }
-        }
-    }
+    val isItemValidated = item.purchasedQuantity > 0.0 && item.unitPrice != null
+    val totalCost = if (isItemValidated) item.purchasedQuantity * (item.unitPrice ?: 0.0) else 0.0
+
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor = if (item.purchasedQuantity > 0.0 && item.unitPrice != null) MaterialTheme.colorScheme.secondaryContainer
+            containerColor = if (isItemValidated) MaterialTheme.colorScheme.secondaryContainer
             else MaterialTheme.colorScheme.surfaceVariant
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = productName,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "${stringResource(R.string.planned_quantity_display)}: ${item.plannedQuantity} ${item.unit.orEmpty()}",
-                style = MaterialTheme.typography.bodySmall
-            )
-            Spacer(Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = purchasedQuantityText,
-                    onValueChange = { newValue ->
-                        if (newValue.matches(Regex("""^\d*\.?\d*$"""))) {
-                            purchasedQuantityText = newValue
-                            val newPurchasedQuantity = newValue.toDoubleOrNull() ?: 0.0
-                            onUpdate(item.copy(purchasedQuantity = newPurchasedQuantity))
-                        } else if (newValue.isEmpty()) {
-                            purchasedQuantityText = ""
-                            onUpdate(item.copy(purchasedQuantity = 0.0))
-                        }
-                    },
-                    label = { Text(stringResource(R.string.purchased_quantity_label)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (isItemValidated) {
+                Icon(
+                    imageVector = Icons.Filled.CheckCircle,
+                    contentDescription = stringResource(R.string.item_validated_desc),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
                 )
-                Spacer(Modifier.width(8.dp))
-                OutlinedTextField(
-                    value = unitPriceText,
-                    onValueChange = { newValue ->
-                        if (newValue.matches(Regex("""^\d*\.?\d*$"""))) {
-                            unitPriceText = newValue
-                            val newPrice = newValue.toDoubleOrNull()
-                            onUpdate(item.copy(unitPrice = newPrice))
-                        }
-                    },
-                    label = { Text(stringResource(R.string.unit_price_label)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
+                Spacer(Modifier.width(12.dp))
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = productName,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-                Spacer(Modifier.width(8.dp))
-                IconButton(
-                    onClick = { onDelete(item) },
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                ) {
-                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_item))
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "${stringResource(R.string.planned_quantity_display)}: ${item.plannedQuantity} ${item.unit.orEmpty()}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                )
+                if (isItemValidated) {
+                    Text(
+                        text = "${item.purchasedQuantity} x ${currencyFormatter.format(item.unitPrice)} = ${currencyFormatter.format(totalCost)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
+            }
+            Spacer(Modifier.width(8.dp))
+            IconButton(onClick = { onDelete(item) }) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.delete_item, productName),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
             }
         }
     }
 }
 
+@Composable
+fun EditShoppingItemDialog(
+    item: ShoppingListItem,
+    currencyFormatter: NumberFormat,
+    onDismiss: () -> Unit,
+    onConfirm: (ShoppingListItem) -> Unit
+) {
+    var purchasedQuantityText by remember { mutableStateOf(item.purchasedQuantity.toString().takeIf { it != "0.0" } ?: "") }
+    var unitPriceText by remember { mutableStateOf(item.unitPrice?.toString() ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.edit_item_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = purchasedQuantityText,
+                    onValueChange = { newValue ->
+                        if (newValue.matches(Regex("""^\d*\.?\d*$"""))) {
+                            purchasedQuantityText = newValue
+                        }
+                    },
+                    label = { Text(stringResource(R.string.purchased_quantity_label)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = unitPriceText,
+                    onValueChange = { newValue ->
+                        if (newValue.matches(Regex("""^\d*\.?\d{0,2}$"""))) {
+                            unitPriceText = newValue
+                        }
+                    },
+                    label = { Text(stringResource(R.string.unit_price_label)) },
+                    prefix = { Text(currencyFormatter.currency?.symbol ?: "$") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                val updatedItem = item.copy(
+                    purchasedQuantity = purchasedQuantityText.toDoubleOrNull() ?: 0.0,
+                    unitPrice = unitPriceText.toDoubleOrNull()
+                )
+                onConfirm(updatedItem)
+            }) {
+                Text(stringResource(R.string.confirm_changes))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddShoppingItemDialog(
+    allProducts: List<Product>,
+    expenseViewModel: ExpenseViewModel,
+    shoppingListViewModel: ShoppingListViewModel,
+    onDismiss: () -> Unit,
+    onConfirm: (productId: Int, unit: String?, quantity: Double) -> Unit,
+    snackbarHostState: SnackbarHostState
+) {
+    var productText by remember { mutableStateOf("") }
+    var selectedProductId by remember { mutableStateOf<Int?>(null) }
+    var plannedQuantity by remember { mutableStateOf("") }
+    var unit by remember { mutableStateOf("") }
+    var productDropdownExpanded by remember { mutableStateOf(false) }
+    var showAddProductDialog by remember { mutableStateOf(false) }
+    var newProductName by remember { mutableStateOf("") }
+
+    val categoriesForSupplier by shoppingListViewModel.categoriesForSupplier.collectAsState(initial = emptyList())
+    var selectedCategoryId by remember { mutableStateOf<Int?>(null) }
+    var categoryDropdownExpanded by remember { mutableStateOf(false) }
+
+    val productsForCategory by remember(selectedCategoryId) {
+        derivedStateOf {
+            if (selectedCategoryId == null) {
+                allProducts
+            } else {
+                allProducts.filter { it.categoryId == selectedCategoryId }
+            }
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.add_new_item_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Category Dropdown
+                ExposedDropdownMenuBox(
+                    expanded = categoryDropdownExpanded,
+                    onExpandedChange = { categoryDropdownExpanded = !categoryDropdownExpanded }
+                ) {
+                    TextField(
+                        value = categoriesForSupplier.find { it.id == selectedCategoryId }?.name ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.category)) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded) },
+                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = categoryDropdownExpanded,
+                        onDismissRequest = { categoryDropdownExpanded = false }
+                    ) {
+                        categoriesForSupplier.forEach { category ->
+                            DropdownMenuItem(
+                                text = { Text(category.name) },
+                                onClick = {
+                                    selectedCategoryId = category.id
+                                    productText = ""
+                                    selectedProductId = null
+                                    categoryDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // Product Dropdown
+                ExposedDropdownMenuBox(
+                    expanded = productDropdownExpanded,
+                    onExpandedChange = { productDropdownExpanded = !productDropdownExpanded }
+                ) {
+                    TextField(
+                        value = productText,
+                        onValueChange = {
+                            productText = it
+                            selectedProductId = null
+                            productDropdownExpanded = true
+                        },
+                        label = { Text(stringResource(R.string.product_name_label)) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = productDropdownExpanded) },
+                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable, true).fillMaxWidth(),
+                        enabled = selectedCategoryId != null
+                    )
+                    ExposedDropdownMenu(
+                        expanded = productDropdownExpanded,
+                        onDismissRequest = { productDropdownExpanded = false }
+                    ) {
+                        val filteredProducts = productsForCategory.filter { it.name.contains(productText, ignoreCase = true) }
+                        if (filteredProducts.isEmpty() && productText.isNotBlank()) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.add_new_product, productText)) },
+                                onClick = {
+                                    newProductName = productText
+                                    showAddProductDialog = true
+                                    productDropdownExpanded = false
+                                }
+                            )
+                        }
+                        filteredProducts.forEach { product ->
+                            DropdownMenuItem(
+                                text = { Text(product.name) },
+                                onClick = {
+                                    productText = product.name
+                                    selectedProductId = product.id
+                                    productDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = plannedQuantity,
+                    onValueChange = { newValue -> if (newValue.matches(Regex("""^\d*\.?\d*$"""))) plannedQuantity = newValue },
+                    label = { Text(stringResource(R.string.quantity_label)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = unit,
+                    onValueChange = { unit = it },
+                    label = { Text(stringResource(R.string.unit_label)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            val isConfirmEnabled = selectedProductId != null && (plannedQuantity.toDoubleOrNull() ?: 0.0) > 0.0
+            Button(
+                onClick = {
+                    onConfirm(selectedProductId!!, unit.ifBlank { null }, plannedQuantity.toDouble())
+                    onDismiss()
+                },
+                enabled = isConfirmEnabled
+            ) {
+                Text(stringResource(R.string.add_button))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        }
+    )
+
+    if (showAddProductDialog) {
+        AddProductDialog(
+            onDismissRequest = { showAddProductDialog = false },
+            initialProductName = newProductName,
+            expenseViewModel = expenseViewModel,
+            snackbarHostState = snackbarHostState,
+            onProductAddedOrSelected = { productId, productName ->
+                selectedProductId = productId
+                productText = productName
+            },
+            // Pass the selected category to the AddProductDialog
+            preselectedCategoryId = selectedCategoryId
+        )
+    }
+}
+
+// This is the same dialog from ShoppingListActivity, kept for creating new products in the flow
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductDialog(
@@ -645,7 +647,8 @@ fun AddProductDialog(
     onProductAddedOrSelected: (Int, String) -> Unit,
     initialProductName: String,
     expenseViewModel: ExpenseViewModel,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState,
+    preselectedCategoryId: Int?
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -654,44 +657,47 @@ fun AddProductDialog(
     var newProductSelectedCategory by remember { mutableStateOf<Category?>(null) }
     var newProductCategorySearchQuery by remember { mutableStateOf("") }
     var newProductCategoryDropdownExpanded by remember { mutableStateOf(false) }
+
+    // Pre-select the category if one was passed in
+    LaunchedEffect(preselectedCategoryId, allCategories) {
+        if (preselectedCategoryId != null) {
+            newProductSelectedCategory = allCategories.find { it.id == preselectedCategoryId }
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.add_new_product_title)) },
         text = {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = newProductNameDialog,
                     onValueChange = { newProductNameDialog = it },
                     label = { Text(stringResource(R.string.product_name_label)) },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(8.dp))
                 ExposedDropdownMenuBox(
                     expanded = newProductCategoryDropdownExpanded,
-                    onExpandedChange = { newProductCategoryDropdownExpanded = !newProductCategoryDropdownExpanded },
-                    modifier = Modifier.fillMaxWidth()
+                    onExpandedChange = { newProductCategoryDropdownExpanded = !newProductCategoryDropdownExpanded }
                 ) {
                     OutlinedTextField(
                         value = newProductSelectedCategory?.name ?: newProductCategorySearchQuery,
-                        onValueChange = { newValue ->
-                            newProductCategorySearchQuery = newValue
+                        onValueChange = {
+                            newProductCategorySearchQuery = it
                             newProductSelectedCategory = null
                             newProductCategoryDropdownExpanded = true
                         },
-                        readOnly = false,
                         label = { Text(stringResource(R.string.category)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = newProductCategoryDropdownExpanded) },
-                        modifier = Modifier
-                            .menuAnchor(MenuAnchorType.PrimaryEditable, true)
-                            .fillMaxWidth()
+                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable, true).fillMaxWidth(),
+                        // Disable editing if a category is pre-selected
+                        enabled = preselectedCategoryId == null
                     )
                     ExposedDropdownMenu(
                         expanded = newProductCategoryDropdownExpanded,
                         onDismissRequest = { newProductCategoryDropdownExpanded = false }
                     ) {
-                        val filteredCategories = allCategories.filter {
-                            it.name.contains(newProductCategorySearchQuery, ignoreCase = true)
-                        }
+                        val filteredCategories = allCategories.filter { it.name.contains(newProductCategorySearchQuery, ignoreCase = true) }
                         if (filteredCategories.isEmpty() && newProductCategorySearchQuery.isNotBlank()) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.add_new_category, newProductCategorySearchQuery)) },
@@ -700,19 +706,14 @@ fun AddProductDialog(
                                         val existingCategory = expenseViewModel.getCategoryByName(newProductCategorySearchQuery)
                                         val categoryToAdd = existingCategory ?: Category(name = newProductCategorySearchQuery)
                                         val categoryId = existingCategory?.id?.toLong() ?: expenseViewModel.addCategory(categoryToAdd)
-
                                         if (categoryId != -1L) {
                                             newProductSelectedCategory = categoryToAdd.copy(id = categoryId.toInt())
                                             newProductCategorySearchQuery = newProductSelectedCategory!!.name
-                                            snackbarHostState.showSnackbar(context.getString(R.string.category_added))
-                                        } else {
-                                            snackbarHostState.showSnackbar(context.getString(R.string.failed_to_add_category))
                                         }
                                         newProductCategoryDropdownExpanded = false
                                     }
                                 }
                             )
-                            Spacer(Modifier.height(8.dp))
                         }
                         filteredCategories.forEach { category ->
                             DropdownMenuItem(
@@ -729,23 +730,16 @@ fun AddProductDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = {
                     if (newProductNameDialog.isNotBlank() && newProductSelectedCategory != null) {
                         coroutineScope.launch {
                             val existingProduct = expenseViewModel.getProductByName(newProductNameDialog)
                             if (existingProduct == null) {
-                                val newId = expenseViewModel.addProduct(
-                                    Product(
-                                        name = newProductNameDialog,
-                                        categoryId = newProductSelectedCategory!!.id
-                                    )
-                                )
+                                val newId = expenseViewModel.addProduct(Product(name = newProductNameDialog, categoryId = newProductSelectedCategory!!.id))
                                 if (newId != -1L) {
                                     onProductAddedOrSelected(newId.toInt(), newProductNameDialog)
                                     snackbarHostState.showSnackbar(context.getString(R.string.product_added))
-                                } else {
-                                    snackbarHostState.showSnackbar(context.getString(R.string.failed_to_add_product))
                                 }
                             } else {
                                 onProductAddedOrSelected(existingProduct.id, existingProduct.name)
@@ -756,7 +750,8 @@ fun AddProductDialog(
                     } else {
                         coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.product_name_and_category_empty)) }
                     }
-                }
+                },
+                enabled = newProductNameDialog.isNotBlank() && newProductSelectedCategory != null
             ) { Text(stringResource(R.string.add_button)) }
         },
         dismissButton = {
@@ -769,13 +764,31 @@ fun AddProductDialog(
 @Composable
 fun PreviewShoppingListScreen() {
     ExpenseTrackerTheme {
-        //val context = LocalContext.current
-        //val application = context.applicationContext as Application
-        //val shoppingListViewModel: ShoppingListViewModel = viewModel(factory = ShoppingListViewModelFactory(application))
-        //val expenseViewModel: ExpenseViewModel = viewModel(factory = ExpenseViewModelFactory(application))
-        /*ShoppingListScreen(
-            shoppingListViewModel = shoppingListViewModel,
-            expenseViewModel = expenseViewModel
-        )*/
+        /* This is a placeholder for the preview.
+        // In a real app, you would inject mock ViewModels here.
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Shopping List") },
+                    navigationIcon = { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) },
+                    actions = {
+                        IconButton(onClick = {}) {
+                            BadgedBox(badge = { Badge { Text("3") } }) {
+                                Icon(Icons.Default.ShoppingCartCheckout, null)
+                            }
+                        }
+                    }
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = {}) {
+                    Icon(Icons.Default.Add, null)
+                }
+            }
+        ) { padding ->
+            Column(Modifier.padding(padding).padding(16.dp)) {
+                Text("Shopping List Content Area")
+            }
+        }*/
     }
 }

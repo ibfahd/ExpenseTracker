@@ -2,6 +2,7 @@ package com.fahdev.expensetracker
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.data.ShoppingListItem
 import com.fahdev.expensetracker.data.ShoppingRepository
@@ -20,7 +21,9 @@ class ShoppingListViewModel @Inject constructor(
 ) : ViewModel() {
     private val _currentSupplierId = MutableStateFlow<Int?>(null)
     val currentSupplierId: StateFlow<Int?> = _currentSupplierId.asStateFlow()
+
     private val _currentShoppingDate = MutableStateFlow(0L)
+
     val shoppingListItems: StateFlow<List<ShoppingListItem>> = combine(
         _currentSupplierId,
         _currentShoppingDate
@@ -33,8 +36,18 @@ class ShoppingListViewModel @Inject constructor(
             flowOf(emptyList())
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val allSuppliers: Flow<List<Supplier>> = shoppingRepository.allSuppliers
     val allProducts: Flow<List<Product>> = shoppingRepository.allProducts
+
+    val categoriesForSupplier: StateFlow<List<Category>> = _currentSupplierId.flatMapLatest { supplierId ->
+        if (supplierId != null) {
+            shoppingRepository.getCategoriesForSupplier(supplierId)
+        } else {
+            flowOf(emptyList())
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     init {
         viewModelScope.launch {
             allSuppliers.firstOrNull()?.firstOrNull()?.id?.let { firstSupplierId ->

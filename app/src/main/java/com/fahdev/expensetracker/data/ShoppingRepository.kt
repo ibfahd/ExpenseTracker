@@ -13,7 +13,8 @@ class ShoppingRepository(
     private val shoppingListItemDao: ShoppingListItemDao,
     private val expenseDao: ExpenseDao,
     private val productDao: ProductDao,
-    private val supplierDao: SupplierDao
+    private val supplierDao: SupplierDao,
+    private val categorySupplierDao: CategorySupplierDao
 ) {
 
     val allSuppliers: Flow<List<Supplier>> = supplierDao.getAllSuppliers()
@@ -25,6 +26,10 @@ class ShoppingRepository(
         } else {
             flowOf(emptyList())
         }
+    }
+
+    fun getCategoriesForSupplier(supplierId: Int): Flow<List<Category>> {
+        return categorySupplierDao.getCategoriesForSupplier(supplierId)
     }
 
     suspend fun getLatestShoppingDateForSupplier(supplierId: Int): Long? {
