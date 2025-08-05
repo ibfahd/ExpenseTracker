@@ -85,6 +85,21 @@ interface ExpenseDao {
     fun getTotalTransactionCount(): Flow<Int?>
 
     @Query("""
+        SELECT COUNT(e.id) FROM expenses e
+        INNER JOIN products p ON e.productId = p.id
+        WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
+          AND (:endDate IS NULL OR e.timestamp <= :endDate)
+          AND (:categoryId IS NULL OR p.categoryId = :categoryId)
+          AND (:supplierId IS NULL OR e.supplierId = :supplierId)
+    """)
+    fun getFilteredTransactionCount(
+        startDate: Long?,
+        endDate: Long?,
+        categoryId: Int?,
+        supplierId: Int?
+    ): Flow<Int?>
+
+    @Query("""
         SELECT c.name as categoryName, SUM(e.amount) as totalAmount
         FROM Expenses e
         INNER JOIN Products p ON e.productId = p.id
@@ -102,6 +117,36 @@ interface ExpenseDao {
         ORDER BY totalAmount DESC
     """)
     fun getSpendingBySupplier(): Flow<List<SupplierSpending>>
+
+    // --- NEW Filtered Reporting Queries ---
+    @Query("""
+        SELECT c.name as categoryName, SUM(e.amount) as totalAmount
+        FROM Expenses e
+        INNER JOIN Products p ON e.productId = p.id
+        INNER JOIN Categories c ON p.categoryId = c.id
+        WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
+          AND (:endDate IS NULL OR e.timestamp <= :endDate)
+          AND (:categoryId IS NULL OR p.categoryId = :categoryId)
+          AND (:supplierId IS NULL OR e.supplierId = :supplierId)
+        GROUP BY c.name
+        ORDER BY totalAmount DESC
+    """)
+    fun getSpendingByCategoryFiltered(startDate: Long?, endDate: Long?, categoryId: Int?, supplierId: Int?): Flow<List<CategorySpending>>
+
+    @Query("""
+        SELECT s.name as supplierName, SUM(e.amount) as totalAmount
+        FROM Expenses e
+        INNER JOIN Products p ON e.productId = p.id
+        INNER JOIN Suppliers s ON e.supplierId = s.id
+        WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
+          AND (:endDate IS NULL OR e.timestamp <= :endDate)
+          AND (:categoryId IS NULL OR p.categoryId = :categoryId)
+          AND (:supplierId IS NULL OR e.supplierId = :supplierId)
+        GROUP BY s.name
+        ORDER BY totalAmount DESC
+    """)
+    fun getSpendingBySupplierFiltered(startDate: Long?, endDate: Long?, categoryId: Int?, supplierId: Int?): Flow<List<SupplierSpending>>
+
 
     // --- NEW, STABLE Product Detail Report Queries ---
 
@@ -133,10 +178,12 @@ interface ExpenseDao {
         JOIN Expenses e ON e.productId = p.id
         WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
           AND (:endDate IS NULL OR e.timestamp <= :endDate)
+          AND (:categoryId IS NULL OR p.categoryId = :categoryId)
+          AND (:supplierId IS NULL OR e.supplierId = :supplierId)
         GROUP BY p.id, p.name, c.id, c.name
         ORDER BY c.name ASC, p.name ASC
     """)
-    fun getProductSpendingReport(startDate: Long?, endDate: Long?): Flow<List<ProductSpendingInfo>>
+    fun getProductSpendingReport(startDate: Long?, endDate: Long?, categoryId: Int?, supplierId: Int?): Flow<List<ProductSpendingInfo>>
 
     // Step 2: Get the lowest price details for a single product within the date range.
     @Query("""

@@ -468,7 +468,7 @@ fun EditShoppingItemDialog(
                 )
                 onConfirm(updatedItem)
             }) {
-                Text(stringResource(R.string.confirm_changes))
+                Text(stringResource(R.string.confirm))
             }
         },
         dismissButton = {
@@ -739,7 +739,7 @@ fun AddProductDialog(
                                 val newId = expenseViewModel.addProduct(Product(name = newProductNameDialog, categoryId = newProductSelectedCategory!!.id))
                                 if (newId != -1L) {
                                     onProductAddedOrSelected(newId.toInt(), newProductNameDialog)
-                                    snackbarHostState.showSnackbar(context.getString(R.string.product_added))
+                                    snackbarHostState.showSnackbar(context.getString(R.string.product_added_successfully))
                                 }
                             } else {
                                 onProductAddedOrSelected(existingProduct.id, existingProduct.name)

@@ -49,8 +49,91 @@ class ExpenseViewModel @Inject constructor(
     val spendingBySupplier: StateFlow<List<SupplierSpending>> = expenseRepository.spendingBySupplier.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val averageDailyExpense: StateFlow<Double> = combine(totalExpensesAllTime, firstExpenseDate) { total, firstDateMs -> if (total > 0 && firstDateMs != null) { val days = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - firstDateMs).coerceAtLeast(1); total / days } else { 0.0 } }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
     val averageMonthlyExpense: StateFlow<Double> = combine(totalExpensesAllTime, firstExpenseDate) { total, firstDateMs -> if (total > 0 && firstDateMs != null) { val firstCal = Calendar.getInstance().apply { timeInMillis = firstDateMs }; val currentCal = Calendar.getInstance(); var months = (currentCal.get(Calendar.YEAR) - firstCal.get(Calendar.YEAR)) * 12; months -= firstCal.get(Calendar.MONTH); months += currentCal.get(Calendar.MONTH); if (currentCal.get(Calendar.DAY_OF_MONTH) < firstCal.get(Calendar.DAY_OF_MONTH) && months > 0) { months-- }; total / max(1, months + 1) } else { 0.0 } }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    val productReportDetails: StateFlow<List<ProductReportDetail>> = combine(_selectedStartDate, _selectedEndDate, _refreshTrigger) { startDate, endDate, _ -> Pair(startDate, endDate) }.flatMapLatest { (startDate, endDate) -> expenseRepository.getProductSpendingReport(startDate, endDate).map { spendingList -> spendingList.map { spendingInfo -> val lowestPriceInfo = expenseRepository.getLowestPriceForProduct(spendingInfo.productId, startDate, endDate); val cheapestSupplierName = lowestPriceInfo?.supplierId?.let { id -> expenseRepository.getSupplierById(id).first()?.name }; ProductReportDetail(productId = spendingInfo.productId, productName = spendingInfo.productName, categoryId = spendingInfo.categoryId, categoryName = spendingInfo.categoryName, totalAmountSpent = spendingInfo.totalAmountSpent, lowestTransactionAmount = lowestPriceInfo?.amount, cheapestSupplierName = cheapestSupplierName) } } }.catch { e -> Log.e("ExpenseViewModel", "Error fetching product report details", e); emit(emptyList()) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val totalFilteredTransactionCount: StateFlow<Int> = combine(_selectedStartDate, _selectedEndDate, _selectedCategoryId, _selectedSupplierId, _refreshTrigger) { startDate, endDate, categoryId, supplierId, _ ->
+        FilterParams(startDate, endDate, categoryId, supplierId)
+    }.flatMapLatest { params ->
+        expenseRepository.getFilteredTransactionCount(params.startDate, params.endDate, params.categoryId, params.supplierId)
+    }.map { it ?: 0 }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val averageDailyExpenseFiltered: StateFlow<Double> = combine(totalFilteredExpenses, _selectedStartDate, _selectedEndDate) { total, startDate, endDate ->
+        if (total > 0 && startDate != null) {
+            val end = endDate ?: System.currentTimeMillis()
+            val days = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(end - startDate).coerceAtLeast(1)
+            total / days
+        } else {
+            0.0
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+    val averageMonthlyExpenseFiltered: StateFlow<Double> = combine(totalFilteredExpenses, _selectedStartDate, _selectedEndDate) { total, startDate, endDate ->
+        if (total > 0 && startDate != null) {
+            val firstCal = Calendar.getInstance().apply { timeInMillis = startDate }
+            val endCal = Calendar.getInstance().apply { timeInMillis = endDate ?: System.currentTimeMillis() }
+            var months = (endCal.get(Calendar.YEAR) - firstCal.get(Calendar.YEAR)) * 12
+            months -= firstCal.get(Calendar.MONTH)
+            months += endCal.get(Calendar.MONTH)
+            if (endCal.get(Calendar.DAY_OF_MONTH) < firstCal.get(Calendar.DAY_OF_MONTH) && months > 0) {
+                months--
+            }
+            total / max(1, months + 1)
+        } else {
+            0.0
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+    
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val productReportDetails: StateFlow<List<ProductReportDetail>> = combine(
+        _selectedStartDate, _selectedEndDate, _selectedCategoryId, _selectedSupplierId, _refreshTrigger
+    ) { startDate, endDate, categoryId, supplierId, _ ->
+        FilterParams(startDate, endDate, categoryId, supplierId)
+    }.flatMapLatest { params ->
+        expenseRepository.getProductSpendingReport(params.startDate, params.endDate, params.categoryId, params.supplierId)
+            .map { spendingList ->
+                spendingList.map { spendingInfo ->
+                    val lowestPriceInfo = expenseRepository.getLowestPriceForProduct(spendingInfo.productId, params.startDate, params.endDate)
+                    val cheapestSupplierName = lowestPriceInfo?.supplierId?.let { id -> expenseRepository.getSupplierById(id).first()?.name }
+                    ProductReportDetail(
+                        productId = spendingInfo.productId,
+                        productName = spendingInfo.productName,
+                        categoryId = spendingInfo.categoryId,
+                        categoryName = spendingInfo.categoryName,
+                        totalAmountSpent = spendingInfo.totalAmountSpent,
+                        lowestTransactionAmount = lowestPriceInfo?.amount,
+                        cheapestSupplierName = cheapestSupplierName
+                    )
+                }
+            }
+    }.catch { e ->
+        Log.e("ExpenseViewModel", "Error fetching product report details", e)
+        emit(emptyList())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val spendingByCategoryFiltered: StateFlow<List<CategorySpending>> = combine(
+        _selectedStartDate, _selectedEndDate, _selectedCategoryId, _selectedSupplierId, _refreshTrigger
+    ) { startDate, endDate, categoryId, supplierId, _ ->
+        FilterParams(startDate, endDate, categoryId, supplierId)
+    }.flatMapLatest { params ->
+        expenseRepository.getSpendingByCategoryFiltered(params.startDate, params.endDate, params.categoryId, params.supplierId)
+    }.catch { e ->
+        Log.e("ExpenseViewModel", "Error fetching filtered spending by category", e)
+        emit(emptyList())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val spendingBySupplierFiltered: StateFlow<List<SupplierSpending>> = combine(
+        _selectedStartDate, _selectedEndDate, _selectedCategoryId, _selectedSupplierId, _refreshTrigger
+    ) { startDate, endDate, categoryId, supplierId, _ ->
+        FilterParams(startDate, endDate, categoryId, supplierId)
+    }.flatMapLatest { params ->
+        expenseRepository.getSpendingBySupplierFiltered(params.startDate, params.endDate, params.categoryId, params.supplierId)
+    }.catch { e ->
+        Log.e("ExpenseViewModel", "Error fetching filtered spending by supplier", e)
+        emit(emptyList())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
 
     // --- State and Logic for the Add Expense Screen Flow ---
     private val _selectedSupplierForAdd = MutableStateFlow<Supplier?>(null)
@@ -120,8 +203,16 @@ class ExpenseViewModel @Inject constructor(
     // --- ViewModel Initialization ---
     init {
         viewModelScope.launch {
-            val defaultFilter = userPreferencesRepository.homeScreenDefaultFilter.first()
-            setDateRangeFilter(defaultFilter)
+            userPreferencesRepository.selectedStartDate.collect { _selectedStartDate.value = it }
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.selectedEndDate.collect { _selectedEndDate.value = it }
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.selectedCategoryId.collect { _selectedCategoryId.value = it }
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.selectedSupplierId.collect { _selectedSupplierId.value = it }
         }
     }
 
@@ -143,11 +234,69 @@ class ExpenseViewModel @Inject constructor(
     fun updateSupplier(supplier: Supplier) { viewModelScope.launch { expenseRepository.updateSupplier(supplier); _refreshTrigger.value++ } }
     fun deleteSupplier(supplier: Supplier) { viewModelScope.launch { expenseRepository.deleteSupplier(supplier); _refreshTrigger.value++ } }
     fun getSupplierById(id: Int): Flow<Supplier?> = expenseRepository.getSupplierById(id)
-    fun setCategoryFilter(categoryId: Int?) { _selectedCategoryId.value = categoryId }
-    fun setSupplierFilter(supplierId: Int?) { _selectedSupplierId.value = supplierId }
-    fun setDateRangeFilter(rangeType: String) { val calendar = Calendar.getInstance(); var startDate: Long? = null; var endDate: Long? = System.currentTimeMillis(); when (rangeType) { "ThisMonth" -> { calendar.set(Calendar.DAY_OF_MONTH, 1); calendar.set(Calendar.HOUR_OF_DAY, 0); calendar.set(Calendar.MINUTE, 0); calendar.set(Calendar.SECOND, 0); calendar.set(Calendar.MILLISECOND, 0); startDate = calendar.timeInMillis } "Last7Days" -> { calendar.add(Calendar.DAY_OF_YEAR, -6); calendar.set(Calendar.HOUR_OF_DAY, 0); calendar.set(Calendar.MINUTE, 0); calendar.set(Calendar.SECOND, 0); calendar.set(Calendar.MILLISECOND, 0); startDate = calendar.timeInMillis } "LastMonth" -> { calendar.add(Calendar.MONTH, -1); calendar.set(Calendar.DAY_OF_MONTH, 1); calendar.set(Calendar.HOUR_OF_DAY, 0); calendar.set(Calendar.MINUTE, 0); calendar.set(Calendar.SECOND, 0); calendar.set(Calendar.MILLISECOND, 0); startDate = calendar.timeInMillis; val endOfLastMonth = Calendar.getInstance().apply { timeInMillis = startDate; add(Calendar.MONTH, 1); add(Calendar.DAY_OF_MONTH, -1); set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59); set(Calendar.SECOND, 59); set(Calendar.MILLISECOND, 999) }; endDate = endOfLastMonth.timeInMillis } "ThisYear" -> { calendar.set(Calendar.DAY_OF_YEAR, 1); calendar.set(Calendar.HOUR_OF_DAY, 0); calendar.set(Calendar.MINUTE, 0); calendar.set(Calendar.SECOND, 0); calendar.set(Calendar.MILLISECOND, 0); startDate = calendar.timeInMillis } "All" -> { startDate = null; endDate = null } }; _selectedStartDate.value = startDate; _selectedEndDate.value = endDate }
-    fun setCustomDateRangeFilter(startDate: Long?, endDate: Long?) { _selectedStartDate.value = startDate; _selectedEndDate.value = endDate }
-    fun resetFilters() { setDateRangeFilter("All"); _selectedCategoryId.value = null; _selectedSupplierId.value = null }
+    fun setCategoryFilter(categoryId: Int?) { userPreferencesRepository.updateSelectedCategoryId(categoryId) }
+    fun setSupplierFilter(supplierId: Int?) { userPreferencesRepository.updateSelectedSupplierId(supplierId) }
+    fun setDateRangeFilter(rangeType: String) {
+        val calendar = Calendar.getInstance()
+        var startDate: Long? = null
+        var endDate: Long? = System.currentTimeMillis()
+        when (rangeType) {
+            "ThisMonth" -> {
+                calendar.set(Calendar.DAY_OF_MONTH, 1)
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                startDate = calendar.timeInMillis
+            }
+            "Last7Days" -> {
+                calendar.add(Calendar.DAY_OF_YEAR, -6)
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                startDate = calendar.timeInMillis
+            }
+            "LastMonth" -> {
+                calendar.add(Calendar.MONTH, -1)
+                calendar.set(Calendar.DAY_OF_MONTH, 1)
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                startDate = calendar.timeInMillis
+                val endOfLastMonth = Calendar.getInstance().apply {
+                    timeInMillis = startDate
+                    add(Calendar.MONTH, 1)
+                    add(Calendar.DAY_OF_MONTH, -1)
+                    set(Calendar.HOUR_OF_DAY, 23)
+                    set(Calendar.MINUTE, 59)
+                    set(Calendar.SECOND, 59)
+                    set(Calendar.MILLISECOND, 999)
+                }
+                endDate = endOfLastMonth.timeInMillis
+            }
+            "ThisYear" -> {
+                calendar.set(Calendar.DAY_OF_YEAR, 1)
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                startDate = calendar.timeInMillis
+            }
+            "All" -> {
+                startDate = null
+                endDate = null
+            }
+        }
+        userPreferencesRepository.updateSelectedDates(startDate, endDate)
+    }
+    fun setCustomDateRangeFilter(startDate: Long?, endDate: Long?) { userPreferencesRepository.updateSelectedDates(startDate, endDate) }
+    fun resetFilters() {
+        setDateRangeFilter("All")
+        userPreferencesRepository.updateSelectedCategoryId(null)
+        userPreferencesRepository.updateSelectedSupplierId(null)
+    }
     fun getProductsForCategory(categoryId: Int): Flow<List<Product>> = expenseRepository.getProductsForCategory(categoryId)
     suspend fun getProductByNameInCategory(name: String, categoryId: Int): Product? = expenseRepository.getProductByNameInCategory(name, categoryId)
     fun updateProduct(product: Product) { viewModelScope.launch { expenseRepository.updateProduct(product) } }

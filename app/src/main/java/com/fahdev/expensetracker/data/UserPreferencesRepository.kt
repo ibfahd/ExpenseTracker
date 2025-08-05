@@ -52,10 +52,50 @@ class UserPreferencesRepository private constructor(context: Context) {
         _homeScreenDefaultFilter.value = filterKey
     }
 
+    // --- Filter State ---
+    private val _selectedStartDate = MutableStateFlow(sharedPreferences.getLong(KEY_START_DATE, -1L).let { if (it == -1L) null else it })
+    val selectedStartDate = _selectedStartDate.asStateFlow()
+
+    private val _selectedEndDate = MutableStateFlow(sharedPreferences.getLong(KEY_END_DATE, -1L).let { if (it == -1L) null else it })
+    val selectedEndDate = _selectedEndDate.asStateFlow()
+
+    private val _selectedCategoryId = MutableStateFlow(sharedPreferences.getInt(KEY_CATEGORY_ID, -1).let { if (it == -1) null else it })
+    val selectedCategoryId = _selectedCategoryId.asStateFlow()
+
+    private val _selectedSupplierId = MutableStateFlow(sharedPreferences.getInt(KEY_SUPPLIER_ID, -1).let { if (it == -1) null else it })
+    val selectedSupplierId = _selectedSupplierId.asStateFlow()
+
+    fun updateSelectedDates(startDate: Long?, endDate: Long?) {
+        sharedPreferences.edit {
+            if (startDate == null) remove(KEY_START_DATE) else putLong(KEY_START_DATE, startDate)
+            if (endDate == null) remove(KEY_END_DATE) else putLong(KEY_END_DATE, endDate)
+        }
+        _selectedStartDate.value = startDate
+        _selectedEndDate.value = endDate
+    }
+
+    fun updateSelectedCategoryId(categoryId: Int?) {
+        sharedPreferences.edit {
+            if (categoryId == null) remove(KEY_CATEGORY_ID) else putInt(KEY_CATEGORY_ID, categoryId)
+        }
+        _selectedCategoryId.value = categoryId
+    }
+
+    fun updateSelectedSupplierId(supplierId: Int?) {
+        sharedPreferences.edit {
+            if (supplierId == null) remove(KEY_SUPPLIER_ID) else putInt(KEY_SUPPLIER_ID, supplierId)
+        }
+        _selectedSupplierId.value = supplierId
+    }
+
     companion object {
         private const val KEY_CURRENCY = "currency_code"
         private const val KEY_LANGUAGE = "language_tag"
         private const val KEY_HOME_FILTER = "home_screen_filter"
+        private const val KEY_START_DATE = "selected_start_date"
+        private const val KEY_END_DATE = "selected_end_date"
+        private const val KEY_CATEGORY_ID = "selected_category_id"
+        private const val KEY_SUPPLIER_ID = "selected_supplier_id"
 
         @Volatile
         private var INSTANCE: UserPreferencesRepository? = null

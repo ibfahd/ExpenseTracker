@@ -210,7 +210,7 @@ fun AddExpenseFlow(
                                 supplierId = selectedSupplier!!.id
                             )
                             expenseViewModel.addExpense(newExpense)
-                            Toast.makeText(context, context.getString(R.string.expense_saved), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.expense_saved_successfully), Toast.LENGTH_SHORT).show()
                             onSaveSuccess()
                         }
                     },

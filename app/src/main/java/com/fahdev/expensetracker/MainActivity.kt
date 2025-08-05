@@ -76,19 +76,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.CurrencyHelper
+import com.fahdev.expensetracker.data.Expense
+import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.data.Supplier
 import com.fahdev.expensetracker.data.UserPreferencesRepository
 import com.fahdev.expensetracker.ui.components.EmptyState
+import com.fahdev.expensetracker.ui.components.FilterDialog
+import com.fahdev.expensetracker.ui.components.FilterStatusRow
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -96,12 +106,138 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Add test data only in debug builds to avoid populating production releases
+        if (com.fahdev.expensetracker.BuildConfig.DEBUG) {
+            lifecycleScope.launch {
+                // Check if data already exists to prevent adding it on every launch
+                val expenseCount = expenseViewModel.totalTransactionCount.first()
+                if (expenseCount == 0) {
+                    addTestData(expenseViewModel)
+                }
+            }
+        }
+
         enableEdgeToEdge()
         setContent {
             ExpenseTrackerTheme {
                 MainAppScreen(expenseViewModel = expenseViewModel)
             }
         }
+    }
+}
+
+/**
+ * Populates the database with a set of fictitious data for testing and demonstration.
+ * This function creates several categories, suppliers, and products, then generates
+ * random expenses over the last 3 years.
+ */
+private suspend fun addTestData(viewModel: ExpenseViewModel) {
+    withContext(Dispatchers.IO) {
+        // 1. Define Categories
+        val categories = listOf(
+            Category(name = "Groceries", iconName = "local_grocery_store", colorHex = "#4CAF50"),
+            Category(name = "Utilities", iconName = "lightbulb", colorHex = "#FFC107"),
+            Category(name = "Transport", iconName = "directions_car", colorHex = "#2196F3"),
+            Category(name = "Entertainment", iconName = "theaters", colorHex = "#E91E63"),
+            Category(name = "Health", iconName = "favorite", colorHex = "#F44336"),
+            Category(name = "Shopping", iconName = "shopping_bag", colorHex = "#9C27B0")
+        )
+        val categoryIds = categories.map { viewModel.addCategory(it) }
+
+        // 2. Define Suppliers
+        val suppliers = listOf(
+            Supplier(name = "FreshMart"),
+            Supplier(name = "City Power & Light"),
+            Supplier(name = "Metro Transit"),
+            Supplier(name = "Cineplex"),
+            Supplier(name = "Community Pharmacy"),
+            Supplier(name = "Amazon"),
+            Supplier(name = "SuperValue Grocers"),
+            Supplier(name = "City Gas Station")
+        )
+        val supplierIds = suppliers.map { viewModel.addSupplier(it) }
+
+        // 3. Define Products and link them to Categories
+        val products = listOf(
+            // Groceries
+            Product(name = "Milk", categoryId = categoryIds[0].toInt()),
+            Product(name = "Bread", categoryId = categoryIds[0].toInt()),
+            Product(name = "Eggs", categoryId = categoryIds[0].toInt()),
+            Product(name = "Apples", categoryId = categoryIds[0].toInt()),
+            // Utilities
+            Product(name = "Electricity Bill", categoryId = categoryIds[1].toInt()),
+            Product(name = "Water Bill", categoryId = categoryIds[1].toInt()),
+            // Transport
+            Product(name = "Bus Fare", categoryId = categoryIds[2].toInt()),
+            Product(name = "Gasoline", categoryId = categoryIds[2].toInt()),
+            // Entertainment
+            Product(name = "Movie Ticket", categoryId = categoryIds[3].toInt()),
+            Product(name = "Streaming Subscription", categoryId = categoryIds[3].toInt()),
+            // Health
+            Product(name = "Painkillers", categoryId = categoryIds[4].toInt()),
+            // Shopping
+            Product(name = "T-Shirt", categoryId = categoryIds[5].toInt()),
+            Product(name = "Book", categoryId = categoryIds[5].toInt())
+        )
+        val productIds = products.map { viewModel.addProduct(it) }
+
+        // 4. Link Suppliers to Categories (Many-to-Many)
+        // FreshMart & SuperValue -> Groceries
+        viewModel.saveSupplierLinksForCategory(categoryIds[0].toInt(), listOf(supplierIds[0].toInt(), supplierIds[6].toInt()))
+        // City Power -> Utilities
+        viewModel.saveSupplierLinksForCategory(categoryIds[1].toInt(), listOf(supplierIds[1].toInt()))
+        // Metro Transit & City Gas -> Transport
+        viewModel.saveSupplierLinksForCategory(categoryIds[2].toInt(), listOf(supplierIds[2].toInt(), supplierIds[7].toInt()))
+        // Cineplex & Amazon -> Entertainment
+        viewModel.saveSupplierLinksForCategory(categoryIds[3].toInt(), listOf(supplierIds[3].toInt(), supplierIds[5].toInt()))
+        // Community Pharmacy -> Health
+        viewModel.saveSupplierLinksForCategory(categoryIds[4].toInt(), listOf(supplierIds[4].toInt()))
+        // Amazon -> Shopping
+        viewModel.saveSupplierLinksForCategory(categoryIds[5].toInt(), listOf(supplierIds[5].toInt()))
+
+
+        // 5. Generate random expenses over the last 3 years
+        val today = System.currentTimeMillis()
+        val random = Random(System.currentTimeMillis())
+        val expenseList = mutableListOf<Expense>()
+
+        for (i in 1..500) { // Create 500 random expenses
+            val randomProductIndex = random.nextInt(productIds.size)
+            val product = products[randomProductIndex]
+            val productId = productIds[randomProductIndex].toInt()
+
+            // Find suppliers linked to the product's category
+            val linkedSupplierIds = when (product.categoryId) {
+                categoryIds[0].toInt() -> listOf(supplierIds[0].toInt(), supplierIds[6].toInt()) // Groceries
+                categoryIds[1].toInt() -> listOf(supplierIds[1].toInt()) // Utilities
+                categoryIds[2].toInt() -> listOf(supplierIds[2].toInt(), supplierIds[7].toInt()) // Transport
+                categoryIds[3].toInt() -> listOf(supplierIds[3].toInt(), supplierIds[5].toInt()) // Entertainment
+                categoryIds[4].toInt() -> listOf(supplierIds[4].toInt()) // Health
+                categoryIds[5].toInt() -> listOf(supplierIds[5].toInt()) // Shopping
+                else -> emptyList()
+            }
+            if (linkedSupplierIds.isEmpty()) continue
+
+            val supplierId = linkedSupplierIds.random(random)
+            val amount = when (product.categoryId) {
+                categoryIds[1].toInt() -> random.nextDouble(50.0, 200.0) // Utilities are expensive
+                else -> random.nextDouble(5.0, 75.0)
+            }
+            val daysAgo = random.nextInt(1095) // 3 years
+            val timestamp = today - TimeUnit.DAYS.toMillis(daysAgo.toLong())
+
+            expenseList.add(
+                Expense(
+                    productId = productId,
+                    supplierId = supplierId,
+                    amount = amount,
+                    timestamp = timestamp
+                )
+            )
+        }
+
+        expenseList.forEach { viewModel.addExpense(it) }
     }
 }
 
@@ -399,380 +535,6 @@ fun ExpenseItem(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
-        }
-    }
-}
-
-@Composable
-fun FilterStatusRow(
-    selectedStartDate: Long?,
-    selectedEndDate: Long?,
-    selectedCategory: Category?,
-    selectedSupplier: Supplier?,
-    onResetFilters: () -> Unit
-) {
-    val context = LocalContext.current
-    val filtersActive = selectedStartDate != null || selectedEndDate != null || selectedCategory != null || selectedSupplier != null
-
-    if (filtersActive) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = context.getString(R.string.active_filters),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    if (selectedStartDate != null && selectedEndDate != null) {
-                        val start = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(selectedStartDate))
-                        val end = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(selectedEndDate))
-                        Text(
-                            text = context.getString(R.string.date_range, start, end),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
-                        )
-                    } else if (selectedStartDate != null) {
-                        val start = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(selectedStartDate))
-                        Text(
-                            text = "From: $start",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
-                        )
-                    }
-                    if (selectedCategory != null) {
-                        Text(
-                            text = context.getString(R.string.category_filter, selectedCategory.name),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
-                        )
-                    }
-                    if (selectedSupplier != null) {
-                        Text(
-                            text = context.getString(R.string.supplier_filter, selectedSupplier.name),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
-                        )
-                    }
-                }
-                IconButton(onClick = onResetFilters) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = context.getString(R.string.clear_filters),
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FilterDialog(
-    expenseViewModel: ExpenseViewModel,
-    allCategories: List<Category>,
-    allSuppliers: List<Supplier>,
-    onDismiss: () -> Unit
-) {
-    val selectedStartDate by expenseViewModel.selectedStartDate.collectAsState(initial = null)
-    val selectedEndDate by expenseViewModel.selectedEndDate.collectAsState(initial = null)
-    val selectedCategoryId by expenseViewModel.selectedCategoryId.collectAsState(initial = null)
-    val selectedSupplierId by expenseViewModel.selectedSupplierId.collectAsState(initial = null)
-    var showDatePicker by remember { mutableStateOf(false) }
-    val dateRangePickerState = rememberDateRangePickerState(
-        initialSelectedStartDateMillis = selectedStartDate,
-        initialSelectedEndDateMillis = selectedEndDate
-    )
-    val context = LocalContext.current
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(context.getString(R.string.filter_expenses)) },
-        text = {
-            Column(
-                modifier = Modifier.padding(vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(context.getString(R.string.filter_by_date), style = MaterialTheme.typography.titleSmall)
-                DateFilterDropdown(
-                    selectedStartDate = selectedStartDate,
-                    selectedEndDate = selectedEndDate,
-                    onDateOptionSelected = { option ->
-                        expenseViewModel.setDateRangeFilter(option)
-                    }
-                )
-                Button(
-                    onClick = { showDatePicker = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(context.getString(R.string.select_custom_date_range))
-                }
-                Spacer(Modifier.height(8.dp))
-                Text(context.getString(R.string.filter_by_category), style = MaterialTheme.typography.titleSmall)
-                CategoryFilterDropdown(
-                    allCategories = allCategories,
-                    selectedCategoryId = selectedCategoryId,
-                    onCategorySelected = { categoryId ->
-                        expenseViewModel.setCategoryFilter(categoryId)
-                    }
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(context.getString(R.string.filter_by_supplier), style = MaterialTheme.typography.titleSmall)
-                SupplierFilterDropdown(
-                    allSuppliers = allSuppliers,
-                    selectedSupplierId = selectedSupplierId,
-                    onSupplierSelected = { supplierId ->
-                        expenseViewModel.setSupplierFilter(supplierId)
-                    }
-                )
-                Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = {
-                        expenseViewModel.resetFilters()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)
-                ) {
-                    Text(context.getString(R.string.clear_all_filters))
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = onDismiss) {
-                Text(context.getString(R.string.apply_filters_button))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(context.getString(R.string.cancel))
-            }
-        }
-    )
-    if (showDatePicker) {
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val startDateMillis = dateRangePickerState.selectedStartDateMillis
-                        var endDateMillis = dateRangePickerState.selectedEndDateMillis
-                        if (startDateMillis != null && endDateMillis == null) {
-                            val cal = Calendar.getInstance().apply { timeInMillis = startDateMillis }
-                            cal.set(Calendar.HOUR_OF_DAY, 23)
-                            cal.set(Calendar.MINUTE, 59)
-                            cal.set(Calendar.SECOND, 59)
-                            cal.set(Calendar.MILLISECOND, 999)
-                            endDateMillis = cal.timeInMillis
-                        }
-                        val normalizedStartDate = startDateMillis?.let {
-                            Calendar.getInstance().apply {
-                                timeInMillis = it
-                                set(Calendar.HOUR_OF_DAY, 0)
-                                set(Calendar.MINUTE, 0)
-                                set(Calendar.SECOND, 0)
-                                set(Calendar.MILLISECOND, 0)
-                            }.timeInMillis
-                        }
-                        val normalizedEndDate = endDateMillis?.let {
-                            Calendar.getInstance().apply {
-                                timeInMillis = it
-                                set(Calendar.HOUR_OF_DAY, 23)
-                                set(Calendar.MINUTE, 59)
-                                set(Calendar.SECOND, 59)
-                                set(Calendar.MILLISECOND, 999)
-                            }.timeInMillis
-                        }
-                        expenseViewModel.setCustomDateRangeFilter(normalizedStartDate, normalizedEndDate)
-                        showDatePicker = false
-                    }
-                ) {
-                    Text(context.getString(R.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text(context.getString(R.string.cancel))
-                }
-            }
-        ) {
-            DateRangePicker(state = dateRangePickerState, modifier = Modifier.padding(16.dp))
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DateFilterDropdown(
-    selectedStartDate: Long?,
-    selectedEndDate: Long?,
-    onDateOptionSelected: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val dateOptions = listOf(
-        "ThisMonth" to context.getString(R.string.this_month),
-        "Last7Days" to context.getString(R.string.last_7_days),
-        "LastMonth" to context.getString(R.string.last_month),
-        "ThisYear" to context.getString(R.string.this_year),
-        "All" to context.getString(R.string.all_time)
-    )
-    val currentSelectionText = remember(selectedStartDate, selectedEndDate) {
-        when {
-            selectedStartDate == null && selectedEndDate == null -> context.getString(R.string.all_time)
-            else -> {
-                val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-                val startStr = selectedStartDate?.let { sdf.format(Date(it)) } ?: "N/A"
-                val endStr = selectedEndDate?.let { sdf.format(Date(it)) } ?: "N/A"
-                if (selectedStartDate != null && selectedEndDate != null && selectedStartDate == selectedEndDate) {
-                    startStr
-                } else if (selectedStartDate != null && selectedEndDate != null) {
-                    "$startStr - $endStr"
-                } else {
-                    context.getString(R.string.select_date_range)
-                }
-            }
-        }
-    }
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        TextField(
-            value = currentSelectionText,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(context.getString(R.string.date_range_label)) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                .fillMaxWidth()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            dateOptions.forEach { (key, label) ->
-                DropdownMenuItem(
-                    text = { Text(label) },
-                    onClick = {
-                        onDateOptionSelected(key)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CategoryFilterDropdown(
-    allCategories: List<Category>,
-    selectedCategoryId: Int?,
-    onCategorySelected: (Int?) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val selectedCategoryName = allCategories.find { it.id == selectedCategoryId }?.name ?: context.getString(R.string.all_categories)
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        TextField(
-            value = selectedCategoryName,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(context.getString(R.string.category)) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                .fillMaxWidth()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            DropdownMenuItem(
-                text = { Text(context.getString(R.string.all_categories)) },
-                onClick = {
-                    onCategorySelected(null)
-                    expanded = false
-                }
-            )
-            allCategories.forEach { category ->
-                DropdownMenuItem(
-                    text = { Text(category.name) },
-                    onClick = {
-                        onCategorySelected(category.id)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SupplierFilterDropdown(
-    allSuppliers: List<Supplier>,
-    selectedSupplierId: Int?,
-    onSupplierSelected: (Int?) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val selectedSupplierName = allSuppliers.find { it.id == selectedSupplierId }?.name ?: context.getString(R.string.all_suppliers)
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        TextField(
-            value = selectedSupplierName,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(context.getString(R.string.supplier)) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                .fillMaxWidth()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            DropdownMenuItem(
-                text = { Text(context.getString(R.string.all_suppliers)) },
-                onClick = {
-                    onSupplierSelected(null)
-                    expanded = false
-                }
-            )
-            allSuppliers.forEach { supplier ->
-                DropdownMenuItem(
-                    text = { Text(supplier.name) },
-                    onClick = {
-                        onSupplierSelected(supplier.id)
-                        expanded = false
-                    }
-                )
-            }
         }
     }
 }

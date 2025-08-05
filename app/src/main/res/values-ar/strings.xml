@@ -1,211 +1,232 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Expense Tracker</string>
+    <!-- App Info -->
+    <string name="app_name">متتبع المصروفات</string>
+    <string name="version_label">الإصدار %1$s</string>
+
+    <!-- Navigation -->
+    <string name="menu">القائمة</string>
+    <string name="back_button_desc">رجوع</string>
+    <string name="settings">الإعدادات</string>
+    <string name="about">حول</string>
+
+    <!-- Main Actions -->
+    <string name="add_new_expense">إضافة مصروف جديد</string>
     <string name="manage_categories">إدارة الفئات</string>
     <string name="manage_suppliers">إدارة الموردين</string>
-    <string name="filter_expenses">تصفية المصاريف</string>
-    <string name="add_new_expense">إضافة مصروف جديد</string>
-    <string name="no_expenses">لا توجد مصاريف مسجلة بعد، أو لا توجد مصاريف تطابق الفلاتر الحالية.</string>
-    <string name="total_expenses">إجمالي المصاريف</string>
+    <string name="filter_expenses">تصفية المصروفات</string>
+    <string name="shopping_list_title">قائمة التسوق</string>
+    <string name="title_activity_reporting">تقرير المصروفات</string>
+
+    <!-- Common Actions -->
+    <string name="add_button">إضافة</string>
+    <string name="save_button">حفظ</string>
+    <string name="cancel">إلغاء</string>
+    <string name="delete_button">حذف</string>
+    <string name="confirm">تأكيد</string>
+    <string name="save_changes">حفظ التغييرات</string>
+    <string name="save_expense">حفظ المصروف</string>
+
+    <!-- Form Fields -->
+    <string name="amount">المبلغ</string>
+    <string name="date">التاريخ</string>
+    <string name="select_date">اختر التاريخ</string>
+    <string name="category">الفئة</string>
+    <string name="supplier">المورد</string>
+    <string name="product">المنتج</string>
+    <string name="quantity_label">الكمية المخططة</string>
+    <string name="purchased_quantity_label">الكمية المشتراة</string>
+    <string name="unit_price_label">سعر الوحدة</string>
+    <string name="unit_label">الوحدة (مثل: كيلو، قطعة)</string>
+
+    <!-- Categories -->
+    <string name="category_name_label">اسم الفئة</string>
+    <string name="add_category_title">إضافة فئة</string>
+    <string name="edit_category_title">تعديل الفئة</string>
+    <string name="all_categories">جميع الفئات</string>
+    <string name="unknown_category">فئة غير معروفة</string>
+    <string name="add_new_category_desc">إضافة فئة جديدة</string>
+    <string name="edit_category_desc">تعديل %1$s</string>
+    <string name="delete_category_desc">حذف %1$s</string>
+    <string name="add_new_category">إضافة فئة جديدة: \"%s\"</string>
+
+    <!-- Default Categories -->
+    <string name="category_food_drinks">الطعام والمشروبات</string>
+    <string name="category_housing">السكن</string>
+    <string name="category_transportation">النقل</string>
+    <string name="category_utilities">الخدمات العامة</string>
+    <string name="category_healthcare">الرعاية الصحية</string>
+    <string name="category_personal_care">العناية الشخصية</string>
+    <string name="category_shopping">التسوق</string>
+    <string name="category_entertainment">الترفيه</string>
+    <string name="category_travel">السفر</string>
+    <string name="category_education">التعليم</string>
+    <string name="category_savings_investments">المدخرات والاستثمارات</string>
+    <string name="category_miscellaneous">متنوع</string>
+
+    <!-- Suppliers -->
+    <string name="supplier_name_label">اسم المورد</string>
+    <string name="supplier_label">المورد:</string>
+    <string name="add_supplier_title">إضافة مورد</string>
+    <string name="edit_supplier_title">تعديل المورد</string>
+    <string name="all_suppliers">جميع الموردين</string>
+    <string name="select_supplier">اختر المورد</string>
+    <string name="select_supplier_title">اختر المورد</string>
+    <string name="add_new_supplier_desc">إضافة مورد جديد</string>
+    <string name="edit_supplier_desc">تعديل %1$s</string>
+    <string name="delete_supplier_desc">حذف %1$s</string>
+    <string name="add_new_supplier">إضافة مورد جديد: \"%s\"</string>
+
+    <!-- Products -->
+    <string name="product_name_label">اسم المنتج</string>
+    <string name="add_product_title">إضافة منتج</string>
+    <string name="edit_product_title">تعديل المنتج</string>
+    <string name="add_new_product_title">إضافة منتج جديد</string>
+    <string name="select_product">اختر المنتج</string>
+    <string name="select_product_icon">اختر المنتج</string>
+    <string name="select_supplier_icon">اختر المورد</string>
+    <string name="unknown_product">منتج غير معروف</string>
+    <string name="add_new_product">إضافة منتج جديد: \"%s\"</string>
+    <string name="add_new_product_short">منتج جديد</string>
+    <string name="unknown">غير معروف</string>
+
+    <!-- Expenses -->
+    <string name="edit_expense_title">تعديل المصروف</string>
+    <string name="delete_expense">حذف المصروف</string>
+    <string name="no_expenses">لا توجد مصروفات مسجلة بعد، أو لا توجد مصروفات تطابق المرشحات الحالية.</string>
+    <string name="total_expenses">إجمالي المصروفات</string>
     <string name="from_supplier">من %1$s</string>
-    <string name="active_filters">الفلاتر النشطة:</string>
+    <string name="loading_expense_details">تحميل تفاصيل المصروف…</string>
+    <string name="error_expense_not_found">خطأ: المصروف غير موجود أو المعرف مفقود.</string>
+
+    <!-- Filters -->
+    <string name="active_filters">المرشحات النشطة:</string>
     <string name="date_range">التاريخ: %1$s - %2$s</string>
     <string name="category_filter">الفئة: %1$s</string>
     <string name="supplier_filter">المورد: %1$s</string>
-    <string name="clear_filters">مسح الفلاتر</string>
-    <string name="close">إغلاق</string>
-    <string name="ok">موافق</string>
-    <string name="cancel">إلغاء</string>
+    <string name="clear_filters">مسح المرشحات</string>
     <string name="apply_filters_button">تطبيق</string>
     <string name="filter_by_date">تصفية حسب الفترة:</string>
-    <string name="select_custom_date_range">تحديد نطاق زمني مخصص</string>
+    <string name="select_custom_date_range">اختر نطاق تاريخ مخصص</string>
     <string name="filter_by_category">تصفية حسب الفئة:</string>
     <string name="filter_by_supplier">تصفية حسب المورد:</string>
-    <string name="clear_all_filters">مسح كل الفلاتر</string>
+    <string name="clear_all_filters">مسح جميع المرشحات</string>
+    <string name="select_date_range">اختر نطاق التاريخ</string>
+    <string name="date_range_label">الفترة</string>
+
+    <!-- Time Periods -->
     <string name="this_month">هذا الشهر</string>
     <string name="last_7_days">آخر 7 أيام</string>
     <string name="last_month">الشهر الماضي</string>
-    <string name="this_year">هذه السنة</string>
-    <string name="all_time">كل الأوقات</string>
-    <string name="select_date_range">تحديد نطاق زمني</string>
-    <string name="date_range_label">الفترة</string>
-    <string name="all_categories">كل الفئات</string>
-    <string name="category">الفئة</string>
-    <string name="all_suppliers">كل الموردين</string>
-    <string name="supplier">المورد</string>
-    <string name="start">بداية</string>
-    <string name="end">نهاية</string>
-    <string name="category_food_drinks">طعام ومشروبات</string>
-    <string name="category_housing">سكن</string>
-    <string name="category_transportation">مواصلات</string>
-    <string name="category_utilities">خدمات</string>
-    <string name="category_healthcare">رعاية صحية</string>
-    <string name="category_personal_care">عناية شخصية</string>
-    <string name="category_shopping">تسوق</string>
-    <string name="category_entertainment">ترفيه</string>
-    <string name="category_travel">سفر</string>
-    <string name="category_education">تعليم</string>
-    <string name="category_savings_investments">مدخرات واستثمارات</string>
-    <string name="category_miscellaneous">متنوعات</string>
-    <string name="shopping_list_title">قائمة التسوق</string>
-    <string name="supplier_label">المورد:</string>
-    <string name="select_supplier">اختر المورد</string>
-    <string name="start_new_trip_button">بدء رحلة تسوق جديدة / إعادة استخدام آخر قائمة</string>
+    <string name="this_year">هذا العام</string>
+    <string name="all_time">جميع الأوقات</string>
+
+    <!-- Shopping List -->
     <string name="add_new_item_title">إضافة عنصر جديد</string>
-    <string name="product_name_label">اسم المنتج</string>
-    <string name="quantity_label">الكمية المخطط لها</string>
-    <string name="unit_label">الوحدة (مثال: كجم، قطعة)</string>
-    <string name="add_item_button">إضافة عنصر</string>
-    <string name="current_shopping_list_title">قائمة التسوق الحالية</string>
-    <string name="no_items_in_list">لا توجد عناصر في قائمة التسوق الحالية. أضف بعض العناصر!</string>
-    <string name="unknown_product">منتج غير معروف</string>
-    <string name="planned_quantity_display">المخطط له</string>
-    <string name="purchased_quantity_label">الكمية المشتراة</string>
-    <string name="unit_price_label">سعر الوحدة</string>
-    <string name="delete_item">حذف العنصر</string>
-    <string name="title_activity_reporting">تقرير المصاريف</string>
-    <string name="back_button_desc">رجوع</string>
-    <string name="report_section_summary">ملخص عام (كل الأوقات)</string>
-    <string name="report_total_expenses_all_time">إجمالي المصاريف (كل الأوقات)</string>
+    <string name="planned_quantity_display">مخطط</string>
+    <string name="delete_item">حذف العنصر: %1$s</string>
+    <string name="add_new_shopping_item">إضافة عنصر تسوق جديد</string>
+    <string name="validate_all_purchases">التحقق من جميع المشتريات</string>
+    <string name="validate_purchases_action">التحقق من المشتريات</string>
+    <string name="confirm_purchases">تأكيد المشتريات</string>
+    <string name="confirm_purchases_message">هل أنت متأكد من أنك تريد تسجيل جميع المشتريات المدخلة كمصروفات؟</string>
+    <string name="complete_shopping_title">إكمال التسوق</string>
+    <string name="complete_shopping">إكمال التسوق</string>
+    <string name="edit_item_title">تعديل عنصر التسوق</string>
+    <string name="item_validated_desc">تم ملء العنصر</string>
+    <string name="validation_summary_title">ملخص</string>
+    <string name="validation_summary">%1$d من %2$d عنصر جاهز للتحقق</string>
+    <string name="items_to_record">العناصر المراد تسجيلها: %d</string>
+    <string name="total_amount">المبلغ الإجمالي: %s</string>
+    <string name="total_cost">الإجمالي: %.2f</string>
+    <string name="record_expenses">تسجيل المصروفات</string>
+    <string name="processing_purchases">المعالجة جارية…</string>
+    <string name="no_items_ready">لا توجد عناصر جاهزة</string>
+
+    <!-- Reports -->
+    <string name="report_section_summary">الملخص العام</string>
     <string name="report_average_daily_expense">متوسط المصروف اليومي</string>
     <string name="report_average_monthly_expense">متوسط المصروف الشهري</string>
     <string name="report_total_transactions">إجمالي المعاملات</string>
-    <string name="report_section_spending_by_category_all_time">أعلى المصاريف حسب الفئة (كل الأوقات)</string>
-    <string name="report_section_spending_by_supplier_all_time">أعلى المصاريف حسب المورد (كل الأوقات)</string>
-    <string name="report_no_data_categories_all_time">لا توجد بيانات مصاريف حسب الفئة.</string>
-    <string name="report_no_data_suppliers_all_time">لا توجد بيانات مصاريف حسب المورد.</string>
-    <string name="report_section_product_details">تفاصيل شراء المنتج (مصفاة حسب الفترة)</string>
-    <string name="report_no_product_data">لا توجد تفاصيل شراء منتجات للفترة المحددة.</string>
+    <string name="report_no_product_data">لا توجد تفاصيل شراء منتجات متاحة للفترة المحددة.</string>
     <string name="report_product_total_spent">إجمالي المصروف:</string>
-    <string name="report_product_lowest_price">أقل سعر مدفوع:</string>
-    <string name="report_product_cheapest_supplier">أرخص مورد (بأقل سعر):</string>
-    <string name="report_not_available">غير متوفر</string>
+    <string name="report_product_lowest_price">أقل سعر تم دفعه:</string>
+    <string name="report_product_cheapest_supplier">المورد الأرخص (بأقل سعر):</string>
+    <string name="report_not_available">غير متاح</string>
     <string name="report_tab_summary">ملخص</string>
     <string name="report_tab_product_details">تفاصيل المنتج</string>
-    <string name="menu">القائمة</string>
-    <string name="settings">الإعدادات</string>
-    <string name="about">حول</string>
+    <string name="report_total_expenses_period">إجمالي الإنفاق</string>
+    <string name="report_lifetime_averages">متوسطات مدى الحياة</string>
+    <string name="report_period_averages">متوسطات الفترة</string>
+    <string name="report_section_spending_by_category_period">الإنفاق حسب الفئة</string>
+    <string name="report_section_spending_by_supplier_period">الإنفاق حسب المورد</string>
+    <string name="report_no_data_in_period">لا توجد بيانات متاحة للفترة المحددة.</string>
+
+    <!-- Settings -->
     <string name="setting_regional_title">الإعدادات الإقليمية</string>
     <string name="setting_currency_label">العملة</string>
     <string name="setting_language_label">اللغة</string>
-    <string name="version_label">الإصدار %1$s</string>
-    <string name="about_section_disclaimer">إخلاء مسؤولية</string>
-    <string name="about_disclaimer_content">هذا التطبيق هو أداة لإدارة الشؤون المالية الشخصية مصممة لمساعدتك على تتبع نفقاتك. لا يقدم التطبيق استشارات مالية أو قروضًا أو ائتمانًا أو يسهل الاستثمارات أو يشارك في أي خدمات مالية منظمة.</string>
-    <string name="about_section_privacy">البيانات والخصوصية</string>
-    <string name="about_privacy_content">يتم تخزين جميع البيانات المالية التي تدخلها بشكل آمن وحصري على جهازك. لا يقوم هذا التطبيق بجمع أو نقل أي من معلوماتك المالية الشخصية إلى خوادم خارجية. خصوصيتك هي الأولوية القصوى.</string>
-    <string name="about_section_contact">الاتصال والدعم</string>
-    <string name="about_contact_content">للأسئلة أو الملاحظات أو الدعم، يرجى مراسلتنا : https://expensetrackerwebsite.web.app/#contact</string>
-    <string name="add_new_category_desc">إضافة فئة جديدة</string>
-    <string name="no_categories_placeholder">لا توجد فئات حتى الآن. انقر على \'+\' لإضافة واحدة!</string>
-    <string name="add_category_title">إضافة فئة</string>
-    <string name="edit_category_title">تعديل الفئة</string>
-    <string name="category_name_label">اسم الفئة</string>
-    <string name="add_button">إضافة</string>
-    <string name="save_button">حفظ</string>
-    <string name="confirm_deletion_title">تأكيد الحذف</string>
-    <string name="delete_category_confirmation_message">هل أنت متأكد من أنك تريد حذف الفئة \'%1$s\'؟ سيؤثر هذا أيضًا على المصاريف ذات الصلة.</string>
-    <string name="delete_button">حذف</string>
-    <string name="edit_category_desc">تعديل %1$s</string>
-    <string name="delete_category_desc">حذف %1$s</string>
-    <string name="category_exists_error">فئة بهذا الاسم موجودة بالفعل!</string>
-    <string name="category_added_success">تمت إضافة الفئة!</string>
-    <string name="category_updated_success">تم تحديث الفئة!</string>
-    <string name="category_deleted_success">تم حذف الفئة!</string>
-    <string name="category_name_empty_error">لا يمكن أن يكون اسم الفئة فارغًا.</string>
-
-    <string name="add_new_supplier_desc">إضافة مورد جديد</string>
-    <string name="no_suppliers_placeholder">لا يوجد موردون حتى الآن. انقر على \'+\' لإضافة واحد!</string>
-    <string name="add_supplier_title">إضافة مورد</string>
-    <string name="edit_supplier_title">تعديل المورد</string>
-    <string name="supplier_name_label">اسم المورد</string>
-    <string name="delete_supplier_confirmation_message">هل أنت متأكد من أنك تريد حذف المورد \'%1$s\'؟ سيؤثر هذا أيضًا على المصاريف ذات الصلة.</string>
-    <string name="delete_supplier_with_expenses_confirmation">تحذير: \'%1$s\' مرتبط بنفقات. سيؤدي حذف المورد إلى حذف جميع سجلات نفقاته نهائيًا. لا يمكن التراجع عن هذا الإجراء.</string>
-    <string name="edit_supplier_desc">تعديل %1$s</string>
-    <string name="delete_supplier_desc">حذف %1$s</string>
-    <string name="supplier_exists_error">مورد بهذا الاسم موجود بالفعل!</string>
-    <string name="supplier_added_success">تمت إضافة المورد!</string>
-    <string name="supplier_updated_success">تم تحديث المورد!</string>
-    <string name="supplier_deleted_success">تم حذف المورد!</string>
-    <string name="supplier_name_empty_error">لا يمكن أن يكون اسم المورد فارغًا.</string>
     <string name="setting_display_title">خيارات العرض</string>
-    <string name="setting_home_filter_label">العرض الافتراضي للشاشة الرئيسية</string>
-    <string name="delete_category_error_has_products">لا يمكن الحذف: هذه الفئة لديها منتجات مرتبطة بها.</string>
-    <string name="no_categories_title">لم يتم العثور على فئات</string>
-    <string name="no_categories_description">اضغط على زر \"+\" لإضافة فئتك الأولى والبدء في تنظيم نفقاتك.</string>
-    <string name="no_suppliers_title">لم يتم العثور على الموردين</string>
-    <string name="no_suppliers_description">اضغط على زر \"+\" لإضافة المورد الأول الخاص بك.</string>
-    <string name="no_expenses_title">لا توجد نفقات هنا</string>
-    <string name="no_expenses_description">بمجرد إضافة مصروف، سوف يظهر هنا.</string>
-    <string name="no_expenses_match_filter_title">لا توجد نفقات مطابقة</string>
-    <string name="no_expenses_match_filter_description">حاول ضبط أو مسح المرشحات الخاصة بك لرؤية المزيد من النتائج.</string>
-    <string name="no_items_in_list_title">قائمة التسوق الخاصة بك فارغة</string>
-    <string name="no_items_in_list_description">حدد المورد واضغط على زر \"+\" لإضافة العناصر إلى قائمتك.</string>
-    <string name="amount">المبلغ</string>
-    <string name="select_product">اختر المنتج</string>
-    <string name="add_new_product">إضافة منتج جديد: \"%s\"</string>
-    <string name="unknown_category">فئة غير معروفة</string>
-    <string name="select_supplier_title">اختر المورد</string>
-    <string name="add_new_supplier">إضافة مورد جديد: \"%s\"</string>
-    <string name="save_expense">حفظ المصروف</string>
-    <string name="add_new_product_title">إضافة منتج جديد</string>
-    <string name="add_new_category">إضافة فئة جديدة: \"%s\"</string>
-    <string name="product_added">تمت إضافة المنتج!</string>
-    <string name="failed_to_add_product">فشل في إضافة المنتج.</string>
-    <string name="product_exists">المنتج موجود بالفعل، تم اختياره.</string>
-    <string name="product_name_and_category_empty">لا يمكن أن يكون اسم المنتج والفئة فارغين.</string>
-    <string name="add_new_supplier_title">إضافة مورد جديد</string>
-    <string name="supplier_added">تمت إضافة المورد!</string>
-    <string name="failed_to_add_supplier">فشل في إضافة المورد.</string>
-    <string name="supplier_exists">المورد موجود بالفعل، تم اختياره.</string>
-    <string name="supplier_name_empty">لا يمكن أن يكون اسم المورد فارغًا.</string>
-    <string name="edit_expense_title">تعديل المصروف</string>
-    <string name="loading_expense_details">جاري تحميل تفاصيل المصروف…</string>
-    <string name="error_expense_not_found">خطأ: لم يتم العثور على المصروف أو المعرف مفقود.</string>
-    <string name="product">المنتج</string>
-    <string name="select_product_icon">اختر المنتج</string>
-    <string name="select_supplier_icon">اختر المورد</string>
-    <string name="date">التاريخ</string>
-    <string name="select_date">اختر التاريخ</string>
-    <string name="confirm">تأكيد</string>
-    <string name="save_changes">حفظ التغييرات</string>
-    <string name="delete_expense">حذف المصروف</string>
-    <string name="expense_updated_successfully">تم تحديث المصروف بنجاح!</string>
-    <string name="fill_all_fields">يرجى ملء جميع الحقول بشكل صحيح.</string>
-    <string name="are_you_sure_delete_expense">هل أنت متأكد من أنك تريد حذف هذا المصروف؟</string>
-    <string name="expense_deleted_successfully">تم حذف المصروف بنجاح!</string>
-    <string name="unknown">غير معروف</string>
-    <string name="add_product_title">إضافة منتج</string>
-    <string name="edit_product_title">تعديل المنتج</string>
-    <string name="product_name_exists_in_category">منتج بهذا الاسم موجود بالفعل في هذه الفئة.</string>
-    <string name="delete_product_confirmation">هل أنت متأكد من أنك تريد حذف المنتج \'%s\'؟</string>
-    <string name="cannot_delete_product_has_expenses">لا يمكن حذف المنتج. لديه مصاريف مرتبطة به.</string>
-    <string name="add_new_shopping_item">إضافة عنصر تسوق جديد</string>
-    <string name="validate_all_purchases">التحقق من صحة جميع المشتريات</string>
-    <string name="confirm_purchases">تأكيد المشتريات</string>
-    <string name="confirm_purchases_message">هل أنت متأكد من أنك تريد تسجيل جميع المشتريات المدخلة كمصاريف؟</string>
-    <string name="expenses_recorded_successfully">تم تسجيل %d مصاريف بنجاح!</string>
-    <string name="no_valid_purchases_to_record">لا توجد مشتريات صالحة للتسجيل.</string>
-    <string name="item_added_to_shopping_list">تمت إضافة العنصر إلى قائمة التسوق!</string>
-    <string name="select_product_and_enter_quantity">يرجى اختيار منتج وإدخال كمية مخططة موجبة صالحة.</string>
-    <string name="category_added">تمت إضافة الفئة!</string>
-    <string name="failed_to_add_category">فشل في إضافة الفئة.</string>
+    <string name="setting_home_filter_label">عرض الصفحة الرئيسية الافتراضي</string>
     <string name="select_currency">اختر العملة</string>
-    <string name="system_default">النظام الافتراضي</string>
+    <string name="system_default">افتراضي النظام</string>
+
+    <!-- About -->
+    <string name="about_section_disclaimer">إخلاء المسؤولية</string>
+    <string name="about_disclaimer_content">هذا التطبيق هو أداة لإدارة الأموال الشخصية مصممة لمساعدتك في تتبع مصروفاتك. لا يقدم المشورة المالية، ولا يوفر القروض أو الائتمان، ولا يسهل الاستثمارات، ولا يشارك في أي خدمات مالية منظمة.</string>
+    <string name="about_section_privacy">البيانات والخصوصية</string>
+    <string name="about_privacy_content">جميع البيانات المالية التي تدخلها يتم تخزينها بأمان وحصرياً على جهازك. لا يجمع هذا التطبيق أو ينقل أي من معلوماتك المالية الشخصية إلى خوادم خارجية. خصوصيتك هي أولوية قصوى.</string>
+    <string name="about_section_contact">الاتصال والدعم</string>
+    <string name="about_contact_content">للأسئلة أو التعليقات أو الدعم، يرجى الاتصال بنا على: https://expensetrackerwebsite.web.app/#contact</string>
+
+    <!-- Empty States -->
+    <string name="no_categories_title">لم يتم العثور على فئات</string>
+    <string name="no_categories_description">اضغط على زر \'+\' لإضافة فئتك الأولى وابدأ في تنظيم مصروفاتك.</string>
+    <string name="no_suppliers_title">لم يتم العثور على موردين</string>
+    <string name="no_suppliers_description">اضغط على زر \'+\' لإضافة مورد أول.</string>
+    <string name="no_expenses_title">لا توجد مصروفات هنا</string>
+    <string name="no_expenses_description">بمجرد إضافة مصروف، سيظهر هنا.</string>
+    <string name="no_expenses_match_filter_title">لا توجد مصروفات مطابقة</string>
+    <string name="no_expenses_match_filter_description">حاول تعديل أو مسح مرشحاتك لرؤية المزيد من النتائج.</string>
+    <string name="no_items_in_list_title">قائمة التسوق فارغة</string>
+    <string name="no_items_in_list_description">اختر مورد واضغط على زر \'+\' لإضافة عناصر إلى قائمتك.</string>
+
+    <!-- Confirmation Dialogs -->
+    <string name="confirm_deletion_title">تأكيد الحذف</string>
+    <string name="delete_category_confirmation_message">هل أنت متأكد من أنك تريد حذف الفئة \'%1$s\'؟ سيؤثر هذا أيضاً على المصروفات ذات الصلة.</string>
+    <string name="delete_supplier_confirmation_message">هل أنت متأكد من أنك تريد حذف المورد \'%1$s\'؟</string>
+    <string name="delete_supplier_with_expenses_confirmation">تحذير: \'%1$s\' لديه مصروفات مرتبطة. حذف المورد سيحذف أيضاً جميع سجلات مصروفاته نهائياً. لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="delete_product_confirmation">هل أنت متأكد من أنك تريد حذف المنتج \'%s\'؟</string>
+    <string name="are_you_sure_delete_expense">هل أنت متأكد من أنك تريد حذف هذا المصروف؟</string>
+
+    <!-- Success Messages -->
+    <string name="category_added_successfully">تمت إضافة الفئة!</string>
+    <string name="category_updated_successfully">تم تحديث الفئة!</string>
+    <string name="category_deleted_successfully">تم حذف الفئة!</string>
+    <string name="supplier_added_successfully">تمت إضافة المورد!</string>
+    <string name="supplier_updated_successfully">تم تحديث المورد!</string>
+    <string name="supplier_deleted_successfully">تم حذف المورد!</string>
+    <string name="product_added_successfully">تمت إضافة المنتج!</string>
+    <string name="product_exists">المنتج موجود بالفعل، تم اختياره.</string>
+    <string name="expense_updated_successfully">تم تحديث المصروف بنجاح!</string>
+    <string name="expense_deleted_successfully">تم حذف المصروف بنجاح!</string>
+    <string name="expense_saved_successfully">تم حفظ المصروف!</string>
+    <string name="expenses_recorded_successfully">تم تسجيل %d مصروف بنجاح!</string>
+    <string name="item_added_to_shopping_list">تمت إضافة العنصر إلى قائمة التسوق!</string>
+
+    <!-- Error Messages -->
+    <string name="category_exists_error">فئة بهذا الاسم موجودة بالفعل!</string>
+    <string name="category_name_empty_error">اسم الفئة لا يمكن أن يكون فارغاً.</string>
+    <string name="supplier_exists_error">مورد بهذا الاسم موجود بالفعل!</string>
+    <string name="supplier_name_empty_error">اسم المورد لا يمكن أن يكون فارغاً.</string>
+    <string name="product_name_exists_in_category">منتج بهذا الاسم موجود بالفعل في هذه الفئة.</string>
+    <string name="product_name_and_category_empty">اسم المنتج والفئة لا يمكن أن يكونا فارغين.</string>
+    <string name="delete_category_error_has_products">لا يمكن الحذف: هذه الفئة لديها منتجات مرتبطة بها.</string>
+    <string name="cannot_delete_product_has_expenses">لا يمكن حذف المنتج. لديه مصروفات مرتبطة.</string>
+    <string name="failed_to_add_product">فشل في إضافة المنتج.</string>
+    <string name="failed_to_add_category">فشل في إضافة الفئة.</string>
+    <string name="fill_all_fields">يرجى ملء جميع الحقول بشكل صحيح.</string>
     <string name="please_fill_amount_product_supplier">يرجى ملء المبلغ واختيار المنتج والمورد</string>
-    <string name="expense_saved">تم حفظ المصروف!</string>
-    <string name="validation_summary">%1$d من %2$d عنصر جاهز للتحقق</string>
-    <string name="total_cost">الإجمالي: %.2f</string>
-    <string name="processing_purchases">جاري المعالجة…</string>
-    <string name="complete_shopping">إتمام التسوق</string>
-    <string name="no_items_ready">لا توجد عناصر جاهزة</string>
-    <string name="confirm_changes">تأكيد</string>
-    <string name="item_validated_desc">تم ملء العنصر</string>
-    <string name="complete_shopping_title">إتمام التسوق</string>
-    <string name="validation_summary_title">ملخص</string>
-    <string name="items_to_record">العناصر المسجلة: %d</string>
-    <string name="total_amount">المبلغ الإجمالي: %s</string>
-    <string name="record_expenses">تسجيل المصروفات</string>
-    <string name="add_new_product_short">منتج جديد</string>
-    <string name="validate_purchases_action">التحقق من صحة المشتريات</string>
-    <string name="edit_item_title">تعديل عنصر التسوق</string>
+    <string name="select_product_and_enter_quantity">يرجى اختيار منتج وإدخال كمية مخططة صحيحة موجبة.</string>
+    <string name="no_valid_purchases_to_record">لا توجد مشتريات صحيحة للتسجيل.</string>
 </resources>

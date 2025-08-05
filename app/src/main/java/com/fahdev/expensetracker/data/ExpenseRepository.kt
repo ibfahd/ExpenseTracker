@@ -56,8 +56,14 @@ class ExpenseRepository(
     val totalExpensesAllTime: Flow<Double?> = expenseDao.getTotalExpensesAllTime()
     val firstExpenseDate: Flow<Long?> = expenseDao.getFirstExpenseDate()
     val totalTransactionCount: Flow<Int?> = expenseDao.getTotalTransactionCount()
+    fun getFilteredTransactionCount(startDate: Long?, endDate: Long?, categoryId: Int?, supplierId: Int?): Flow<Int?> = expenseDao.getFilteredTransactionCount(startDate, endDate, categoryId, supplierId)
     val spendingByCategory: Flow<List<CategorySpending>> = expenseDao.getSpendingByCategory()
     val spendingBySupplier: Flow<List<SupplierSpending>> = expenseDao.getSpendingBySupplier()
-    fun getProductSpendingReport(startDate: Long?, endDate: Long?): Flow<List<ExpenseDao.ProductSpendingInfo>> = expenseDao.getProductSpendingReport(startDate, endDate)
+
+    // --- Filtered Reporting Data ---
+    fun getSpendingByCategoryFiltered(startDate: Long?, endDate: Long?, categoryId: Int?, supplierId: Int?): Flow<List<CategorySpending>> = expenseDao.getSpendingByCategoryFiltered(startDate, endDate, categoryId, supplierId)
+    fun getSpendingBySupplierFiltered(startDate: Long?, endDate: Long?, categoryId: Int?, supplierId: Int?): Flow<List<SupplierSpending>> = expenseDao.getSpendingBySupplierFiltered(startDate, endDate, categoryId, supplierId)
+
+    fun getProductSpendingReport(startDate: Long?, endDate: Long?, categoryId: Int?, supplierId: Int?): Flow<List<ExpenseDao.ProductSpendingInfo>> = expenseDao.getProductSpendingReport(startDate, endDate, categoryId, supplierId)
     suspend fun getLowestPriceForProduct(productId: Int, startDate: Long?, endDate: Long?): ExpenseDao.LowestPriceInfo? = expenseDao.getLowestPriceForProduct(productId, startDate, endDate)
 }
