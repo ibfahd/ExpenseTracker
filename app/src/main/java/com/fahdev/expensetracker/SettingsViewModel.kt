@@ -23,9 +23,12 @@ class SettingsViewModel @Inject constructor(
         userPreferencesRepository.setLanguage(languageTag)
         LocaleHelper.updateAppLocale(languageTag)
     }
-    val selectedHomeFilter: StateFlow<String> = userPreferencesRepository.homeScreenDefaultFilter
-
-    fun setHomeFilter(filterKey: String) {
-        userPreferencesRepository.setHomeScreenDefaultFilter(filterKey)
+    val selectedTheme: StateFlow<String> = userPreferencesRepository.theme
+    fun setTheme(theme: String) {
+        userPreferencesRepository.setTheme(theme)
+    }
+    val selectedCardStyle: StateFlow<String> = userPreferencesRepository.cardStyle
+    fun setCardStyle(style: String) {
+        userPreferencesRepository.setCardStyle(style)
     }
 }

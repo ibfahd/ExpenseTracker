@@ -5,64 +5,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ShoppingCartCheckout
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.outlined.Storefront
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -70,18 +25,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.fahdev.expensetracker.data.Category
-import com.fahdev.expensetracker.data.CurrencyHelper
-import com.fahdev.expensetracker.data.Product
-import com.fahdev.expensetracker.data.ShoppingListItem
-import com.fahdev.expensetracker.data.UserPreferencesRepository
+import com.fahdev.expensetracker.data.*
 import com.fahdev.expensetracker.ui.components.EmptyState
+import com.fahdev.expensetracker.ui.components.SelectionAccordion
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
+import java.text.SimpleDateFormat
+import java.util.*
 
 @AndroidEntryPoint
 class ShoppingListActivity : AppCompatActivity() {
@@ -123,7 +76,8 @@ fun ShoppingListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     // State from ViewModels
-    val currentSupplierId by shoppingListViewModel.currentSupplierId.collectAsState()
+    val currentSupplier by shoppingListViewModel.currentSupplier.collectAsState()
+    val shoppingDate by shoppingListViewModel.shoppingDate.collectAsState()
     val allSuppliers by shoppingListViewModel.allSuppliers.collectAsState(initial = emptyList())
     val shoppingListItems by shoppingListViewModel.shoppingListItems.collectAsState(initial = emptyList())
     val allProducts by shoppingListViewModel.allProducts.collectAsState(initial = emptyList())
@@ -133,9 +87,9 @@ fun ShoppingListScreen(
         CurrencyHelper.getCurrencyFormatter(currencyCode)
     }
 
-
     // UI State
-    var expandedSupplierDropdown by remember { mutableStateOf(false) }
+    var isSupplierAccordionExpanded by remember { mutableStateOf(true) }
+    var showDatePicker by remember { mutableStateOf(false) }
     var showAddShoppingItemDialog by remember { mutableStateOf(false) }
     var showEditShoppingItemDialog by remember { mutableStateOf(false) }
     var itemToEdit by remember { mutableStateOf<ShoppingListItem?>(null) }
@@ -189,7 +143,7 @@ fun ShoppingListScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            if (currentSupplierId != null) {
+            if (currentSupplier != null && shoppingDate != null) {
                 FloatingActionButton(onClick = { showAddShoppingItemDialog = true }) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_new_shopping_item))
                 }
@@ -202,70 +156,74 @@ fun ShoppingListScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
-            // Supplier selection dropdown
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(stringResource(R.string.supplier_label), style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.width(8.dp))
-                ExposedDropdownMenuBox(
-                    expanded = expandedSupplierDropdown,
-                    onExpandedChange = { expandedSupplierDropdown = !expandedSupplierDropdown },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    TextField(
-                        value = allSuppliers.find { it.id == currentSupplierId }?.name ?: stringResource(R.string.select_supplier),
+            Spacer(Modifier.height(16.dp))
+            // --- Supplier Accordion ---
+            SelectionAccordion(
+                title = stringResource(R.string.supplier),
+                selectedItem = currentSupplier,
+                isExpanded = isSupplierAccordionExpanded,
+                onToggle = { isSupplierAccordionExpanded = !isSupplierAccordionExpanded },
+                items = allSuppliers,
+                onItemSelected = { supplier ->
+                    shoppingListViewModel.selectSupplier(supplier)
+                    isSupplierAccordionExpanded = false
+                },
+                defaultIcon = Icons.Outlined.Storefront
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            // --- Date Selection ---
+            AnimatedVisibility(visible = currentSupplier != null) {
+                Box(modifier = Modifier.clickable { showDatePicker = true }) {
+                    OutlinedTextField(
+                        value = shoppingDate?.let { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(it)) } ?: stringResource(R.string.select_date),
                         onValueChange = {},
                         readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSupplierDropdown) },
-                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
+                        label = { Text(stringResource(R.string.date)) },
+                        trailingIcon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = false, // Make it visually distinct as a non-editable field
+                        colors = OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline,
+                            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
-                    ExposedDropdownMenu(
-                        expanded = expandedSupplierDropdown,
-                        onDismissRequest = { expandedSupplierDropdown = false }
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            // --- Main content area for the list ---
+            AnimatedVisibility(visible = currentSupplier != null && shoppingDate != null) {
+                if (shoppingListItems.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Outlined.ShoppingCart,
+                        title = stringResource(id = R.string.no_items_in_list_title),
+                        description = stringResource(id = R.string.no_items_in_list_description)
+                    )
+                } else {
+                    LazyColumn(
+                        contentPadding = PaddingValues(bottom = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        allSuppliers.forEach { supplier ->
-                            DropdownMenuItem(
-                                text = { Text(supplier.name) },
+                        items(shoppingListItems, key = { it.id }) { item ->
+                            ShoppingListItemCard(
+                                item = item,
+                                productName = allProducts.find { it.id == item.productId }?.name ?: stringResource(R.string.unknown_product),
+                                currencyFormatter = currencyFormatter,
                                 onClick = {
-                                    shoppingListViewModel.selectSupplier(supplier.id)
-                                    expandedSupplierDropdown = false
+                                    itemToEdit = item
+                                    showEditShoppingItemDialog = true
+                                },
+                                onDelete = { itemToDelete ->
+                                    shoppingListViewModel.deleteShoppingItem(itemToDelete)
                                 }
                             )
                         }
-                    }
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(8.dp))
-
-            // Main content area for the list
-            if (shoppingListItems.isEmpty()) {
-                EmptyState(
-                    icon = Icons.Outlined.ShoppingCart,
-                    title = stringResource(id = R.string.no_items_in_list_title),
-                    description = stringResource(id = R.string.no_items_in_list_description)
-                )
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(shoppingListItems, key = { it.id }) { item ->
-                        ShoppingListItemCard(
-                            item = item,
-                            productName = allProducts.find { it.id == item.productId }?.name ?: stringResource(R.string.unknown_product),
-                            currencyFormatter = currencyFormatter,
-                            onClick = {
-                                itemToEdit = item
-                                showEditShoppingItemDialog = true
-                            },
-                            onDelete = { itemToDelete ->
-                                shoppingListViewModel.deleteShoppingItem(itemToDelete)
-                            }
-                        )
                     }
                 }
             }
@@ -273,6 +231,30 @@ fun ShoppingListScreen(
     }
 
     // --- Dialogs ---
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = shoppingDate ?: System.currentTimeMillis())
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        shoppingListViewModel.selectShoppingDate(it)
+                    }
+                    showDatePicker = false
+                }) {
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     if (showAddShoppingItemDialog) {
         AddShoppingItemDialog(
@@ -758,37 +740,4 @@ fun AddProductDialog(
             TextButton(onClick = onDismissRequest) { Text(stringResource(R.string.cancel)) }
         }
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewShoppingListScreen() {
-    ExpenseTrackerTheme {
-        /* This is a placeholder for the preview.
-        // In a real app, you would inject mock ViewModels here.
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Shopping List") },
-                    navigationIcon = { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) },
-                    actions = {
-                        IconButton(onClick = {}) {
-                            BadgedBox(badge = { Badge { Text("3") } }) {
-                                Icon(Icons.Default.ShoppingCartCheckout, null)
-                            }
-                        }
-                    }
-                )
-            },
-            floatingActionButton = {
-                FloatingActionButton(onClick = {}) {
-                    Icon(Icons.Default.Add, null)
-                }
-            }
-        ) { padding ->
-            Column(Modifier.padding(padding).padding(16.dp)) {
-                Text("Shopping List Content Area")
-            }
-        }*/
-    }
 }

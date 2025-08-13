@@ -135,6 +135,42 @@ class ExpenseViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
+    // --- Trend Analysis State ---
+    enum class TrendGrouping { DAY, WEEK, MONTH }
+    private val _trendGrouping = MutableStateFlow(TrendGrouping.DAY)
+    val trendGrouping: StateFlow<TrendGrouping> = _trendGrouping.asStateFlow()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val trendData: StateFlow<List<ExpenseDao.TrendDataPoint>> = combine(
+        _selectedStartDate, _selectedEndDate, _trendGrouping, _refreshTrigger
+    ) { startDate, endDate, grouping, _ ->
+        Triple(startDate, endDate, grouping)
+    }.flatMapLatest { (startDate, endDate, grouping) ->
+        when (grouping) {
+            TrendGrouping.DAY -> expenseRepository.getSpendingByDay(startDate, endDate)
+            TrendGrouping.WEEK -> expenseRepository.getSpendingByWeek(startDate, endDate)
+            TrendGrouping.MONTH -> expenseRepository.getSpendingByMonth(startDate, endDate)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val previousPeriodTotal: StateFlow<Double> = combine(
+        _selectedStartDate, _selectedEndDate, _selectedCategoryId, _selectedSupplierId, _refreshTrigger
+    ) { sDate, eDate, catId, supId, _ ->
+        if (sDate == null) return@combine FilterParams(null, null, null, null)
+
+        val end = eDate ?: System.currentTimeMillis()
+        val duration = end - sDate
+        val previousEndDate = sDate - 1
+        val previousStartDate = previousEndDate - duration
+
+        FilterParams(previousStartDate, previousEndDate, catId, supId)
+    }.flatMapLatest { params ->
+        if (params.startDate != null && params.startDate < 0) flowOf(0.0) else expenseRepository.getTotalFilteredExpenses(params.startDate, params.endDate, params.categoryId, params.supplierId)
+    }.map { it ?: 0.0 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+
     // --- State and Logic for the Add Expense Screen Flow ---
     private val _selectedSupplierForAdd = MutableStateFlow<Supplier?>(null)
     val selectedSupplierForAdd: StateFlow<Supplier?> = _selectedSupplierForAdd.asStateFlow()
@@ -186,6 +222,10 @@ class ExpenseViewModel @Inject constructor(
         _selectedCategoryForAdd.value = null
     }
 
+    fun setTrendGrouping(grouping: TrendGrouping) {
+        _trendGrouping.value = grouping
+    }
+
     // --- Functions for Managing Category-Supplier Links ---
     fun getLinkedSupplierIds(categoryId: Int): Flow<List<Int>> = expenseRepository.getSupplierIdsForCategory(categoryId)
     fun saveSupplierLinksForCategory(categoryId: Int, supplierIds: List<Int>) {
@@ -200,19 +240,27 @@ class ExpenseViewModel @Inject constructor(
         }
     }
 
+    private val _isReady = MutableStateFlow(false)
+    val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
+
     // --- ViewModel Initialization ---
     init {
         viewModelScope.launch {
-            userPreferencesRepository.selectedStartDate.collect { _selectedStartDate.value = it }
-        }
-        viewModelScope.launch {
-            userPreferencesRepository.selectedEndDate.collect { _selectedEndDate.value = it }
-        }
-        viewModelScope.launch {
-            userPreferencesRepository.selectedCategoryId.collect { _selectedCategoryId.value = it }
-        }
-        viewModelScope.launch {
-            userPreferencesRepository.selectedSupplierId.collect { _selectedSupplierId.value = it }
+            // Combine several flows that indicate readiness.
+            // For example, wait until we have loaded user preferences.
+            combine(
+                userPreferencesRepository.selectedStartDate,
+                userPreferencesRepository.selectedEndDate,
+                userPreferencesRepository.selectedCategoryId,
+                userPreferencesRepository.selectedSupplierId
+            ) { startDate, endDate, categoryId, supplierId ->
+                _selectedStartDate.value = startDate
+                _selectedEndDate.value = endDate
+                _selectedCategoryId.value = categoryId
+                _selectedSupplierId.value = supplierId
+                // Once the first set of preferences are loaded, we can consider the app "ready".
+                _isReady.value = true
+            }.collect() // Use collect() to start the flow processing
         }
     }
 

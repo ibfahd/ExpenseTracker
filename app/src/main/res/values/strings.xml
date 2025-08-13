@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App Info -->
-    <string name="app_name">Expense Tracker</string>
+    <string name="app_name" translatable="false">Expense Tracker</string>
     <string name="version_label">Version %1$s</string>
 
     <!-- Navigation -->
@@ -12,7 +12,7 @@
 
     <!-- Main Actions -->
     <string name="add_new_expense">Add new expense</string>
-    <string name="manage_categories">Manage Categories</string>
+    <string name="manage_categories">Manage Categories &amp; Products</string>
     <string name="manage_suppliers">Manage Suppliers</string>
     <string name="filter_expenses">Filter Expenses</string>
     <string name="shopping_list_title">Shopping List</string>
@@ -48,7 +48,7 @@
     <string name="add_new_category_desc">Add new category</string>
     <string name="edit_category_desc">Edit %1$s</string>
     <string name="delete_category_desc">Delete %1$s</string>
-    <string name="add_new_category">Add new category: \"%s\"</string>
+    <string name="add_new_category">Add new category: %1$s</string>
 
     <!-- Default Categories -->
     <string name="category_food_drinks">Food and Drinks</string>
@@ -162,34 +162,47 @@
     <string name="report_section_spending_by_supplier_period">Spending by Supplier</string>
     <string name="report_no_data_in_period">No data available for the selected period.</string>
 
+    <string name="report_tab_trends">Trends</string>
+    <string name="report_period_comparison">Comparison vs. Previous Period</string>
+    <string name="report_previous_period_total">Previous Period Total</string>
+    <string name="report_change">Change</string>
+
     <!-- Settings -->
     <string name="setting_regional_title">Regional Settings</string>
     <string name="setting_currency_label">Currency</string>
     <string name="setting_language_label">Language</string>
     <string name="setting_display_title">Display Options</string>
-    <string name="setting_home_filter_label">Default Home View</string>
+    <string name="setting_theme_label">Theme</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_system">System Default</string>
+    <string name="setting_card_style_label">Card Corner Style</string>
+    <string name="card_style_rounded">Rounded</string>
+    <string name="card_style_square">Square</string>
     <string name="select_currency">Select Currency</string>
     <string name="system_default">System Default</string>
 
     <!-- About -->
-    <string name="about_section_disclaimer">Disclaimer</string>
-    <string name="about_disclaimer_content">This application is a personal finance management tool designed to help you track your expenses. It does NOT provide financial advice, offer loans or credit, facilitate investments, or engage in any regulated financial services.</string>
-    <string name="about_section_privacy">Data &amp; Privacy</string>
-    <string name="about_privacy_content">All financial data you enter is stored securely and exclusively on your device. This app does not collect or transmit any of your personal financial information to external servers. Your privacy is a top priority.</string>
-    <string name="about_section_contact">Contact &amp; Support</string>
-    <string name="about_contact_content">For questions, feedback, or support, please contact us at: https://expensetrackerwebsite.web.app/#contact</string>
+    <string name="developed_by">Developed by FahDev Studio</string>
+    <string name="copyright">© %1$d FahDev Studio. All rights reserved.</string>
+    <string name="contact_us">Contact Us</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="rate_the_app">Rate the App</string>
+    <string name="open_source_licenses">Open Source Licenses</string>
+    <string name="about_contact_url" translatable="false">https://expensetrackerwebsite.web.app/#contact</string>
+    <string name="about_privacy_url" translatable="false">https://expensetrackerwebsite.web.app/privacy.html</string>
 
     <!-- Empty States -->
     <string name="no_categories_title">No Categories Found</string>
-    <string name="no_categories_description">Tap the \'+\' button to add your first category and start organizing your expenses.</string>
+    <string name="no_categories_description">Tap the + button to add your first category and start organizing your expenses.</string>
     <string name="no_suppliers_title">No Suppliers Found</string>
-    <string name="no_suppliers_description">Tap the \'+\' button to add your first supplier.</string>
+    <string name="no_suppliers_description">Tap the + button to add your first supplier.</string>
     <string name="no_expenses_title">No Expenses Here</string>
     <string name="no_expenses_description">Once you add an expense, it will show up here.</string>
     <string name="no_expenses_match_filter_title">No Matching Expenses</string>
     <string name="no_expenses_match_filter_description">Try adjusting or clearing your filters to see more results.</string>
     <string name="no_items_in_list_title">Your Shopping List is Empty</string>
-    <string name="no_items_in_list_description">Select a supplier and tap the \'+\' button to add items to your list.</string>
+    <string name="no_items_in_list_description">Select a supplier and tap the + button to add items to your list.</string>
 
     <!-- Confirmation Dialogs -->
     <string name="confirm_deletion_title">Confirm Deletion</string>

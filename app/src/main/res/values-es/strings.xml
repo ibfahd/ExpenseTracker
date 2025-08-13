@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App Info -->
-    <string name="app_name">Control de Gastos</string>
-    <string name="version_label">Versión %1$s</string>
+    <string name="version_label">Version %1$s</string> <!-- Removed accent from "Versión" -->
 
     <!-- Navigation -->
     <string name="menu">Menú</string>
@@ -12,8 +11,8 @@
 
     <!-- Main Actions -->
     <string name="add_new_expense">Agregar nuevo gasto</string>
-    <string name="manage_categories">Gestionar categorías</string>
-    <string name="manage_suppliers">Gestionar proveedores</string>
+    <string name="manage_categories">Administrar Categorías y Productos</string>
+    <string name="manage_suppliers">Administrar proveedores</string>
     <string name="filter_expenses">Filtrar gastos</string>
     <string name="shopping_list_title">Lista de compras</string>
     <string name="title_activity_reporting">Informe de gastos</string>
@@ -48,7 +47,7 @@
     <string name="add_new_category_desc">Agregar nueva categoría</string>
     <string name="edit_category_desc">Editar %1$s</string>
     <string name="delete_category_desc">Eliminar %1$s</string>
-    <string name="add_new_category">Agregar nueva categoría: \"%s\"</string>
+    <string name="add_new_category">Agregar nueva categoría: \"%1$s\"</string> <!-- Fixed %s to %1$s -->
 
     <!-- Default Categories -->
     <string name="category_food_drinks">Comida y bebidas</string>
@@ -75,7 +74,7 @@
     <string name="add_new_supplier_desc">Agregar nuevo proveedor</string>
     <string name="edit_supplier_desc">Editar %1$s</string>
     <string name="delete_supplier_desc">Eliminar %1$s</string>
-    <string name="add_new_supplier">Agregar nuevo proveedor: \"%s\"</string>
+    <string name="add_new_supplier">Agregar nuevo proveedor: \"%1$s\"</string> <!-- Fixed %s to %1$s -->
 
     <!-- Products -->
     <string name="product_name_label">Nombre del producto</string>
@@ -86,7 +85,7 @@
     <string name="select_product_icon">Seleccionar producto</string>
     <string name="select_supplier_icon">Seleccionar proveedor</string>
     <string name="unknown_product">Producto desconocido</string>
-    <string name="add_new_product">Agregar nuevo producto: \"%s\"</string>
+    <string name="add_new_product">Agregar nuevo producto: \"%1$s\"</string> <!-- Fixed %s to %1$s -->
     <string name="add_new_product_short">Nuevo producto</string>
     <string name="unknown">Desconocido</string>
 
@@ -163,21 +162,27 @@
     <string name="report_no_data_in_period">No hay datos disponibles para el período seleccionado.</string>
 
     <!-- Settings -->
-    <string name="setting_regional_title">Configuración regional</string>
+    <string name="setting_regional_title">Ajustes regionales</string>
     <string name="setting_currency_label">Moneda</string>
     <string name="setting_language_label">Idioma</string>
-    <string name="setting_display_title">Opciones de visualización</string>
-    <string name="setting_home_filter_label">Vista de inicio predeterminada</string>
+    <string name="setting_display_title">Opciones de Visualización</string>
+    <string name="setting_theme_label">Tema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="theme_system">Predeterminado del sistema</string>
+    <string name="setting_card_style_label">Estilo de esquina de tarjeta</string>
+    <string name="card_style_rounded">Redondeado</string>
+    <string name="card_style_square">Cuadrado</string>
     <string name="select_currency">Seleccionar moneda</string>
     <string name="system_default">Predeterminado del sistema</string>
 
     <!-- About -->
-    <string name="about_section_disclaimer">Exención de responsabilidad</string>
-    <string name="about_disclaimer_content">Esta aplicación es una herramienta de gestión de finanzas personales diseñada para ayudarle a rastrear sus gastos. NO proporciona asesoramiento financiero, no ofrece préstamos o crédito, no facilita inversiones, ni participa en ningún servicio financiero regulado.</string>
-    <string name="about_section_privacy">Datos y privacidad</string>
-    <string name="about_privacy_content">Todos los datos financieros que ingrese se almacenan de forma segura y exclusivamente en su dispositivo. Esta aplicación no recopila ni transmite ninguna de su información financiera personal a servidores externos. Su privacidad es una prioridad absoluta.</string>
-    <string name="about_section_contact">Contacto y soporte</string>
-    <string name="about_contact_content">Para preguntas, comentarios o soporte, por favor contáctenos en: https://expensetrackerwebsite.web.app/#contact</string>
+    <string name="developed_by">Desarrollado por FahDev Studio</string>
+    <string name="copyright">© %1$d FahDev Studio. Todos los derechos reservados.</string>
+    <string name="contact_us">Contáctenos</string>
+    <string name="privacy_policy">Política de privacidad</string>
+    <string name="rate_the_app">Calificar la aplicación</string>
+    <string name="open_source_licenses">Licencias de código abierto</string>
 
     <!-- Empty States -->
     <string name="no_categories_title">No se encontraron categorías</string>
@@ -196,7 +201,7 @@
     <string name="delete_category_confirmation_message">¿Está seguro de que desea eliminar la categoría \'%1$s\'? Esto también afectará los gastos relacionados.</string>
     <string name="delete_supplier_confirmation_message">¿Está seguro de que desea eliminar el proveedor \'%1$s\'?</string>
     <string name="delete_supplier_with_expenses_confirmation">Advertencia: \'%1$s\' tiene gastos asociados. Eliminar el proveedor también eliminará permanentemente todos sus registros de gastos. Esta acción no se puede deshacer.</string>
-    <string name="delete_product_confirmation">¿Está seguro de que desea eliminar el producto \'%s\'?</string>
+    <string name="delete_product_confirmation">¿Está seguro de que desea eliminar el producto \'%1$s\'?</string> <!-- Fixed %s to %1$s -->
     <string name="are_you_sure_delete_expense">¿Está seguro de que desea eliminar este gasto?</string>
 
     <!-- Success Messages -->

@@ -39,17 +39,25 @@ class UserPreferencesRepository private constructor(context: Context) {
         _language.value = languageTag
     }
 
-    // Default Home Filter Preference
-    private val _homeScreenDefaultFilter = MutableStateFlow(
-        sharedPreferences.getString(KEY_HOME_FILTER, "All") ?: "All"
-    )
-    val homeScreenDefaultFilter = _homeScreenDefaultFilter.asStateFlow()
+    // --- Display Preferences ---
+    private val _theme = MutableStateFlow(sharedPreferences.getString(KEY_THEME, "system") ?: "system")
+    val theme = _theme.asStateFlow()
 
-    fun setHomeScreenDefaultFilter(filterKey: String) {
+    fun setTheme(theme: String) {
         sharedPreferences.edit {
-            putString(KEY_HOME_FILTER, filterKey)
+            putString(KEY_THEME, theme)
         }
-        _homeScreenDefaultFilter.value = filterKey
+        _theme.value = theme
+    }
+
+    private val _cardStyle = MutableStateFlow(sharedPreferences.getString(KEY_CARD_STYLE, "rounded") ?: "rounded")
+    val cardStyle = _cardStyle.asStateFlow()
+
+    fun setCardStyle(style: String) {
+        sharedPreferences.edit {
+            putString(KEY_CARD_STYLE, style)
+        }
+        _cardStyle.value = style
     }
 
     // --- Filter State ---
@@ -91,7 +99,8 @@ class UserPreferencesRepository private constructor(context: Context) {
     companion object {
         private const val KEY_CURRENCY = "currency_code"
         private const val KEY_LANGUAGE = "language_tag"
-        private const val KEY_HOME_FILTER = "home_screen_filter"
+        private const val KEY_THEME = "app_theme"
+        private const val KEY_CARD_STYLE = "card_style"
         private const val KEY_START_DATE = "selected_start_date"
         private const val KEY_END_DATE = "selected_end_date"
         private const val KEY_CATEGORY_ID = "selected_category_id"

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App Info -->
-    <string name="app_name">متتبع المصروفات</string>
     <string name="version_label">الإصدار %1$s</string>
 
     <!-- Navigation -->
@@ -12,9 +11,9 @@
 
     <!-- Main Actions -->
     <string name="add_new_expense">إضافة مصروف جديد</string>
-    <string name="manage_categories">إدارة الفئات</string>
+    <string name="manage_categories">إدارة الفئات والمنتجات</string>
     <string name="manage_suppliers">إدارة الموردين</string>
-    <string name="filter_expenses">تصفية المصروفات</string>
+    <string name="filter_expenses">تصفية المصاريف</string>
     <string name="shopping_list_title">قائمة التسوق</string>
     <string name="title_activity_reporting">تقرير المصروفات</string>
 
@@ -167,17 +166,23 @@
     <string name="setting_currency_label">العملة</string>
     <string name="setting_language_label">اللغة</string>
     <string name="setting_display_title">خيارات العرض</string>
-    <string name="setting_home_filter_label">عرض الصفحة الرئيسية الافتراضي</string>
+    <string name="setting_theme_label">المظهر</string>
+    <string name="theme_light">فاتح</string>
+    <string name="theme_dark">داكن</string>
+    <string name="theme_system">افتراضي النظام</string>
+    <string name="setting_card_style_label">نمط زاوية البطاقة</string>
+    <string name="card_style_rounded">دائري</string>
+    <string name="card_style_square">مربع</string>
     <string name="select_currency">اختر العملة</string>
     <string name="system_default">افتراضي النظام</string>
 
     <!-- About -->
-    <string name="about_section_disclaimer">إخلاء المسؤولية</string>
-    <string name="about_disclaimer_content">هذا التطبيق هو أداة لإدارة الأموال الشخصية مصممة لمساعدتك في تتبع مصروفاتك. لا يقدم المشورة المالية، ولا يوفر القروض أو الائتمان، ولا يسهل الاستثمارات، ولا يشارك في أي خدمات مالية منظمة.</string>
-    <string name="about_section_privacy">البيانات والخصوصية</string>
-    <string name="about_privacy_content">جميع البيانات المالية التي تدخلها يتم تخزينها بأمان وحصرياً على جهازك. لا يجمع هذا التطبيق أو ينقل أي من معلوماتك المالية الشخصية إلى خوادم خارجية. خصوصيتك هي أولوية قصوى.</string>
-    <string name="about_section_contact">الاتصال والدعم</string>
-    <string name="about_contact_content">للأسئلة أو التعليقات أو الدعم، يرجى الاتصال بنا على: https://expensetrackerwebsite.web.app/#contact</string>
+    <string name="developed_by">مطور بواسطة FahDev Studio</string>
+    <string name="copyright">© %1$d FahDev Studio. جميع الحقوق محفوظة.</string>
+    <string name="contact_us">اتصل بنا</string>
+    <string name="privacy_policy">سياسة الخصوصية</string>
+    <string name="rate_the_app">قيم التطبيق</string>
+    <string name="open_source_licenses">تراخيص المصادر المفتوحة</string>
 
     <!-- Empty States -->
     <string name="no_categories_title">لم يتم العثور على فئات</string>

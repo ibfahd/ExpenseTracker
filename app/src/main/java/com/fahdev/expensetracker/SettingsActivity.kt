@@ -122,7 +122,9 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel) {
                         fontWeight = FontWeight.Bold
                     )
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                    DefaultHomeFilterSelector(settingsViewModel = settingsViewModel)
+                    ThemeSelector(settingsViewModel = settingsViewModel)
+                    Spacer(Modifier.height(16.dp))
+                    CardStyleSelector(settingsViewModel = settingsViewModel)
                 }
             }
         }
@@ -133,14 +135,14 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DefaultHomeFilterSelector(settingsViewModel: SettingsViewModel) {
-    val selectedFilterKey by settingsViewModel.selectedHomeFilter.collectAsState()
+fun ThemeSelector(settingsViewModel: SettingsViewModel) {
+    val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
     var expanded by remember { mutableStateOf(false) }
 
-    val filterOptions = mapOf(
-        "All" to stringResource(id = R.string.all_time),
-        "ThisMonth" to stringResource(id = R.string.this_month),
-        "Last7Days" to stringResource(id = R.string.last_7_days)
+    val themeOptions = mapOf(
+        "system" to stringResource(id = R.string.theme_system),
+        "light" to stringResource(id = R.string.theme_light),
+        "dark" to stringResource(id = R.string.theme_dark)
     )
 
     Row(
@@ -148,7 +150,7 @@ fun DefaultHomeFilterSelector(settingsViewModel: SettingsViewModel) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = stringResource(R.string.setting_home_filter_label),
+            text = stringResource(R.string.setting_theme_label),
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyLarge
         )
@@ -159,7 +161,7 @@ fun DefaultHomeFilterSelector(settingsViewModel: SettingsViewModel) {
             modifier = Modifier.weight(1.5f)
         ) {
             TextField(
-                value = filterOptions[selectedFilterKey] ?: "",
+                value = themeOptions[selectedTheme] ?: "",
                 onValueChange = {},
                 readOnly = true,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -170,11 +172,63 @@ fun DefaultHomeFilterSelector(settingsViewModel: SettingsViewModel) {
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
             ) {
-                filterOptions.forEach { (key, name) ->
+                themeOptions.forEach { (key, name) ->
                     DropdownMenuItem(
                         text = { Text(name) },
                         onClick = {
-                            settingsViewModel.setHomeFilter(key)
+                            settingsViewModel.setTheme(key)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CardStyleSelector(settingsViewModel: SettingsViewModel) {
+    val selectedCardStyle by settingsViewModel.selectedCardStyle.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
+
+    val cardStyleOptions = mapOf(
+        "rounded" to stringResource(id = R.string.card_style_rounded),
+        "square" to stringResource(id = R.string.card_style_square)
+    )
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = stringResource(R.string.setting_card_style_label),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge
+        )
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier.weight(1.5f)
+        ) {
+            TextField(
+                value = cardStyleOptions[selectedCardStyle] ?: "",
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                cardStyleOptions.forEach { (key, name) ->
+                    DropdownMenuItem(
+                        text = { Text(name) },
+                        onClick = {
+                            settingsViewModel.setCardStyle(key)
                             expanded = false
                         }
                     )

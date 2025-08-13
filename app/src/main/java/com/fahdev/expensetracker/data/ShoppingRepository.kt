@@ -64,7 +64,7 @@ class ShoppingRepository(
                         productId = item.productId,
                         supplierId = item.supplierId ?: 0,
                         amount = amount,
-                        timestamp = System.currentTimeMillis()
+                        date = item.shoppingDate,
                     )
                     launch { expenseDao.insertExpense(expense) }
                     recordedCount++

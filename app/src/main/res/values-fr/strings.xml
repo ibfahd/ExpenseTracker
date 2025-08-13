@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App Info -->
-    <string name="app_name">Suivi des Dépenses</string>
     <string name="version_label">Version %1$s</string>
 
     <!-- Navigation -->
@@ -12,7 +11,7 @@
 
     <!-- Main Actions -->
     <string name="add_new_expense">Ajouter une nouvelle dépense</string>
-    <string name="manage_categories">Gérer les catégories</string>
+    <string name="manage_categories">Gérer les Catégories et Produits</string>
     <string name="manage_suppliers">Gérer les fournisseurs</string>
     <string name="filter_expenses">Filtrer les dépenses</string>
     <string name="shopping_list_title">Liste de courses</string>
@@ -48,7 +47,7 @@
     <string name="add_new_category_desc">Ajouter une nouvelle catégorie</string>
     <string name="edit_category_desc">Modifier %1$s</string>
     <string name="delete_category_desc">Supprimer %1$s</string>
-    <string name="add_new_category">Ajouter une nouvelle catégorie : \"%s\"</string>
+    <string name="add_new_category">Ajouter une nouvelle catégorie : \"%1$s\"</string>
 
     <!-- Default Categories -->
     <string name="category_food_drinks">Alimentation et boissons</string>
@@ -75,7 +74,7 @@
     <string name="add_new_supplier_desc">Ajouter un nouveau fournisseur</string>
     <string name="edit_supplier_desc">Modifier %1$s</string>
     <string name="delete_supplier_desc">Supprimer %1$s</string>
-    <string name="add_new_supplier">Ajouter un nouveau fournisseur : \"%s\"</string>
+    <string name="add_new_supplier">Ajouter un nouveau fournisseur : \"%1$s\"</string>
 
     <!-- Products -->
     <string name="product_name_label">Nom du produit</string>
@@ -86,7 +85,7 @@
     <string name="select_product_icon">Sélectionner un produit</string>
     <string name="select_supplier_icon">Sélectionner un fournisseur</string>
     <string name="unknown_product">Produit inconnu</string>
-    <string name="add_new_product">Ajouter un nouveau produit : \"%s\"</string>
+    <string name="add_new_product">Ajouter un nouveau produit : \"%1$s\"</string>
     <string name="add_new_product_short">Nouveau produit</string>
     <string name="unknown">Inconnu</string>
 
@@ -167,17 +166,23 @@
     <string name="setting_currency_label">Devise</string>
     <string name="setting_language_label">Langue</string>
     <string name="setting_display_title">Options d\'affichage</string>
-    <string name="setting_home_filter_label">Vue d\'accueil par défaut</string>
+    <string name="setting_theme_label">Thème</string>
+    <string name="theme_light">Clair</string>
+    <string name="theme_dark">Sombre</string>
+    <string name="theme_system">Par défaut du système</string>
+    <string name="setting_card_style_label">Style des coins de carte</string>
+    <string name="card_style_rounded">Arrondi</string>
+    <string name="card_style_square">Carré</string>
     <string name="select_currency">Sélectionner la devise</string>
     <string name="system_default">Par défaut du système</string>
 
     <!-- About -->
-    <string name="about_section_disclaimer">Clause de non-responsabilité</string>
-    <string name="about_disclaimer_content">Cette application est un outil de gestion des finances personnelles conçu pour vous aider à suivre vos dépenses. Elle ne fournit PAS de conseils financiers, n\'offre pas de prêts ou de crédit, ne facilite pas les investissements et ne s\'engage dans aucun service financier réglementé.</string>
-    <string name="about_section_privacy">Données et confidentialité</string>
-    <string name="about_privacy_content">Toutes les données financières que vous saisissez sont stockées de manière sécurisée et exclusivement sur votre appareil. Cette application ne collecte ni ne transmet aucune de vos informations financières personnelles vers des serveurs externes. Votre confidentialité est une priorité absolue.</string>
-    <string name="about_section_contact">Contact et support</string>
-    <string name="about_contact_content">Pour les questions, commentaires ou le support, veuillez nous contacter à : https://expensetrackerwebsite.web.app/#contact</string>
+    <string name="developed_by">Développé par FahDev Studio</string>
+    <string name="copyright">© %1$d FahDev Studio. Tous droits réservés.</string>
+    <string name="contact_us">Nous contacter</string>
+    <string name="privacy_policy">Politique de confidentialité</string>
+    <string name="rate_the_app">Noter l\'application</string>
+    <string name="open_source_licenses">Licences open source</string>
 
     <!-- Empty States -->
     <string name="no_categories_title">Aucune catégorie trouvée</string>
@@ -196,7 +201,7 @@
     <string name="delete_category_confirmation_message">Êtes-vous sûr de vouloir supprimer la catégorie \'%1$s\' ? Cela affectera également les dépenses associées.</string>
     <string name="delete_supplier_confirmation_message">Êtes-vous sûr de vouloir supprimer le fournisseur \'%1$s\' ?</string>
     <string name="delete_supplier_with_expenses_confirmation">Attention : \'%1$s\' a des dépenses associées. Supprimer le fournisseur supprimera également définitivement tous ses enregistrements de dépenses. Cette action ne peut pas être annulée.</string>
-    <string name="delete_product_confirmation">Êtes-vous sûr de vouloir supprimer le produit \'%s\' ?</string>
+    <string name="delete_product_confirmation">Êtes-vous sûr de vouloir supprimer le produit \'%1$s\' ?</string>
     <string name="are_you_sure_delete_expense">Êtes-vous sûr de vouloir supprimer cette dépense ?</string>
 
     <!-- Success Messages -->

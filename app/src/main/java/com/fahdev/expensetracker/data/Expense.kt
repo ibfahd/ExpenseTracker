@@ -34,5 +34,6 @@ data class Expense(
     val amount: Double,
     val productId: Int,
     val supplierId: Int,
-    val timestamp: Long = System.currentTimeMillis()
+    val date: Long, // The user-selected date for the expense
+    val creationTimestamp: Long = System.currentTimeMillis() // When the entry was created
 )

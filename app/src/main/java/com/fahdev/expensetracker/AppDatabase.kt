@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
         ShoppingListItem::class,
         CategorySupplierCrossRef::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -44,7 +44,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "expense_database"
                 )
                     .addCallback(AppDatabaseCallback(context))
-                    .addMigrations(MIGRATION_1_2, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                     .build()
                 INSTANCE = instance
                 instance
@@ -139,6 +139,41 @@ abstract class AppDatabase : RoomDatabase() {
                 """)
                 // Create indices for the foreign keys for better performance
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_category_supplier_cross_ref_supplierId` ON `category_supplier_cross_ref` (`supplierId`)")
+            }
+        }
+
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 1. Add the new 'date' and 'creationTimestamp' columns with default values
+                db.execSQL("ALTER TABLE expenses ADD COLUMN date INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE expenses ADD COLUMN creationTimestamp INTEGER NOT NULL DEFAULT 0")
+
+                // 2. Copy the data from the old 'timestamp' column to both new columns
+                db.execSQL("UPDATE expenses SET date = timestamp, creationTimestamp = timestamp")
+
+                // 3. Re-create the table without the old 'timestamp' column
+                db.execSQL("""
+                    CREATE TABLE expenses_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        amount REAL NOT NULL,
+                        productId INTEGER NOT NULL,
+                        supplierId INTEGER NOT NULL,
+                        date INTEGER NOT NULL,
+                        creationTimestamp INTEGER NOT NULL,
+                        FOREIGN KEY(productId) REFERENCES products(id) ON DELETE RESTRICT,
+                        FOREIGN KEY(supplierId) REFERENCES suppliers(id) ON DELETE RESTRICT
+                    )
+                """)
+                db.execSQL("""
+                    INSERT INTO expenses_new (id, amount, productId, supplierId, date, creationTimestamp)
+                    SELECT id, amount, productId, supplierId, date, creationTimestamp FROM expenses
+                """)
+                db.execSQL("DROP TABLE expenses")
+                db.execSQL("ALTER TABLE expenses_new RENAME TO expenses")
+
+                // 4. Re-create indices on the new table
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_expenses_productId` ON `expenses` (`productId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_expenses_supplierId` ON `expenses` (`supplierId`)")
             }
         }
     }

@@ -19,19 +19,20 @@ import javax.inject.Inject
 class ShoppingListViewModel @Inject constructor(
     private val shoppingRepository: ShoppingRepository
 ) : ViewModel() {
-    private val _currentSupplierId = MutableStateFlow<Int?>(null)
-    val currentSupplierId: StateFlow<Int?> = _currentSupplierId.asStateFlow()
+    private val _currentSupplier = MutableStateFlow<Supplier?>(null)
+    val currentSupplier: StateFlow<Supplier?> = _currentSupplier.asStateFlow()
 
-    private val _currentShoppingDate = MutableStateFlow(0L)
+    private val _shoppingDate = MutableStateFlow<Long?>(null)
+    val shoppingDate: StateFlow<Long?> = _shoppingDate.asStateFlow()
 
     val shoppingListItems: StateFlow<List<ShoppingListItem>> = combine(
-        _currentSupplierId,
-        _currentShoppingDate
-    ) { supplierId, shoppingDate ->
-        Pair(supplierId, shoppingDate)
-    }.flatMapLatest { (supplierId, shoppingDate) ->
-        if (supplierId != null) {
-            shoppingRepository.getShoppingListItemsForTrip(supplierId, shoppingDate)
+        _currentSupplier,
+        _shoppingDate
+    ) { supplier, date ->
+        Pair(supplier, date)
+    }.flatMapLatest { (supplier, date) ->
+        if (supplier != null && date != null) {
+            shoppingRepository.getShoppingListItemsForTrip(supplier.id, date)
         } else {
             flowOf(emptyList())
         }
@@ -40,36 +41,36 @@ class ShoppingListViewModel @Inject constructor(
     val allSuppliers: Flow<List<Supplier>> = shoppingRepository.allSuppliers
     val allProducts: Flow<List<Product>> = shoppingRepository.allProducts
 
-    val categoriesForSupplier: StateFlow<List<Category>> = _currentSupplierId.flatMapLatest { supplierId ->
-        if (supplierId != null) {
-            shoppingRepository.getCategoriesForSupplier(supplierId)
+    val categoriesForSupplier: StateFlow<List<Category>> = _currentSupplier.flatMapLatest { supplier ->
+        if (supplier != null) {
+            shoppingRepository.getCategoriesForSupplier(supplier.id)
         } else {
             flowOf(emptyList())
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    init {
+    fun selectSupplier(supplier: Supplier) {
         viewModelScope.launch {
-            allSuppliers.firstOrNull()?.firstOrNull()?.id?.let { firstSupplierId ->
-                selectSupplier(firstSupplierId)
+            if (_currentSupplier.value == supplier) {
+                // Deselect if the same supplier is clicked again
+                _currentSupplier.value = null
+                _shoppingDate.value = null
+            } else {
+                _currentSupplier.value = supplier
+                val latestDate = shoppingRepository.getLatestShoppingDateForSupplier(supplier.id)
+                _shoppingDate.value = latestDate ?: System.currentTimeMillis()
             }
         }
     }
 
-    fun selectSupplier(supplierId: Int) {
-        viewModelScope.launch {
-            _currentSupplierId.value = supplierId
-            val latestDate = shoppingRepository.getLatestShoppingDateForSupplier(supplierId)
-            _currentShoppingDate.value = latestDate ?: System.currentTimeMillis()
-        }
+    fun selectShoppingDate(date: Long) {
+        _shoppingDate.value = date
     }
 
     fun addShoppingItem(productId: Int, unit: String?, initialPlannedQuantity: Double) {
         viewModelScope.launch(Dispatchers.IO) {
-            val currentSupplier = _currentSupplierId.value ?: return@launch
-            val currentTripDate = _currentShoppingDate.value.takeIf { it != 0L } ?: System.currentTimeMillis().also {
-                _currentShoppingDate.value = it
-            }
+            val supplier = _currentSupplier.value ?: return@launch
+            val date = _shoppingDate.value ?: return@launch
 
             val newItem = ShoppingListItem(
                 productId = productId,
@@ -77,8 +78,8 @@ class ShoppingListViewModel @Inject constructor(
                 plannedQuantity = initialPlannedQuantity,
                 purchasedQuantity = 0.0,
                 unitPrice = null,
-                supplierId = currentSupplier,
-                shoppingDate = currentTripDate
+                supplierId = supplier.id,
+                shoppingDate = date
             )
             shoppingRepository.addShoppingItem(newItem)
         }

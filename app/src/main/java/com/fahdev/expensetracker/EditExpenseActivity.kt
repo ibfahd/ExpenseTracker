@@ -104,7 +104,7 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                     amount = "%.2f".format(expenseDetails.expense.amount)
                     selectedProductId = expenseDetails.expense.productId
                     selectedSupplierId = expenseDetails.expense.supplierId
-                    selectedDate = expenseDetails.expense.timestamp
+                    selectedDate = expenseDetails.expense.date
                 }
         }
     }
@@ -251,7 +251,7 @@ fun EditExpenseScreen(expenseViewModel: ExpenseViewModel, expenseId: Int) {
                                 amount = parsedAmount,
                                 productId = selectedProductId!!,
                                 supplierId = selectedSupplierId!!,
-                                timestamp = selectedDate
+                                date = selectedDate
                             )
                             scope.launch {
                                 expenseViewModel.updateExpense(updatedExpense)

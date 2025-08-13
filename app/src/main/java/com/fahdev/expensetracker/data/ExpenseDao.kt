@@ -24,7 +24,7 @@ interface ExpenseDao {
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM expenses ORDER BY timestamp DESC")
+    @Query("SELECT * FROM expenses ORDER BY date DESC")
     fun getAllExpensesWithDetails(): Flow<List<ExpenseWithDetails>>
 
     @Transaction
@@ -32,7 +32,7 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE id = :id")
     fun getExpenseWithDetailsById(id: Int): Flow<ExpenseWithDetails?>
 
-    @Query("SELECT SUM(amount) FROM expenses WHERE strftime('%Y-%m', datetime(timestamp / 1000, 'unixepoch')) = strftime('%Y-%m', datetime(:currentTimestamp / 1000, 'unixepoch'))")
+    @Query("SELECT SUM(amount) FROM expenses WHERE strftime('%Y-%m', datetime(date / 1000, 'unixepoch')) = strftime('%Y-%m', datetime(:currentTimestamp / 1000, 'unixepoch'))")
     fun getTotalMonthlyExpenses(currentTimestamp: Long): Flow<Double?>
 
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
@@ -43,11 +43,11 @@ interface ExpenseDao {
         INNER JOIN products p ON e.productId = p.id
         INNER JOIN categories c ON p.categoryId = c.id
         INNER JOIN suppliers s ON e.supplierId = s.id
-        WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
-          AND (:endDate IS NULL OR e.timestamp <= :endDate)
+        WHERE (:startDate IS NULL OR e.date >= :startDate)
+          AND (:endDate IS NULL OR e.date <= :endDate)
           AND (:categoryId IS NULL OR p.categoryId = :categoryId)
           AND (:supplierId IS NULL OR e.supplierId = :supplierId)
-        ORDER BY e.timestamp DESC
+        ORDER BY e.date DESC
     """)
     fun getFilteredExpensesWithDetails(
         startDate: Long?,
@@ -61,8 +61,8 @@ interface ExpenseDao {
         INNER JOIN products p ON e.productId = p.id
         INNER JOIN categories c ON p.categoryId = c.id
         INNER JOIN suppliers s ON e.supplierId = s.id
-        WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
-          AND (:endDate IS NULL OR e.timestamp <= :endDate)
+        WHERE (:startDate IS NULL OR e.date >= :startDate)
+          AND (:endDate IS NULL OR e.date <= :endDate)
           AND (:categoryId IS NULL OR p.categoryId = :categoryId)
           AND (:supplierId IS NULL OR e.supplierId = :supplierId)
     """)
@@ -78,7 +78,7 @@ interface ExpenseDao {
     @Query("SELECT SUM(amount) FROM expenses")
     fun getTotalExpensesAllTime(): Flow<Double?>
 
-    @Query("SELECT MIN(timestamp) FROM expenses")
+    @Query("SELECT MIN(date) FROM expenses")
     fun getFirstExpenseDate(): Flow<Long?>
 
     @Query("SELECT COUNT(id) FROM expenses")
@@ -87,8 +87,8 @@ interface ExpenseDao {
     @Query("""
         SELECT COUNT(e.id) FROM expenses e
         INNER JOIN products p ON e.productId = p.id
-        WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
-          AND (:endDate IS NULL OR e.timestamp <= :endDate)
+        WHERE (:startDate IS NULL OR e.date >= :startDate)
+          AND (:endDate IS NULL OR e.date <= :endDate)
           AND (:categoryId IS NULL OR p.categoryId = :categoryId)
           AND (:supplierId IS NULL OR e.supplierId = :supplierId)
     """)
@@ -124,8 +124,8 @@ interface ExpenseDao {
         FROM Expenses e
         INNER JOIN Products p ON e.productId = p.id
         INNER JOIN Categories c ON p.categoryId = c.id
-        WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
-          AND (:endDate IS NULL OR e.timestamp <= :endDate)
+        WHERE (:startDate IS NULL OR e.date >= :startDate)
+          AND (:endDate IS NULL OR e.date <= :endDate)
           AND (:categoryId IS NULL OR p.categoryId = :categoryId)
           AND (:supplierId IS NULL OR e.supplierId = :supplierId)
         GROUP BY c.name
@@ -138,8 +138,8 @@ interface ExpenseDao {
         FROM Expenses e
         INNER JOIN Products p ON e.productId = p.id
         INNER JOIN Suppliers s ON e.supplierId = s.id
-        WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
-          AND (:endDate IS NULL OR e.timestamp <= :endDate)
+        WHERE (:startDate IS NULL OR e.date >= :startDate)
+          AND (:endDate IS NULL OR e.date <= :endDate)
           AND (:categoryId IS NULL OR p.categoryId = :categoryId)
           AND (:supplierId IS NULL OR e.supplierId = :supplierId)
         GROUP BY s.name
@@ -176,8 +176,8 @@ interface ExpenseDao {
         FROM Products p
         JOIN Categories c ON p.categoryId = c.id
         JOIN Expenses e ON e.productId = p.id
-        WHERE (:startDate IS NULL OR e.timestamp >= :startDate)
-          AND (:endDate IS NULL OR e.timestamp <= :endDate)
+        WHERE (:startDate IS NULL OR e.date >= :startDate)
+          AND (:endDate IS NULL OR e.date <= :endDate)
           AND (:categoryId IS NULL OR p.categoryId = :categoryId)
           AND (:supplierId IS NULL OR e.supplierId = :supplierId)
         GROUP BY p.id, p.name, c.id, c.name
@@ -190,9 +190,9 @@ interface ExpenseDao {
         SELECT e.amount, e.supplierId
         FROM Expenses e
         WHERE e.productId = :productId
-          AND (:startDate IS NULL OR e.timestamp >= :startDate)
-          AND (:endDate IS NULL OR e.timestamp <= :endDate)
-        ORDER BY e.amount ASC, e.timestamp ASC
+          AND (:startDate IS NULL OR e.date >= :startDate)
+          AND (:endDate IS NULL OR e.date <= :endDate)
+        ORDER BY e.amount ASC, e.date ASC
         LIMIT 1
     """)
     suspend fun getLowestPriceForProduct(productId: Int, startDate: Long?, endDate: Long?): LowestPriceInfo?
@@ -202,6 +202,36 @@ interface ExpenseDao {
 
     @Query("SELECT COUNT(id) FROM expenses WHERE supplierId = :supplierId")
     suspend fun getExpenseCountForSupplier(supplierId: Int): Int
+
+    // --- Trend Analysis Queries ---
+    data class TrendDataPoint(val timestamp: Long, val amount: Double)
+
+    @Query("""
+        SELECT date as timestamp, SUM(amount) as amount
+        FROM expenses
+        WHERE (:startDate IS NULL OR date >= :startDate) AND (:endDate IS NULL OR date <= :endDate)
+        GROUP BY date / (24 * 60 * 60 * 1000) -- Group by day
+        ORDER BY timestamp ASC
+    """)
+    fun getSpendingByDay(startDate: Long?, endDate: Long?): Flow<List<TrendDataPoint>>
+
+    @Query("""
+        SELECT (strftime('%s', date(date / 1000, 'unixepoch', 'weekday 0', '-6 days')) * 1000) as timestamp, SUM(amount) as amount
+        FROM expenses
+        WHERE (:startDate IS NULL OR date >= :startDate) AND (:endDate IS NULL OR date <= :endDate)
+        GROUP BY strftime('%Y-%W', date / 1000, 'unixepoch')
+        ORDER BY timestamp ASC
+    """)
+    fun getSpendingByWeek(startDate: Long?, endDate: Long?): Flow<List<TrendDataPoint>>
+
+    @Query("""
+        SELECT (strftime('%s', date(date / 1000, 'unixepoch', 'start of month')) * 1000) as timestamp, SUM(amount) as amount
+        FROM expenses
+        WHERE (:startDate IS NULL OR date >= :startDate) AND (:endDate IS NULL OR date <= :endDate)
+        GROUP BY strftime('%Y-%m', date / 1000, 'unixepoch')
+        ORDER BY timestamp ASC
+    """)
+    fun getSpendingByMonth(startDate: Long?, endDate: Long?): Flow<List<TrendDataPoint>>
 
     @Query("DELETE FROM expenses WHERE supplierId = :supplierId")
     suspend fun deleteExpensesBySupplierId(supplierId: Int)

@@ -16,8 +16,8 @@ android {
         applicationId = "com.fahdev.expensetracker"
         minSdk = 24
         targetSdk = 36
-        versionCode = 13
-        versionName = "2.1"
+        versionCode = 14
+        versionName = "2.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
@@ -64,6 +64,13 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+
+    // Charting library
+    implementation(libs.vico.core)
+    implementation(libs.vico.compose.m3)
+
+    // Splash Screen API
+    implementation(libs.androidx.core.splashscreen)
 
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)

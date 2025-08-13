@@ -66,4 +66,9 @@ class ExpenseRepository(
 
     fun getProductSpendingReport(startDate: Long?, endDate: Long?, categoryId: Int?, supplierId: Int?): Flow<List<ExpenseDao.ProductSpendingInfo>> = expenseDao.getProductSpendingReport(startDate, endDate, categoryId, supplierId)
     suspend fun getLowestPriceForProduct(productId: Int, startDate: Long?, endDate: Long?): ExpenseDao.LowestPriceInfo? = expenseDao.getLowestPriceForProduct(productId, startDate, endDate)
+
+    // --- Trend Analysis ---
+    fun getSpendingByDay(startDate: Long?, endDate: Long?): Flow<List<ExpenseDao.TrendDataPoint>> = expenseDao.getSpendingByDay(startDate, endDate)
+    fun getSpendingByWeek(startDate: Long?, endDate: Long?): Flow<List<ExpenseDao.TrendDataPoint>> = expenseDao.getSpendingByWeek(startDate, endDate)
+    fun getSpendingByMonth(startDate: Long?, endDate: Long?): Flow<List<ExpenseDao.TrendDataPoint>> = expenseDao.getSpendingByMonth(startDate, endDate)
 }
