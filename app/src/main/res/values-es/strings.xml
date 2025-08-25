@@ -16,6 +16,12 @@
     <string name="filter_expenses">Filtrar gastos</string>
     <string name="shopping_list_title">Lista de compras</string>
     <string name="title_activity_reporting">Informe de gastos</string>
+    <string name="today">Hoy</string>
+    <string name="yesterday">Ayer</string>
+    <string name="collapse">Contraer</string>
+    <string name="expand">Expandir</string>
+    <string name="save">Guardar</string>
+    <string name="delete">Eliminar</string>
 
     <!-- Common Actions -->
     <string name="add_button">Agregar</string>

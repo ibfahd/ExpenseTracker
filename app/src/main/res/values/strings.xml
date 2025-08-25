@@ -17,6 +17,12 @@
     <string name="filter_expenses">Filter Expenses</string>
     <string name="shopping_list_title">Shopping List</string>
     <string name="title_activity_reporting">Expense Report</string>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="collapse">Collapse</string>
+    <string name="expand">Expand</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
 
     <!-- Common Actions -->
     <string name="add_button">Add</string>

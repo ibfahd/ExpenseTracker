@@ -16,6 +16,12 @@
     <string name="filter_expenses">تصفية المصاريف</string>
     <string name="shopping_list_title">قائمة التسوق</string>
     <string name="title_activity_reporting">تقرير المصروفات</string>
+    <string name="today">اليوم</string>
+    <string name="yesterday">أمس</string>
+    <string name="collapse">طي</string>
+    <string name="expand">توسيع</string>
+    <string name="save">حفظ</string>
+    <string name="delete">حذف</string>
 
     <!-- Common Actions -->
     <string name="add_button">إضافة</string>

@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -22,9 +21,11 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fahdev.expensetracker.data.*
 import com.fahdev.expensetracker.ui.components.EmptyState
 import com.fahdev.expensetracker.ui.components.FilterDialog
@@ -54,15 +56,13 @@ class MainActivity : AppCompatActivity() {
     private val expenseViewModel: ExpenseViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val splashScreen = installSplashScreen()
+        val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        splashScreen.setKeepOnScreenCondition {
-            !expenseViewModel.isReady.value
-        }
+        splash.setKeepOnScreenCondition { !expenseViewModel.isReady.value }
 
         if (BuildConfig.DEBUG) {
-            lifecycleScope.launch {
+            lifecycleScope.launch(Dispatchers.IO) {
                 if (expenseViewModel.totalTransactionCount.first() == 0) {
                     addTestData(expenseViewModel)
                 }
@@ -70,8 +70,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         enableEdgeToEdge()
+
         setContent {
-            val isReady by expenseViewModel.isReady.collectAsState()
+            val isReady by expenseViewModel.isReady.collectAsStateWithLifecycle(false)
             if (isReady) {
                 ExpenseTrackerTheme {
                     MainAppScreen(expenseViewModel = expenseViewModel)
@@ -92,37 +93,53 @@ private suspend fun addTestData(viewModel: ExpenseViewModel) {
             Category(name = "Shopping", iconName = "shopping_bag", colorHex = "#9C27B0")
         )
         val categoryIds = categories.map { viewModel.addCategory(it) }
+
         val suppliers = listOf(
-            Supplier(name = "FreshMart"), Supplier(name = "City Power & Light"), Supplier(name = "Metro Transit"),
-            Supplier(name = "Cineplex"), Supplier(name = "Community Pharmacy"), Supplier(name = "Amazon"),
-            Supplier(name = "SuperValue Grocers"), Supplier(name = "City Gas Station")
+            Supplier(name = "FreshMart"),
+            Supplier(name = "City Power & Light"),
+            Supplier(name = "Metro Transit"),
+            Supplier(name = "Cineplex"),
+            Supplier(name = "Community Pharmacy"),
+            Supplier(name = "Amazon"),
+            Supplier(name = "SuperValue Grocers"),
+            Supplier(name = "City Gas Station")
         )
         val supplierIds = suppliers.map { viewModel.addSupplier(it) }
+
         val products = listOf(
-            Product(name = "Milk", categoryId = categoryIds[0].toInt()), Product(name = "Bread", categoryId = categoryIds[0].toInt()),
-            Product(name = "Electricity Bill", categoryId = categoryIds[1].toInt()), Product(name = "Bus Fare", categoryId = categoryIds[2].toInt()),
-            Product(name = "Gasoline", categoryId = categoryIds[2].toInt()), Product(name = "Movie Ticket", categoryId = categoryIds[3].toInt()),
-            Product(name = "Painkillers", categoryId = categoryIds[4].toInt()), Product(name = "T-Shirt", categoryId = categoryIds[5].toInt())
+            Product(name = "Milk", categoryId = categoryIds[0].toInt()),
+            Product(name = "Bread", categoryId = categoryIds[0].toInt()),
+            Product(name = "Electricity Bill", categoryId = categoryIds[1].toInt()),
+            Product(name = "Bus Fare", categoryId = categoryIds[2].toInt()),
+            Product(name = "Gasoline", categoryId = categoryIds[2].toInt()),
+            Product(name = "Movie Ticket", categoryId = categoryIds[3].toInt()),
+            Product(name = "Painkillers", categoryId = categoryIds[4].toInt()),
+            Product(name = "T-Shirt", categoryId = categoryIds[5].toInt())
         )
         val productIds = products.map { viewModel.addProduct(it) }
+
         viewModel.saveSupplierLinksForCategory(categoryIds[0].toInt(), listOf(supplierIds[0].toInt(), supplierIds[6].toInt()))
         viewModel.saveSupplierLinksForCategory(categoryIds[2].toInt(), listOf(supplierIds[2].toInt(), supplierIds[7].toInt()))
 
         val today = System.currentTimeMillis()
-        val random = Random(System.currentTimeMillis())
-        for (i in 1..200) {
-            val randomProductIndex = random.nextInt(productIds.size)
-            val product = products[randomProductIndex]
-            val productId = productIds[randomProductIndex].toInt()
+        val rnd = Random.Default
+
+        repeat(200) {
+            val idx = rnd.nextInt(productIds.size)
+            val product = products[idx]
+            val productId = productIds[idx].toInt()
+
             val linkedSupplierIds = when (product.categoryId) {
                 categoryIds[0].toInt() -> listOf(supplierIds[0].toInt(), supplierIds[6].toInt())
                 categoryIds[2].toInt() -> listOf(supplierIds[2].toInt(), supplierIds[7].toInt())
                 else -> listOf(supplierIds.random().toInt())
             }
-            val supplierId = linkedSupplierIds.random(random)
-            val amount = random.nextDouble(5.0, 120.0)
-            val daysAgo = random.nextInt(365)
+
+            val supplierId = linkedSupplierIds.random()
+            val amount = rnd.nextDouble(5.0, 120.0)
+            val daysAgo = rnd.nextInt(365)
             val date = today - TimeUnit.DAYS.toMillis(daysAgo.toLong())
+
             viewModel.addExpense(Expense(productId = productId, supplierId = supplierId, amount = amount, date = date))
         }
     }
@@ -133,26 +150,29 @@ fun MainAppScreen(expenseViewModel: ExpenseViewModel) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val userPrefsRepo = remember { UserPreferencesRepository.getInstance(context.applicationContext) }
-    val currencyCode by userPrefsRepo.currencyCode.collectAsState()
-    val currencyFormatter = remember(currencyCode) { CurrencyHelper.getCurrencyFormatter(currencyCode) }
 
-    val navigationActions = mapOf(
-        stringResource(R.string.manage_suppliers) to { context.startActivity(Intent(context, SupplierManagementActivity::class.java)) },
-        stringResource(R.string.manage_categories) to { context.startActivity(Intent(context, CategoryManagementActivity::class.java)) },
-        stringResource(R.string.shopping_list_title) to { context.startActivity(Intent(context, ShoppingListActivity::class.java)) },
-        stringResource(R.string.title_activity_reporting) to { context.startActivity(Intent(context, ReportingActivity::class.java)) },
-        stringResource(R.string.settings) to { context.startActivity(Intent(context, SettingsActivity::class.java)) },
-        stringResource(R.string.about) to { context.startActivity(Intent(context, AboutActivity::class.java)) }
+    val userPrefsRepo = remember { UserPreferencesRepository.getInstance(context.applicationContext) }
+    val currencyCode by userPrefsRepo.currencyCode.collectAsStateWithLifecycle("USD")
+    val currencyFormatter by remember(currencyCode) {
+        derivedStateOf { CurrencyHelper.getCurrencyFormatter(currencyCode) }
+    }
+
+    val navItems = listOf(
+        NavItem(R.string.manage_suppliers, Icons.Default.LocationOn, SupplierManagementActivity::class.java),
+        NavItem(R.string.manage_categories, Icons.Default.Category, CategoryManagementActivity::class.java),
+        NavItem(R.string.shopping_list_title, Icons.Default.ShoppingCart, ShoppingListActivity::class.java),
+        NavItem(R.string.title_activity_reporting, Icons.Default.Assessment, ReportingActivity::class.java),
+        NavItem(R.string.settings, Icons.Default.Settings, SettingsActivity::class.java),
+        NavItem(R.string.about, Icons.Default.Info, AboutActivity::class.java)
     )
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            AppDrawerContent(onNavigate = { destinationKey ->
-                navigationActions[destinationKey]?.invoke()
+            AppDrawerContent(items = navItems) { activityClass ->
+                context.startActivity(Intent(context, activityClass))
                 scope.launch { drawerState.close() }
-            })
+            }
         }
     ) {
         ExpenseTrackerApp(
@@ -163,30 +183,25 @@ fun MainAppScreen(expenseViewModel: ExpenseViewModel) {
     }
 }
 
+data class NavItem(val titleRes: Int, val icon: ImageVector, val activityClass: Class<*>)
+
 @Composable
-fun AppDrawerContent(onNavigate: (String) -> Unit) {
-    val menuItems = listOf(
-        Pair(stringResource(R.string.manage_suppliers), Icons.Default.LocationOn),
-        Pair(stringResource(R.string.manage_categories), Icons.Default.Category),
-        Pair(stringResource(R.string.shopping_list_title), Icons.Default.ShoppingCart),
-        Pair(stringResource(R.string.title_activity_reporting), Icons.Default.Assessment),
-        Pair(stringResource(R.string.settings), Icons.Default.Settings),
-        Pair(stringResource(R.string.about), Icons.Default.Info)
-    )
+fun AppDrawerContent(items: List<NavItem>, onNavigate: (Class<*>) -> Unit) {
     ModalDrawerSheet {
         Text(
-            stringResource(id = R.string.app_name),
+            text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(16.dp)
         )
         HorizontalDivider()
-        Spacer(Modifier.height(12.dp))
-        menuItems.forEach { (title, icon) ->
+        Spacer(modifier = Modifier.height(12.dp))
+
+        items.forEach { item ->
             NavigationDrawerItem(
-                icon = { Icon(icon, contentDescription = title) },
-                label = { Text(title) },
+                icon = { Icon(item.icon, contentDescription = stringResource(item.titleRes)) },
+                label = { Text(stringResource(item.titleRes)) },
                 selected = false,
-                onClick = { onNavigate(title) },
+                onClick = { onNavigate(item.activityClass) },
                 modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
             )
         }
@@ -201,15 +216,17 @@ fun ExpenseTrackerApp(
     onMenuClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val filteredExpenses by expenseViewModel.filteredExpenses.collectAsState(initial = emptyList())
-    val totalFilteredExpenses by expenseViewModel.totalFilteredExpenses.collectAsState(initial = 0.0)
-    val selectedStartDate by expenseViewModel.selectedStartDate.collectAsState(initial = null)
-    val selectedEndDate by expenseViewModel.selectedEndDate.collectAsState(initial = null)
-    val selectedCategoryId by expenseViewModel.selectedCategoryId.collectAsState(initial = null)
-    val selectedSupplierId by expenseViewModel.selectedSupplierId.collectAsState(initial = null)
-    val allCategories by expenseViewModel.allCategories.collectAsState(initial = emptyList())
-    val allSuppliers by expenseViewModel.allSuppliers.collectAsState(initial = emptyList())
-    var showFilterDialog by remember { mutableStateOf(false) }
+
+    val filteredExpenses by expenseViewModel.filteredExpenses.collectAsStateWithLifecycle(emptyList())
+    val totalFilteredExpenses by expenseViewModel.totalFilteredExpenses.collectAsStateWithLifecycle(0.0)
+    val selectedStartDate by expenseViewModel.selectedStartDate.collectAsStateWithLifecycle(null)
+    val selectedEndDate by expenseViewModel.selectedEndDate.collectAsStateWithLifecycle(null)
+    val selectedCategoryId by expenseViewModel.selectedCategoryId.collectAsStateWithLifecycle(null)
+    val selectedSupplierId by expenseViewModel.selectedSupplierId.collectAsStateWithLifecycle(null)
+    val allCategories by expenseViewModel.allCategories.collectAsStateWithLifecycle(emptyList())
+    val allSuppliers by expenseViewModel.allSuppliers.collectAsStateWithLifecycle(emptyList())
+
+    var showFilterDialog by rememberSaveable { mutableStateOf(false) }
 
     val isFilterActive = selectedStartDate != null || selectedEndDate != null || selectedCategoryId != null || selectedSupplierId != null
 
@@ -217,7 +234,11 @@ fun ExpenseTrackerApp(
         topBar = {
             TopAppBar(
                 title = { Text(context.getString(R.string.app_name)) },
-                navigationIcon = { IconButton(onClick = onMenuClick) { Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu)) } },
+                navigationIcon = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu))
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -225,7 +246,11 @@ fun ExpenseTrackerApp(
                 ),
                 actions = {
                     IconButton(onClick = { showFilterDialog = true }) {
-                        Icon(Icons.Default.FilterList, contentDescription = context.getString(R.string.filter_expenses), tint = MaterialTheme.colorScheme.onPrimary)
+                        Icon(
+                            imageVector = Icons.Default.FilterList,
+                            contentDescription = context.getString(R.string.filter_expenses),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
                     }
                 }
             )
@@ -242,12 +267,15 @@ fun ExpenseTrackerApp(
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
-            modifier = Modifier.padding(innerPadding).fillMaxSize().padding(horizontal = 16.dp),
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
             ExpenseSummaryCard(totalAmount = totalFilteredExpenses, currencyFormatter = currencyFormatter)
-            Spacer(Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             FilterStatusRow(
                 selectedStartDate = selectedStartDate,
                 selectedEndDate = selectedEndDate,
@@ -255,7 +283,7 @@ fun ExpenseTrackerApp(
                 selectedSupplier = allSuppliers.find { it.id == selectedSupplierId },
                 onResetFilters = { expenseViewModel.resetFilters() }
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             if (filteredExpenses.isEmpty()) {
                 val title = if (isFilterActive) stringResource(R.string.no_expenses_match_filter_title) else stringResource(R.string.no_expenses_title)
@@ -271,6 +299,7 @@ fun ExpenseTrackerApp(
             }
         }
     }
+
     if (showFilterDialog) {
         FilterDialog(
             expenseViewModel = expenseViewModel,
@@ -285,10 +314,10 @@ fun ExpenseTrackerApp(
 @Composable
 fun ChronologicalExpenseList(expenses: List<ExpenseWithDetails>, currencyFormatter: NumberFormat) {
     val context = LocalContext.current
-    val groupedByDate = expenses.groupBy {
-        // Normalize to the start of the day
+
+    val groupedByDate = expenses.groupBy { e ->
         Calendar.getInstance().apply {
-            timeInMillis = it.expense.date
+            timeInMillis = e.expense.date
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
@@ -335,22 +364,18 @@ fun CategorizedExpenseList(expenses: List<ExpenseWithDetails>, currencyFormatter
                     currencyFormatter = currencyFormatter
                 )
             }
-            item {
-                AnimatedVisibility(visible = expandedCategories[category.id] ?: false) {
-                    Column {
-                        expensesInCategory.forEach { expense ->
-                            ExpenseItem(
-                                expenseWithDetails = expense,
-                                currencyFormatter = currencyFormatter,
-                                onExpenseClick = {
-                                    val intent = Intent(context, EditExpenseActivity::class.java).apply {
-                                        putExtra("EXPENSE_ID", it)
-                                    }
-                                    context.startActivity(intent)
-                                }
-                            )
+            if (expandedCategories[category.id] == true) {
+                items(expensesInCategory, key = { it.expense.id }) { expense ->
+                    ExpenseItem(
+                        expenseWithDetails = expense,
+                        currencyFormatter = currencyFormatter,
+                        onExpenseClick = {
+                            val intent = Intent(context, EditExpenseActivity::class.java).apply {
+                                putExtra("EXPENSE_ID", it)
+                            }
+                            context.startActivity(intent)
                         }
-                    }
+                    )
                 }
             }
         }
@@ -362,12 +387,17 @@ fun DateHeader(dateMillis: Long) {
     val calendar = Calendar.getInstance()
     val today = Calendar.getInstance()
     val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
-
     calendar.timeInMillis = dateMillis
 
     val dateText = when {
-        calendar.get(Calendar.YEAR) == today.get(Calendar.YEAR) && calendar.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR) -> "Today"
-        calendar.get(Calendar.YEAR) == yesterday.get(Calendar.YEAR) && calendar.get(Calendar.DAY_OF_YEAR) == yesterday.get(Calendar.DAY_OF_YEAR) -> "Yesterday"
+        calendar.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                calendar.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR) ->
+            stringResource(R.string.today)
+
+        calendar.get(Calendar.YEAR) == yesterday.get(Calendar.YEAR) &&
+                calendar.get(Calendar.DAY_OF_YEAR) == yesterday.get(Calendar.DAY_OF_YEAR) ->
+            stringResource(R.string.yesterday)
+
         else -> SimpleDateFormat("MMMM d, yyyy", Locale.getDefault()).format(Date(dateMillis))
     }
 
@@ -401,14 +431,18 @@ fun CategoryAccordionHeader(
         val icon = IconAndColorUtils.iconMap[category.iconName] ?: Icons.AutoMirrored.Filled.Label
         val color = IconAndColorUtils.colorMap[category.colorHex] ?: MaterialTheme.colorScheme.primary
         Icon(imageVector = icon, contentDescription = category.name, tint = color)
-        Spacer(Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(text = category.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(text = currencyFormatter.format(totalAmount), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = currencyFormatter.format(totalAmount),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         Icon(
             imageVector = Icons.Filled.ArrowDropDown,
-            contentDescription = if (isExpanded) "Collapse" else "Expand",
+            contentDescription = if (isExpanded) stringResource(R.string.collapse) else stringResource(R.string.expand),
             modifier = Modifier.rotate(rotationAngle)
         )
     }
@@ -417,7 +451,9 @@ fun CategoryAccordionHeader(
 @Composable
 fun ExpenseSummaryCard(totalAmount: Double, currencyFormatter: NumberFormat) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, bottom = 8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -446,7 +482,10 @@ fun ExpenseItem(
     onExpenseClick: (Int) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { onExpenseClick(expenseWithDetails.expense.id) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { onExpenseClick(expenseWithDetails.expense.id) },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -461,20 +500,23 @@ fun ExpenseItem(
             ) {
                 Icon(imageVector = icon, contentDescription = category.name, tint = color, modifier = Modifier.size(24.dp))
             }
-            Spacer(Modifier.width(12.dp))
+
+            Spacer(modifier = Modifier.width(12.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = expenseWithDetails.productWithCategory.product.name,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = expenseWithDetails.supplier.name,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
+
             Text(
                 text = currencyFormatter.format(expenseWithDetails.expense.amount),
                 style = MaterialTheme.typography.titleLarge,
