@@ -251,4 +251,6 @@
     <string name="please_fill_amount_product_supplier">Por favor complete la cantidad, seleccione producto y proveedor</string>
     <string name="select_product_and_enter_quantity">Por favor seleccione un producto e ingrese una cantidad planificada positiva válida.</string>
     <string name="no_valid_purchases_to_record">No hay compras válidas para registrar.</string>
+    <string name="invalid_amount">Cantidad no válida</string>
+
 </resources>

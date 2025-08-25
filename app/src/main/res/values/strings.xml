@@ -105,7 +105,7 @@
     <string name="loading_expense_details">Loading expense details…</string>
     <string name="error_expense_not_found">Error: Expense not found or ID missing.</string>
 
-    <!-- Filters -->
+        <!-- Filters -->
     <string name="active_filters">Active Filters:</string>
     <string name="date_range">Date: %1$s - %2$s</string>
     <string name="category_filter">Category: %1$s</string>
@@ -255,5 +255,6 @@
     <string name="please_fill_amount_product_supplier">Please fill Amount, select Product and Supplier</string>
     <string name="select_product_and_enter_quantity">Please select a product and enter a valid positive planned quantity.</string>
     <string name="no_valid_purchases_to_record">No valid purchases to record.</string>
+    <string name="invalid_amount">Invalid Amount</string>
 
 </resources>

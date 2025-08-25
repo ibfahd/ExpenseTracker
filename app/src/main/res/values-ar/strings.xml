@@ -251,4 +251,6 @@
     <string name="please_fill_amount_product_supplier">يرجى ملء المبلغ واختيار المنتج والمورد</string>
     <string name="select_product_and_enter_quantity">يرجى اختيار منتج وإدخال كمية مخططة صحيحة موجبة.</string>
     <string name="no_valid_purchases_to_record">لا توجد مشتريات صحيحة للتسجيل.</string>
+    <string name="invalid_amount">مبلغ غير صالح</string>
+
 </resources>

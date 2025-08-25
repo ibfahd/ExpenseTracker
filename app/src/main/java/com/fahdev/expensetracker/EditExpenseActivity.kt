@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
@@ -13,7 +14,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,6 +30,7 @@ class EditExpenseActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val expenseId = intent.getIntExtra("EXPENSE_ID", -1)
+        if (expenseId == -1) finish()
 
         setContent {
             ExpenseTrackerTheme {
@@ -53,141 +54,150 @@ fun EditExpenseScreen(
     onFinished: () -> Unit
 ) {
     val expense by viewModel.getExpenseWithDetailsById(expenseId).collectAsStateWithLifecycle(null)
-
-    var selectedDate by rememberSaveable { mutableStateOf<Long?>(null) }
-    var amountText by rememberSaveable { mutableStateOf("") }
-    var showDatePickerDialog by remember { mutableStateOf(false) }
-
-    // Initialize state when expense is loaded
-    LaunchedEffect(expense) {
-        expense?.let {
-            selectedDate = it.expense.date
-            amountText = it.expense.amount.toString()
-        }
+    if (expense == null) {
+        CircularProgressIndicator(modifier = Modifier.fillMaxSize())
+        return
     }
 
+    var selectedDate by rememberSaveable { mutableLongStateOf(expense!!.expense.date) }
+    var amountText by rememberSaveable { mutableStateOf(expense!!.expense.amount.toString()) }
+    var showDatePickerDialog by remember { mutableStateOf(false) }
+    var showError by remember { mutableStateOf(false) }
+
     val dateFormatter = remember { SimpleDateFormat.getDateInstance() }
-    val displayedDate = selectedDate?.let { dateFormatter.format(Date(it)) }
-        ?: stringResource(R.string.select_date)
+    val displayedDate = dateFormatter.format(Date(selectedDate))
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Product (read-only)
-        OutlinedTextField(
-            value = expense?.productWithCategory?.product?.name.orEmpty(),
-            onValueChange = {},
-            label = { Text(stringResource(R.string.product)) },
-            readOnly = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        // Supplier (read-only)
-        OutlinedTextField(
-            value = expense?.supplier?.name.orEmpty(),
-            onValueChange = {},
-            label = { Text(stringResource(R.string.supplier)) },
-            readOnly = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        // Date (editable via picker)
-        OutlinedTextField(
-            value = displayedDate,
-            onValueChange = {},
-            label = { Text(stringResource(R.string.date)) },
-            readOnly = true,
+    Scaffold(
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.edit_expense_title)) }) }
+    ) { padding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showDatePickerDialog = true },
-            trailingIcon = {
-                Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.select_date))
-            }
-        )
-
-        if (showDatePickerDialog) {
-            val dialogDatePickerState = rememberDatePickerState(
-                initialSelectedDateMillis = selectedDate
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+        ) {
+            OutlinedTextField(
+                value = expense!!.productWithCategory.product.name,
+                onValueChange = {},
+                label = { Text(stringResource(R.string.product)) },
+                readOnly = true,
+                modifier = Modifier.fillMaxWidth()
             )
-            DatePickerDialog(
-                onDismissRequest = { showDatePickerDialog = false },
-                confirmButton = {
-                    Button(onClick = {
-                        dialogDatePickerState.selectedDateMillis?.let {
-                            selectedDate = it
-                        }
-                        showDatePickerDialog = false
-                    }) {
-                        Text(stringResource(R.string.confirm))
-                    }
-                },
-                dismissButton = {
-                    Button(onClick = { showDatePickerDialog = false }) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                }
-            ) {
-                DatePicker(state = dialogDatePickerState)
-            }
-        }
 
-        Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(12.dp))
 
-        // Amount (editable)
-        OutlinedTextField(
-            value = amountText,
-            onValueChange = { amountText = it },
-            label = { Text(stringResource(R.string.amount)) },
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
+            OutlinedTextField(
+                value = expense!!.supplier.name,
+                onValueChange = {},
+                label = { Text(stringResource(R.string.supplier)) },
+                readOnly = true,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(12.dp))
 
-        // Save button
-        Button(
-            onClick = {
-                val pid = expense?.productWithCategory?.product?.id ?: return@Button
-                val sid = expense?.supplier?.id ?: return@Button
-                val date = selectedDate ?: System.currentTimeMillis()
-                val amount = amountText.toDoubleOrNull() ?: return@Button
-
-                viewModel.updateExpense(
-                    Expense(
-                        id = expense?.expense?.id ?: 0,
-                        productId = pid,
-                        supplierId = sid,
-                        amount = amount,
-                        date = date
+            Box(modifier = Modifier.clickable { showDatePickerDialog = true }) {
+                OutlinedTextField(
+                    value = displayedDate,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(stringResource(R.string.date)) },
+                    trailingIcon = { Icon(Icons.Filled.DateRange, contentDescription = null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = false,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                        disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
-                onFinished()
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(stringResource(R.string.save))
-        }
+            }
 
-        Spacer(Modifier.height(12.dp))
-
-        // Delete button
-        Button(
-            onClick = {
-                expense?.expense?.let {
-                    viewModel.deleteExpense(it)
+            if (showDatePickerDialog) {
+                val dialogDatePickerState = rememberDatePickerState(
+                    initialSelectedDateMillis = selectedDate
+                )
+                DatePickerDialog(
+                    onDismissRequest = { showDatePickerDialog = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            dialogDatePickerState.selectedDateMillis?.let {
+                                selectedDate = it
+                            }
+                            showDatePickerDialog = false
+                        }) {
+                            Text(stringResource(R.string.confirm))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDatePickerDialog = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                    }
+                ) {
+                    DatePicker(state = dialogDatePickerState)
                 }
-                onFinished()
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-        ) {
-            Text(stringResource(R.string.delete))
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = amountText,
+                onValueChange = { amountText = it },
+                label = { Text(stringResource(R.string.amount)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = showError,
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (showError) {
+                Text(
+                    text = stringResource(R.string.invalid_amount),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            Button(
+                onClick = {
+                    val amount = amountText.toDoubleOrNull()
+                    if (amount == null || amount <= 0) {
+                        showError = true
+                        return@Button
+                    }
+                    showError = false
+
+                    viewModel.updateExpense(
+                        Expense(
+                            id = expense!!.expense.id,
+                            productId = expense!!.productWithCategory.product.id,
+                            supplierId = expense!!.supplier.id,
+                            amount = amount,
+                            date = selectedDate
+                        )
+                    )
+                    onFinished()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.save))
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Button(
+                onClick = {
+                    viewModel.deleteExpense(expense!!.expense)
+                    onFinished()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text(stringResource(R.string.delete))
+            }
         }
     }
 }
