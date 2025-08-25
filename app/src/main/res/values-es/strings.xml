@@ -160,6 +160,10 @@
     <string name="report_section_spending_by_category_period">Gasto por categoría</string>
     <string name="report_section_spending_by_supplier_period">Gasto por proveedor</string>
     <string name="report_no_data_in_period">No hay datos disponibles para el período seleccionado.</string>
+    <string name="report_tab_trends">Tendencias</string>
+    <string name="report_period_comparison">Comparación vs. Período Anterior</string>
+    <string name="report_previous_period_total">Total Período Anterior</string>
+    <string name="report_change">Cambio</string>
 
     <!-- Settings -->
     <string name="setting_regional_title">Ajustes regionales</string>
@@ -183,6 +187,13 @@
     <string name="privacy_policy">Política de privacidad</string>
     <string name="rate_the_app">Calificar la aplicación</string>
     <string name="open_source_licenses">Licencias de código abierto</string>
+    <string name="build_label">Versión %1$d</string>
+    <string name="contact_us_desc">Contactar soporte por correo</string>
+    <string name="privacy_policy_desc">Ver política de privacidad</string>
+    <string name="rate_the_app_desc">Calificar esta app en Play Store</string>
+    <string name="error_opening_contact">No se puede abrir la página de contacto</string>
+    <string name="error_opening_privacy">No se puede abrir la política de privacidad</string>
+    <string name="error_opening_play_store">No se puede abrir Play Store</string>
 
     <!-- Empty States -->
     <string name="no_categories_title">No se encontraron categorías</string>

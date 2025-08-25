@@ -161,7 +161,6 @@
     <string name="report_section_spending_by_category_period">Spending by Category</string>
     <string name="report_section_spending_by_supplier_period">Spending by Supplier</string>
     <string name="report_no_data_in_period">No data available for the selected period.</string>
-
     <string name="report_tab_trends">Trends</string>
     <string name="report_period_comparison">Comparison vs. Previous Period</string>
     <string name="report_previous_period_total">Previous Period Total</string>
@@ -191,6 +190,14 @@
     <string name="open_source_licenses">Open Source Licenses</string>
     <string name="about_contact_url" translatable="false">https://expensetrackerwebsite.web.app/#contact</string>
     <string name="about_privacy_url" translatable="false">https://expensetrackerwebsite.web.app/privacy.html</string>
+    <string name="build_label">Build %1$d</string>
+    <string name="contact_us_desc">Contact support via email</string>
+    <string name="privacy_policy_desc">View privacy policy</string>
+    <string name="rate_the_app_desc">Rate this app on Play Store</string>
+    <string name="error_opening_contact">Unable to open contact page</string>
+    <string name="error_opening_privacy">Unable to open privacy policy</string>
+    <string name="error_opening_play_store">Unable to open Play Store</string>
+
 
     <!-- Empty States -->
     <string name="no_categories_title">No Categories Found</string>
@@ -242,4 +249,5 @@
     <string name="please_fill_amount_product_supplier">Please fill Amount, select Product and Supplier</string>
     <string name="select_product_and_enter_quantity">Please select a product and enter a valid positive planned quantity.</string>
     <string name="no_valid_purchases_to_record">No valid purchases to record.</string>
+
 </resources>

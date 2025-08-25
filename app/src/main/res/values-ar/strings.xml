@@ -160,6 +160,10 @@
     <string name="report_section_spending_by_category_period">الإنفاق حسب الفئة</string>
     <string name="report_section_spending_by_supplier_period">الإنفاق حسب المورد</string>
     <string name="report_no_data_in_period">لا توجد بيانات متاحة للفترة المحددة.</string>
+    <string name="report_tab_trends">الاتجاهات</string>
+    <string name="report_period_comparison">مقارنة مع الفترة السابقة</string>
+    <string name="report_previous_period_total">إجمالي الفترة السابقة</string>
+    <string name="report_change">التغيير</string>
 
     <!-- Settings -->
     <string name="setting_regional_title">الإعدادات الإقليمية</string>
@@ -183,6 +187,13 @@
     <string name="privacy_policy">سياسة الخصوصية</string>
     <string name="rate_the_app">قيم التطبيق</string>
     <string name="open_source_licenses">تراخيص المصادر المفتوحة</string>
+    <string name="build_label">الإصدار %1$d</string>
+    <string name="contact_us_desc">اتصل بالدعم عبر البريد الإلكتروني</string>
+    <string name="privacy_policy_desc">عرض سياسة الخصوصية</string>
+    <string name="rate_the_app_desc">قيم هذا التطبيق على Play Store</string>
+    <string name="error_opening_contact">تعذر فتح صفحة الاتصال</string>
+    <string name="error_opening_privacy">تعذر فتح سياسة الخصوصية</string>
+    <string name="error_opening_play_store">تعذر فتح Play Store</string>
 
     <!-- Empty States -->
     <string name="no_categories_title">لم يتم العثور على فئات</string>

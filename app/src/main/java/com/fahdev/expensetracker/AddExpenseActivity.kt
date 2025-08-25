@@ -7,11 +7,19 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -23,15 +31,38 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Storefront
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -52,7 +83,8 @@ import com.fahdev.expensetracker.ui.utils.IconAndColorUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 @AndroidEntryPoint
 class AddExpenseActivity : AppCompatActivity() {
@@ -117,7 +149,7 @@ fun AddExpenseFlow(
 
     // State for the form inputs
     var amount by remember { mutableStateOf("") }
-    var selectedDate by remember { mutableStateOf(System.currentTimeMillis()) }
+    var selectedDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
     var showAddProductDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -253,15 +285,27 @@ fun AddExpenseFlow(
                 Button(
                     onClick = {
                         val amountDouble = amount.toDoubleOrNull()
-                        if (amountDouble == null || amountDouble <= 0 || selectedProduct == null) {
-                            Toast.makeText(context, context.getString(R.string.please_fill_amount_product_supplier), Toast.LENGTH_SHORT).show()
+                        val product = selectedProduct
+                        val supplier = selectedSupplier
+
+                        if (amountDouble == null || amountDouble <= 0.0 || product == null || supplier == null) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.please_fill_amount_product_supplier),
+                                Toast.LENGTH_SHORT
+                            ).show()
                             return@Button
                         }
+
+                        // capture ids now to avoid any nullability issues inside coroutine
+                        val productId = product.id
+                        val supplierId = supplier.id
+
                         coroutineScope.launch {
                             val newExpense = Expense(
                                 amount = amountDouble,
-                                productId = selectedProduct!!.id,
-                                supplierId = selectedSupplier!!.id,
+                                productId = productId,
+                                supplierId = supplierId,
                                 date = selectedDate
                             )
                             expenseViewModel.addExpense(newExpense)
@@ -269,7 +313,7 @@ fun AddExpenseFlow(
                             onSaveSuccess()
                         }
                     },
-                    enabled = selectedProduct != null && amount.isNotBlank(),
+                    enabled = selectedProduct != null && selectedSupplier != null && amount.isNotBlank(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
