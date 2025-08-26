@@ -6,7 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
@@ -63,6 +65,7 @@ fun EditExpenseScreen(
     var amountText by rememberSaveable { mutableStateOf(expense!!.expense.amount.toString()) }
     var showDatePickerDialog by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val dateFormatter = remember { SimpleDateFormat.getDateInstance() }
     val displayedDate = dateFormatter.format(Date(selectedDate))
@@ -147,8 +150,33 @@ fun EditExpenseScreen(
                 value = amountText,
                 onValueChange = { amountText = it },
                 label = { Text(stringResource(R.string.amount)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        val amount = amountText.toDoubleOrNull()
+                        if (amount == null || amount <= 0) {
+                            showError = true
+                            return@KeyboardActions
+                        }
+                        showError = false
+
+                        viewModel.updateExpense(
+                            Expense(
+                                id = expense!!.expense.id,
+                                productId = expense!!.productWithCategory.product.id,
+                                supplierId = expense!!.supplier.id,
+                                amount = amount,
+                                date = selectedDate
+                            )
+                        )
+                        onFinished()
+                    }
+                ),
                 isError = showError,
+                singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             if (showError) {
@@ -189,15 +217,38 @@ fun EditExpenseScreen(
             Spacer(Modifier.height(12.dp))
 
             Button(
-                onClick = {
-                    viewModel.deleteExpense(expense!!.expense)
-                    onFinished()
-                },
+                onClick = { showDeleteDialog = true },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
                 Text(stringResource(R.string.delete))
             }
         }
+    }
+
+    // Delete Confirmation Dialog
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text(stringResource(R.string.confirm_deletion_title)) },
+            text = { Text(stringResource(R.string.are_you_sure_delete_expense)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteExpense(expense!!.expense)
+                        showDeleteDialog = false
+                        onFinished()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.delete_button))
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 }
