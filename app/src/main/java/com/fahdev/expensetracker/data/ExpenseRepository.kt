@@ -2,7 +2,6 @@ package com.fahdev.expensetracker.data
 
 import com.fahdev.expensetracker.ExpenseWithDetails
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 
 class ExpenseRepository(
     private val expenseDao: ExpenseDao,

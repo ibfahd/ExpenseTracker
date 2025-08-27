@@ -144,7 +144,7 @@ object CurrencyHelper {
             CurrencyInfo("TJS", "Tajikistani Somoni"),
             CurrencyInfo("TMT", "Turkmenistani Manat"),
             CurrencyInfo("TND", "Tunisian Dinar"),
-            CurrencyInfo("TOP", "Tongan Paʻanga"),
+            CurrencyInfo("TOP", "Tongan Pa'anga"),
             CurrencyInfo("TRY", "Turkish Lira"),
             CurrencyInfo("TTD", "Trinidad and Tobago Dollar"),
             CurrencyInfo("TWD", "Taiwan Dollar"),
@@ -182,7 +182,7 @@ object CurrencyHelper {
             val locale = Locale.getAvailableLocales().find {
                 try {
                     Currency.getInstance(it) == currency
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     false
                 }
             } ?: Locale.getDefault() // Fallback to default locale
@@ -190,7 +190,7 @@ object CurrencyHelper {
             (NumberFormat.getCurrencyInstance(locale) as NumberFormat).apply {
                 this.currency = currency
             }
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             // Fallback to default if the currency code is invalid
             NumberFormat.getCurrencyInstance(Locale.getDefault())
         }

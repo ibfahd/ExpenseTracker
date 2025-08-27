@@ -167,7 +167,7 @@ fun SimpleBarChart(
     currencyFormatter: NumberFormat,
     modifier: Modifier = Modifier
 ) {
-    val maxValue = data.map { it.second }.maxOrNull() ?: 0.0
+    val maxValue = data.maxOfOrNull { it.second } ?: 0.0
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         data.forEach { (label, value) ->

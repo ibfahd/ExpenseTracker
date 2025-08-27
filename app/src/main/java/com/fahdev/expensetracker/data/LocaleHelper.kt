@@ -1,6 +1,5 @@
 package com.fahdev.expensetracker.data
 
-import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 

@@ -118,7 +118,8 @@ fun SupplierManagementScreen(expenseViewModel: ExpenseViewModel) {
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 88.dp) // Added bottom padding to prevent FAB overlap
                 ) {
                     items(allSuppliers, key = { it.id }) { supplier ->
                         SupplierItem(

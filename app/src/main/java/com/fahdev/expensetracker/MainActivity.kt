@@ -325,7 +325,10 @@ fun ChronologicalExpenseList(expenses: List<ExpenseWithDetails>, currencyFormatt
         }.timeInMillis
     }
 
-    LazyColumn(modifier = Modifier.fillMaxWidth()) {
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(bottom = 88.dp) // Added bottom padding to prevent FAB overlap
+    ) {
         groupedByDate.forEach { (dateMillis, expensesOnDate) ->
             stickyHeader {
                 DateHeader(dateMillis = dateMillis)
@@ -352,7 +355,10 @@ fun CategorizedExpenseList(expenses: List<ExpenseWithDetails>, currencyFormatter
     val groupedByCategory = expenses.groupBy { it.productWithCategory.category }
     val expandedCategories = remember { mutableStateMapOf<Int, Boolean>() }
 
-    LazyColumn(modifier = Modifier.fillMaxWidth()) {
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(bottom = 88.dp) // Added bottom padding to prevent FAB overlap
+    ) {
         groupedByCategory.forEach { (category, expensesInCategory) ->
             item {
                 val total = expensesInCategory.sumOf { it.expense.amount }

@@ -121,7 +121,8 @@ fun CategoryManagementScreen(expenseViewModel: ExpenseViewModel) {
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 88.dp) // Added bottom padding to prevent FAB overlap
                 ) {
                     items(allCategories, key = { it.id }) { category ->
                         CategoryItem(

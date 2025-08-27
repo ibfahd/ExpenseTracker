@@ -207,7 +207,7 @@ fun ShoppingListScreen(
                     )
                 } else {
                     LazyColumn(
-                        contentPadding = PaddingValues(bottom = 16.dp),
+                        contentPadding = PaddingValues(bottom = 88.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(shoppingListItems, key = { it.id }) { item ->
@@ -345,7 +345,7 @@ fun ShoppingListItemCard(
     modifier: Modifier = Modifier
 ) {
     val isItemValidated = item.purchasedQuantity > 0.0 && item.unitPrice != null
-    val totalCost = if (isItemValidated) item.purchasedQuantity * (item.unitPrice ?: 0.0) else 0.0
+    val totalCost = if (isItemValidated) item.purchasedQuantity * item.unitPrice else 0.0
 
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
