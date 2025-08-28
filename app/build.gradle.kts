@@ -16,8 +16,8 @@ android {
         applicationId = "com.fahdev.expensetracker"
         minSdk = 24
         targetSdk = 36
-        versionCode = 15
-        versionName = "2.3"
+        versionCode = 17
+        versionName = "2.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
@@ -67,6 +67,7 @@ dependencies {
 
     // Charting library
     implementation(libs.vico.core)
+    implementation(libs.vico.compose)
     implementation(libs.vico.compose.m3)
 
     // Splash Screen API
