@@ -1,8 +1,6 @@
 package com.fahdev.expensetracker
 
 import android.util.Log
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fahdev.expensetracker.data.*
@@ -12,8 +10,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import javax.inject.Inject
-import kotlin.math.max
-import androidx.compose.ui.graphics.SolidColor
 
 @HiltViewModel
 class ExpenseViewModel @Inject constructor(
@@ -21,8 +17,6 @@ class ExpenseViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
-    // --- Data Flows for UI ---
-    val allProducts: Flow<List<Product>> = expenseRepository.allProducts
     val allSuppliers: Flow<List<Supplier>> = expenseRepository.allSuppliers
     val allCategories: Flow<List<Category>> = expenseRepository.allCategories
 
@@ -44,47 +38,7 @@ class ExpenseViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val totalFilteredExpenses: StateFlow<Double> = combine(_selectedStartDate, _selectedEndDate, _selectedCategoryId, _selectedSupplierId, _refreshTrigger) { startDate, endDate, categoryId, supplierId, _ -> FilterParams(startDate, endDate, categoryId, supplierId) }.flatMapLatest { params -> expenseRepository.getTotalFilteredExpenses(params.startDate, params.endDate, params.categoryId, params.supplierId) }.map { it ?: 0.0 }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    // --- Reporting Data ---
-    val totalExpensesAllTime: StateFlow<Double> = expenseRepository.totalExpensesAllTime.map { it ?: 0.0 }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
-    val firstExpenseDate: StateFlow<Long?> = expenseRepository.firstExpenseDate.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     val totalTransactionCount: StateFlow<Int> = expenseRepository.totalTransactionCount.map { it ?: 0 }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
-    val spendingByCategory: StateFlow<List<CategorySpending>> = expenseRepository.spendingByCategory.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    val spendingBySupplier: StateFlow<List<SupplierSpending>> = expenseRepository.spendingBySupplier.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    val averageDailyExpense: StateFlow<Double> = combine(totalExpensesAllTime, firstExpenseDate) { total, firstDateMs -> if (total > 0 && firstDateMs != null) { val days = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - firstDateMs).coerceAtLeast(1); total / days } else { 0.0 } }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
-    val averageMonthlyExpense: StateFlow<Double> = combine(totalExpensesAllTime, firstExpenseDate) { total, firstDateMs -> if (total > 0 && firstDateMs != null) { val firstCal = Calendar.getInstance().apply { timeInMillis = firstDateMs }; val currentCal = Calendar.getInstance(); var months = (currentCal.get(Calendar.YEAR) - firstCal.get(Calendar.YEAR)) * 12; months -= firstCal.get(Calendar.MONTH); months += currentCal.get(Calendar.MONTH); if (currentCal.get(Calendar.DAY_OF_MONTH) < firstCal.get(Calendar.DAY_OF_MONTH) && months > 0) { months-- }; total / max(1, months + 1) } else { 0.0 } }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val totalFilteredTransactionCount: StateFlow<Int> = combine(_selectedStartDate, _selectedEndDate, _selectedCategoryId, _selectedSupplierId, _refreshTrigger) { startDate, endDate, categoryId, supplierId, _ ->
-        FilterParams(startDate, endDate, categoryId, supplierId)
-    }.flatMapLatest { params ->
-        expenseRepository.getFilteredTransactionCount(params.startDate, params.endDate, params.categoryId, params.supplierId)
-    }.map { it ?: 0 }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
-
-    val averageDailyExpenseFiltered: StateFlow<Double> = combine(totalFilteredExpenses, _selectedStartDate, _selectedEndDate) { total, startDate, endDate ->
-        if (total > 0 && startDate != null) {
-            val end = endDate ?: System.currentTimeMillis()
-            val days = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(end - startDate).coerceAtLeast(1)
-            total / days
-        } else {
-            0.0
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
-
-    val averageMonthlyExpenseFiltered: StateFlow<Double> = combine(totalFilteredExpenses, _selectedStartDate, _selectedEndDate) { total, startDate, endDate ->
-        if (total > 0 && startDate != null) {
-            val firstCal = Calendar.getInstance().apply { timeInMillis = startDate }
-            val endCal = Calendar.getInstance().apply { timeInMillis = endDate ?: System.currentTimeMillis() }
-            var months = (endCal.get(Calendar.YEAR) - firstCal.get(Calendar.YEAR)) * 12
-            months -= firstCal.get(Calendar.MONTH)
-            months += endCal.get(Calendar.MONTH)
-            if (endCal.get(Calendar.DAY_OF_MONTH) < firstCal.get(Calendar.DAY_OF_MONTH) && months > 0) {
-                months--
-            }
-            total / max(1, months + 1)
-        } else {
-            0.0
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val productReportDetails: StateFlow<List<ProductReportDetail>> = combine(
@@ -138,24 +92,6 @@ class ExpenseViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
-    // --- Trend Analysis State ---
-    enum class TrendGrouping { DAY, WEEK, MONTH }
-    private val _trendGrouping = MutableStateFlow(TrendGrouping.DAY)
-    val trendGrouping: StateFlow<TrendGrouping> = _trendGrouping.asStateFlow()
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val trendData: StateFlow<List<ExpenseDao.TrendDataPoint>> = combine(
-        _selectedStartDate, _selectedEndDate, _trendGrouping, _refreshTrigger
-    ) { startDate, endDate, grouping, _ ->
-        Triple(startDate, endDate, grouping)
-    }.flatMapLatest { (startDate, endDate, grouping) ->
-        when (grouping) {
-            TrendGrouping.DAY -> expenseRepository.getSpendingByDay(startDate, endDate)
-            TrendGrouping.WEEK -> expenseRepository.getSpendingByWeek(startDate, endDate)
-            TrendGrouping.MONTH -> expenseRepository.getSpendingByMonth(startDate, endDate)
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
     // --- Chart-specific data flows for the reporting charts tab ---
     /**
      * Monthly spending trend data for line charts
@@ -169,17 +105,6 @@ class ExpenseViewModel @Inject constructor(
     }.flatMapLatest { it }
 
     /**
-     * Weekly spending trend data
-     */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val spendingByWeek: Flow<List<ExpenseDao.TrendDataPoint>> = combine(
-        _selectedStartDate,
-        _selectedEndDate
-    ) { startDate, endDate ->
-        expenseRepository.getSpendingByWeek(startDate, endDate)
-    }.flatMapLatest { it }
-
-    /**
      * Daily spending trend data
      */
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -189,23 +114,6 @@ class ExpenseViewModel @Inject constructor(
     ) { startDate, endDate ->
         expenseRepository.getSpendingByDay(startDate, endDate)
     }.flatMapLatest { it }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val previousPeriodTotal: StateFlow<Double> = combine(
-        _selectedStartDate, _selectedEndDate, _selectedCategoryId, _selectedSupplierId, _refreshTrigger
-    ) { sDate, eDate, catId, supId, _ ->
-        if (sDate == null) return@combine FilterParams(null, null, null, null)
-
-        val end = eDate ?: System.currentTimeMillis()
-        val duration = end - sDate
-        val previousEndDate = sDate - 1
-        val previousStartDate = previousEndDate - duration
-
-        FilterParams(previousStartDate, previousEndDate, catId, supId)
-    }.flatMapLatest { params ->
-        if (params.startDate != null && params.startDate < 0) flowOf(0.0) else expenseRepository.getTotalFilteredExpenses(params.startDate, params.endDate, params.categoryId, params.supplierId)
-    }.map { it ?: 0.0 }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
 
     // --- State and Logic for the Add Expense Screen Flow ---
@@ -257,10 +165,6 @@ class ExpenseViewModel @Inject constructor(
     fun resetAddExpenseFlow() {
         _selectedSupplierForAdd.value = null
         _selectedCategoryForAdd.value = null
-    }
-
-    fun setTrendGrouping(grouping: TrendGrouping) {
-        _trendGrouping.value = grouping
     }
 
     // --- Functions for Managing Category-Supplier Links ---
@@ -315,10 +219,8 @@ class ExpenseViewModel @Inject constructor(
     suspend fun hasProductsInCategory(categoryId: Int): Boolean = expenseRepository.hasProductsInCategory(categoryId)
     fun updateCategory(category: Category) { viewModelScope.launch { expenseRepository.updateCategory(category); _refreshTrigger.value++ } }
     fun deleteCategory(category: Category) { viewModelScope.launch { expenseRepository.deleteCategory(category); _refreshTrigger.value++ } }
-    fun getCategoryById(id: Int): Flow<Category?> = expenseRepository.getCategoryById(id)
     fun updateSupplier(supplier: Supplier) { viewModelScope.launch { expenseRepository.updateSupplier(supplier); _refreshTrigger.value++ } }
     fun deleteSupplier(supplier: Supplier) { viewModelScope.launch { expenseRepository.deleteSupplier(supplier); _refreshTrigger.value++ } }
-    fun getSupplierById(id: Int): Flow<Supplier?> = expenseRepository.getSupplierById(id)
     fun setCategoryFilter(categoryId: Int?) { userPreferencesRepository.updateSelectedCategoryId(categoryId) }
     fun setSupplierFilter(supplierId: Int?) { userPreferencesRepository.updateSelectedSupplierId(supplierId) }
     fun setDateRangeFilter(rangeType: String) {
@@ -391,82 +293,3 @@ class ExpenseViewModel @Inject constructor(
     fun deleteSupplierAndExpenses(supplier: Supplier) { viewModelScope.launch { expenseRepository.deleteSupplierAndExpenses(supplier); _refreshTrigger.value++ } }
 }
 
-// Extension functions for chart data transformation
-object ChartDataTransformations {
-
-    /**
-     * Transform spending data into chart-friendly format with color assignments
-     */
-    fun transformCategoryDataForPieChart(
-        data: List<CategorySpending>,
-        colors: List<Color>
-    ): List<ir.ehsannarmani.compose_charts.models.Pie> {
-        return data.take(8).mapIndexed { index, spending ->
-            ir.ehsannarmani.compose_charts.models.Pie(
-                label = spending.categoryName,
-                data = spending.totalAmount,
-                color = colors[index % colors.size]
-            )
-        }
-    }
-
-    /**
-     * Transform trend data for line chart with proper time formatting
-     */
-    fun transformTrendDataForLineChart(
-        data: List<ExpenseDao.TrendDataPoint>,
-        color: Color
-    ): ir.ehsannarmani.compose_charts.models.Line {
-        return ir.ehsannarmani.compose_charts.models.Line(
-            label = "Spending Trend",
-            values = data.map { it.amount },
-            color = SolidColor(color),
-            firstGradientFillColor = color.copy(alpha = 0.5f),
-            secondGradientFillColor = Color.Transparent,
-            strokeAnimationSpec = androidx.compose.animation.core.tween(2000),
-            gradientAnimationDelay = 1000,
-            drawStyle = ir.ehsannarmani.compose_charts.models.DrawStyle.Stroke(width = 3.dp)
-        )
-    }
-
-    /**
-     * Get optimal time period for trend analysis based on data range
-     */
-    fun getOptimalTrendPeriod(startDate: Long?, endDate: Long?): TrendPeriod {
-        if (startDate == null || endDate == null) return TrendPeriod.MONTHLY
-
-        val daysDiff = (endDate - startDate) / (24 * 60 * 60 * 1000)
-        return when {
-            daysDiff <= 31 -> TrendPeriod.DAILY
-            daysDiff <= 90 -> TrendPeriod.WEEKLY
-            else -> TrendPeriod.MONTHLY
-        }
-    }
-}
-
-enum class TrendPeriod {
-    DAILY, WEEKLY, MONTHLY
-}
-
-// Chart color palettes
-object ChartColors {
-    val categoryColors = listOf(
-        Color(0xFF6366F1), // Indigo
-        Color(0xFF8B5CF6), // Violet
-        Color(0xFFEC4899), // Pink
-        Color(0xFFF59E0B), // Amber
-        Color(0xFF10B981), // Emerald
-        Color(0xFF3B82F6), // Blue
-        Color(0xFFEF4444), // Red
-        Color(0xFF84CC16)  // Lime
-    )
-
-    val supplierColors = listOf(
-        Color(0xFF3B82F6), // Blue
-        Color(0xFF10B981), // Emerald
-        Color(0xFFF59E0B), // Amber
-        Color(0xFFEF4444), // Red
-        Color(0xFF8B5CF6), // Violet
-        Color(0xFFEC4899)  // Pink
-    )
-}

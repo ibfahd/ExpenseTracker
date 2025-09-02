@@ -182,11 +182,11 @@ fun DateFilterDropdown(
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val dateOptions = listOf(
-        context.getString(R.string.this_month) to context.getString(R.string.this_month),
-        context.getString(R.string.last_7_days) to context.getString(R.string.last_7_days),
-        context.getString(R.string.last_month) to context.getString(R.string.last_month),
-        context.getString(R.string.this_year) to context.getString(R.string.this_year),
-        context.getString(R.string.all_time) to context.getString(R.string.all_time)
+        "ThisMonth" to context.getString(R.string.this_month),
+        "Last7Days" to context.getString(R.string.last_7_days),
+        "LastMonth" to context.getString(R.string.last_month),
+        "ThisYear" to context.getString(R.string.this_year),
+        "All" to context.getString(R.string.all_time)
     )
     val currentSelectionText = remember(selectedStartDate, selectedEndDate) {
         when {

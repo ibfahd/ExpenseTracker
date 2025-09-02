@@ -33,12 +33,12 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.fahdev.expensetracker.ChartColors
 import com.fahdev.expensetracker.ExpenseViewModel
 import com.fahdev.expensetracker.R
 import com.fahdev.expensetracker.data.CategorySpending
 import com.fahdev.expensetracker.data.ExpenseDao
 import com.fahdev.expensetracker.data.SupplierSpending
+import com.fahdev.expensetracker.ui.charts.ChartUtils
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.PieChart
 import ir.ehsannarmani.compose_charts.models.DrawStyle
@@ -106,6 +106,14 @@ fun ChartsReportContent(
             spendingBySupplier.isNotEmpty() ||
             trendData.isNotEmpty()
 
+    // Debug logging
+    LaunchedEffect(spendingByCategory) {
+        Log.d("ChartsReport", "Category data: ${spendingByCategory.size} items")
+        spendingByCategory.forEach { category ->
+            Log.d("ChartsReport", "Category: ${category.categoryName}, Amount: ${category.totalAmount}")
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -132,14 +140,7 @@ fun ChartsReportContent(
             }
         }
 
-        if (spendingByCategory.isNotEmpty()) {
-            ReportSectionCard(title = stringResource(R.string.report_category_spending)) {
-                CategorySpendingBarChart(
-                    data = spendingByCategory.take(MAX_DISPLAY_ITEMS),
-                    currencyFormatter = currencyFormatter
-                )
-            }
-        }
+        
 
         if (spendingBySupplier.isNotEmpty()) {
             ReportSectionCard(title = stringResource(R.string.report_supplier_spending)) {
@@ -308,7 +309,11 @@ fun CategorySpendingPieChart(
     currencyFormatter: NumberFormat,
     modifier: Modifier = Modifier
 ) {
-    Log.d("PieChartData", "Data: $data")
+    Log.d("PieChartData", "CategorySpendingPieChart - Data size: ${data.size}")
+    data.forEach { spending ->
+        Log.d("PieChartData", "Category: ${spending.categoryName}, Amount: ${spending.totalAmount}")
+    }
+
     if (data.isEmpty()) {
         Box(
             modifier = Modifier
@@ -324,15 +329,44 @@ fun CategorySpendingPieChart(
         }
         return
     }
-    val pieData = remember(data) {
-        data.mapIndexed { index, spending ->
+
+    // Filter out zero or negative amounts and ensure we have valid data
+    val validData = remember(data) {
+        data.filter { it.totalAmount > 0 }
+    }
+
+    Log.d("PieChartData", "Valid data after filtering: ${validData.size}")
+
+    if (validData.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .height(PIE_CHART_HEIGHT)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.no_data_available),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        return
+    }
+
+    // Use ChartUtils for consistent data transformation
+    val pieData = remember(validData) {
+        validData.mapIndexed { index, spending ->
+            val color = ChartUtils.categoryColors[index % ChartUtils.categoryColors.size]
+            Log.d("PieChartData", "Creating pie slice - Category: ${spending.categoryName}, Amount: ${spending.totalAmount}, Color: $color")
             Pie(
-                label = "${spending.categoryName}\n${currencyFormatter.format(spending.totalAmount)}",
+                label = spending.categoryName,
                 data = spending.totalAmount,
-                color = ChartColors.categoryColors[index % ChartColors.categoryColors.size]
+                color = color
             )
         }
     }
+
+    Log.d("PieChartData", "Final pie data size: ${pieData.size}")
 
     Column(modifier = modifier) {
         Text(
@@ -341,49 +375,45 @@ fun CategorySpendingPieChart(
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             modifier = Modifier.padding(bottom = 16.dp)
         )
+
         PieChart(
             modifier = Modifier
                 .height(PIE_CHART_HEIGHT)
-                .align(Alignment.CenterHorizontally),
-            data = pieData
-        )
-    }
-}
-
-@Composable
-fun CategorySpendingBarChart(
-    data: List<CategorySpending>,
-    currencyFormatter: NumberFormat,
-    modifier: Modifier = Modifier
-) {
-    val maxValue = remember(data) { data.maxOfOrNull { it.totalAmount } ?: 0.0 }
-
-    Column(modifier = modifier) {
-        Text(
-            text = stringResource(R.string.report_category_spending_breakdown),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            modifier = Modifier.padding(bottom = 16.dp)
+                .fillMaxWidth(),
+            data = pieData,
+            onPieClick = { pie ->
+                Log.d("PieChartData", "Pie clicked: ${pie.label} - ${pie.data}")
+            }
         )
 
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            data.forEachIndexed { index, spending ->
-                SpendingBarItem(
-                    name = spending.categoryName,
-                    amount = spending.totalAmount,
-                    maxValue = maxValue,
-                    color = if (ChartColors.categoryColors.isNotEmpty()) {
-                        ChartColors.categoryColors[index % ChartColors.categoryColors.size]
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    },
-                    currencyFormatter = currencyFormatter,
-                    animationLabel = "category_bar_${spending.categoryName}"
-                )
+        // Add legend below the chart
+        Spacer(modifier = Modifier.height(16.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            validData.forEachIndexed { index, spending ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(16.dp)
+                            .height(16.dp)
+                            .background(
+                                ChartUtils.categoryColors[index % ChartUtils.categoryColors.size],
+                                RoundedCornerShape(2.dp)
+                            )
+                    )
+                    Text(
+                        text = "${spending.categoryName}: ${currencyFormatter.format(spending.totalAmount)}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
         }
     }
 }
+
+
 
 @Composable
 fun SupplierSpendingChart(
@@ -407,11 +437,7 @@ fun SupplierSpendingChart(
                     name = spending.supplierName,
                     amount = spending.totalAmount,
                     maxValue = maxValue,
-                    color = if (ChartColors.supplierColors.isNotEmpty()) {
-                        ChartColors.supplierColors[index % ChartColors.supplierColors.size]
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    },
+                    color = ChartUtils.supplierColors[index % ChartUtils.supplierColors.size],
                     currencyFormatter = currencyFormatter,
                     animationLabel = "supplier_bar_${spending.supplierName}"
                 )

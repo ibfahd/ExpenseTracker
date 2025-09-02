@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App Info -->
-    <string name="app_name" translatable="false">Expense Tracker</string>
     <string name="version_label">Versión %1$s</string>
 
     <!-- Navigation -->
@@ -131,11 +130,6 @@
     <string name="last_month">Mes Anterior</string>
     <string name="this_year">Este Año</string>
     <string name="all_time">Todos los Períodos</string>
-    <string name="this_month_key" translatable="false">ThisMonth</string>
-    <string name="last_7_days_key" translatable="false">Last7Days</string>
-    <string name="last_month_key" translatable="false">LastMonth</string>
-    <string name="this_year_key" translatable="false">ThisYear</string>
-    <string name="all_time_key" translatable="false">All</string>
 
     <!-- Shopping List -->
     <string name="add_new_item_title">Agregar Nuevo Elemento</string>
@@ -190,7 +184,6 @@
     <string name="report_spending_patterns_over_time">Sigue tus patrones de gasto a lo largo del tiempo.</string>
     <string name="report_category_spending_breakdown">Desglose de gastos por categoría.</string>
     <string name="report_supplier_spending_comparison">Compara gastos entre diferentes proveedores.</string>
-    <string name="no_data_available" translatable="false">No hay datos disponibles</string>
     <string name="report_spending_distribution_by_category">Distribución de Gastos por Categoría</string>
 
     <!-- Settings -->
@@ -216,8 +209,6 @@
     <string name="privacy_policy">Política de Privacidad</string>
     <string name="rate_the_app">Calificar la App</string>
     <string name="open_source_licenses">Licencias de Código Abierto</string>
-    <string name="about_contact_url" translatable="false">https://expensetrackerwebsite.web.app/#contact</string>
-    <string name="about_privacy_url" translatable="false">https://expensetrackerwebsite.web.app/privacy.html</string>
     <string name="build_label">Compilación %1$d</string>
     <string name="contact_us_desc">Contactar al soporte por correo</string>
     <string name="privacy_policy_desc">Ver política de privacidad</string>

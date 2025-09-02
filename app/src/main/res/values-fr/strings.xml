@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App Info -->
-    <string name="app_name" translatable="false">Expense Tracker</string>
     <string name="version_label">Version %1$s</string>
 
     <!-- Navigation -->
@@ -131,11 +130,6 @@
     <string name="last_month">Mois dernier</string>
     <string name="this_year">Cette année</string>
     <string name="all_time">Toutes périodes</string>
-    <string name="this_month_key" translatable="false">ThisMonth</string>
-    <string name="last_7_days_key" translatable="false">Last7Days</string>
-    <string name="last_month_key" translatable="false">LastMonth</string>
-    <string name="this_year_key" translatable="false">ThisYear</string>
-    <string name="all_time_key" translatable="false">All</string>
 
     <!-- Shopping List -->
     <string name="add_new_item_title">Ajouter un nouvel élément</string>
@@ -190,7 +184,6 @@
     <string name="report_spending_patterns_over_time">Suivez vos habitudes de dépenses dans le temps.</string>
     <string name="report_category_spending_breakdown">Répartition des dépenses par catégorie.</string>
     <string name="report_supplier_spending_comparison">Comparez les dépenses entre différents fournisseurs.</string>
-    <string name="no_data_available" translatable="false">Aucune donnée disponible</string>
     <string name="report_spending_distribution_by_category">Répartition des dépenses par catégorie</string>
 
     <!-- Settings -->
@@ -216,8 +209,6 @@
     <string name="privacy_policy">Politique de confidentialité</string>
     <string name="rate_the_app">Noter l\'application</string>
     <string name="open_source_licenses">Licences open source</string>
-    <string name="about_contact_url" translatable="false">https://expensetrackerwebsite.web.app/#contact</string>
-    <string name="about_privacy_url" translatable="false">https://expensetrackerwebsite.web.app/privacy.html</string>
     <string name="build_label">Build %1$d</string>
     <string name="contact_us_desc">Contacter le support par email</string>
     <string name="privacy_policy_desc">Voir la politique de confidentialité</string>

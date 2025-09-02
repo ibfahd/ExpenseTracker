@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App Info -->
-    <string name="app_name" translatable="false">Expense Tracker</string>
     <string name="version_label">الإصدار %1$s</string>
     <!-- Navigation -->
     <string name="menu">القائمة</string>
@@ -120,11 +119,6 @@
     <string name="last_month">الشهر الماضي</string>
     <string name="this_year">هذا العام</string>
     <string name="all_time">كل الوقت</string>
-    <string name="this_month_key" translatable="false">ThisMonth</string>
-    <string name="last_7_days_key" translatable="false">Last7Days</string>
-    <string name="last_month_key" translatable="false">LastMonth</string>
-    <string name="this_year_key" translatable="false">ThisYear</string>
-    <string name="all_time_key" translatable="false">All</string>
     <!-- Shopping List -->
     <string name="add_new_item_title">إضافة عنصر جديد</string>
     <string name="planned_quantity_display">مخطط</string>
@@ -177,7 +171,6 @@
     <string name="report_spending_patterns_over_time">تتبع أنماط إنفاقك بمرور الوقت.</string>
     <string name="report_category_spending_breakdown">تفصيل المصروفات حسب الفئة.</string>
     <string name="report_supplier_spending_comparison">مقارنة المصروفات بين الموردين المختلفين.</string>
-    <string name="no_data_available" translatable="false">No data available</string>
     <string name="report_spending_distribution_by_category">توزيع المصروفات حسب الفئة</string>
     <!-- Settings -->
     <string name="setting_regional_title">الإعدادات الإقليمية</string>
@@ -201,8 +194,6 @@
     <string name="privacy_policy">سياسة الخصوصية</string>
     <string name="rate_the_app">قيّم التطبيق</string>
     <string name="open_source_licenses">تراخيص المصدر المفتوح</string>
-    <string name="about_contact_url" translatable="false">https://expensetrackerwebsite.web.app/#contact</string>
-    <string name="about_privacy_url" translatable="false">https://expensetrackerwebsite.web.app/privacy.html</string>
     <string name="build_label">الإصدار %1$d</string>
     <string name="contact_us_desc">تواصل مع الدعم عبر البريد الإلكتروني</string>
     <string name="privacy_policy_desc">عرض سياسة الخصوصية</string>
