@@ -275,7 +275,7 @@ fun CurrencySelector(settingsViewModel: SettingsViewModel) {
             ) {
                 availableCurrencies.forEach { currencyInfo ->
                     DropdownMenuItem(
-                        text = { Text("${currencyInfo.displayName} (${currencyInfo.code})") },
+                        text = { Text(stringResource(R.string.currency_display_format, currencyInfo.displayName, currencyInfo.code)) },
                         onClick = {
                             settingsViewModel.setCurrency(currencyInfo.code)
                             expanded = false

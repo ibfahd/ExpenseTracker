@@ -73,7 +73,7 @@ fun FilterStatusRow(
                     } else if (selectedStartDate != null) {
                         val start = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(selectedStartDate))
                         Text(
-                            text = "From: $start",
+                            text = context.getString(R.string.from_date, start),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                         )

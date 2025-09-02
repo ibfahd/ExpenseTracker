@@ -19,9 +19,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.fahdev.expensetracker.GridItem
+import com.fahdev.expensetracker.R
 import com.fahdev.expensetracker.data.Category
 import com.fahdev.expensetracker.data.Product
 import com.fahdev.expensetracker.data.Supplier
@@ -36,6 +38,9 @@ fun <T> SelectionAccordion(
     onItemSelected: (T) -> Unit,
     defaultIcon: ImageVector
 ) where T : Any {
+    val context = LocalContext.current
+    val unknownItemString = context.getString(R.string.unknown_item)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -46,7 +51,7 @@ fun <T> SelectionAccordion(
     ) {
         AccordionHeader(
             title = title,
-            selectedItemName = selectedItem?.let { getItemName(it) },
+            selectedItemName = selectedItem?.let { getItemName(it, unknownItemString) },
             isExpanded = isExpanded,
             onToggle = onToggle
         )
@@ -84,6 +89,7 @@ fun AccordionHeader(
     isExpanded: Boolean,
     onToggle: () -> Unit
 ) {
+    val context = LocalContext.current
     val rotationAngle by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "arrowRotation")
     Row(
         modifier = Modifier
@@ -111,18 +117,18 @@ fun AccordionHeader(
         }
         Icon(
             imageVector = Icons.Filled.ArrowDropDown,
-            contentDescription = if (isExpanded) "Collapse" else "Expand",
+            contentDescription = if (isExpanded) context.getString(R.string.collapse) else context.getString(R.string.expand),
             modifier = Modifier.rotate(rotationAngle),
             tint = MaterialTheme.colorScheme.primary
         )
     }
 }
 
-fun getItemName(item: Any): String {
+fun getItemName(item: Any, unknown: String): String {
     return when (item) {
         is Supplier -> item.name
         is Category -> item.name
         is Product -> item.name
-        else -> "Unknown"
+        else -> unknown
     }
 }

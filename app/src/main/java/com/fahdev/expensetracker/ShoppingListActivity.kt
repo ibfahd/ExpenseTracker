@@ -379,13 +379,13 @@ fun ShoppingListItemCard(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "${stringResource(R.string.planned_quantity_display)}: ${item.plannedQuantity} ${item.unit.orEmpty()}",
+                    text = stringResource(R.string.planned_quantity_and_unit_display, stringResource(R.string.planned_quantity_display), item.plannedQuantity, item.unit.orEmpty()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                 )
                 if (isItemValidated) {
                     Text(
-                        text = "${item.purchasedQuantity} x ${currencyFormatter.format(item.unitPrice)} = ${currencyFormatter.format(totalCost)}",
+                        text = stringResource(R.string.purchase_display, item.purchasedQuantity, currencyFormatter.format(item.unitPrice), currencyFormatter.format(totalCost)),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
@@ -422,7 +422,7 @@ fun EditShoppingItemDialog(
                 OutlinedTextField(
                     value = purchasedQuantityText,
                     onValueChange = { newValue ->
-                        if (newValue.matches(Regex("""^\d*\.?\d*$"""))) {
+                        if (newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
                             purchasedQuantityText = newValue
                         }
                     },
@@ -433,7 +433,7 @@ fun EditShoppingItemDialog(
                 OutlinedTextField(
                     value = unitPriceText,
                     onValueChange = { newValue ->
-                        if (newValue.matches(Regex("""^\d*\.?\d{0,2}$"""))) {
+                        if (newValue.matches(Regex("^\\d*\\.?\\d{0,2}$"))) {
                             unitPriceText = newValue
                         }
                     },
@@ -577,7 +577,7 @@ fun AddShoppingItemDialog(
                 }
                 OutlinedTextField(
                     value = plannedQuantity,
-                    onValueChange = { newValue -> if (newValue.matches(Regex("""^\d*\.?\d*$"""))) plannedQuantity = newValue },
+                    onValueChange = { newValue -> if (newValue.matches(Regex("^\\d*\\.?\\d*$"))) plannedQuantity = newValue },
                     label = { Text(stringResource(R.string.quantity_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()

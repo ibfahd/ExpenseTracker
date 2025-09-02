@@ -10,10 +10,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.fahdev.expensetracker.R
 
 @Composable
 fun EmptyState(
@@ -24,6 +26,7 @@ fun EmptyState(
     action: @Composable (() -> Unit)? = null,
 ) {
     val scrollState = rememberScrollState()
+    val contentDesc = stringResource(id = R.string.empty_state_content_description, title)
 
     Column(
         modifier = modifier
@@ -31,7 +34,7 @@ fun EmptyState(
             .verticalScroll(scrollState)
             .padding(horizontal = 32.dp, vertical = 24.dp)
             .semantics {
-                contentDescription = "Empty state: $title"
+                contentDescription = contentDesc
             },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App Info -->
+    <string name="app_name" translatable="false">Expense Tracker</string>
     <string name="version_label">Version %1$s</string>
 
     <!-- Navigation -->
@@ -11,7 +12,7 @@
 
     <!-- Main Actions -->
     <string name="add_new_expense">Ajouter une nouvelle dépense</string>
-    <string name="manage_categories">Gérer les Catégories et Produits</string>
+    <string name="manage_categories">Gérer les catégories &amp; produits</string>
     <string name="manage_suppliers">Gérer les fournisseurs</string>
     <string name="filter_expenses">Filtrer les dépenses</string>
     <string name="shopping_list_title">Liste de courses</string>
@@ -35,14 +36,14 @@
     <!-- Form Fields -->
     <string name="amount">Montant</string>
     <string name="date">Date</string>
-    <string name="select_date">Sélectionner la date</string>
+    <string name="select_date">Sélectionner une date</string>
     <string name="category">Catégorie</string>
     <string name="supplier">Fournisseur</string>
     <string name="product">Produit</string>
     <string name="quantity_label">Quantité prévue</string>
     <string name="purchased_quantity_label">Quantité achetée</string>
     <string name="unit_price_label">Prix unitaire</string>
-    <string name="unit_label">Unité (ex: kg, pièces)</string>
+    <string name="unit_label">Unité (ex: kg, pcs)</string>
 
     <!-- Categories -->
     <string name="category_name_label">Nom de la catégorie</string>
@@ -53,16 +54,16 @@
     <string name="add_new_category_desc">Ajouter une nouvelle catégorie</string>
     <string name="edit_category_desc">Modifier %1$s</string>
     <string name="delete_category_desc">Supprimer %1$s</string>
-    <string name="add_new_category">Ajouter une nouvelle catégorie : \"%1$s\"</string>
+    <string name="add_new_category">Ajouter une nouvelle catégorie : %1$s</string>
 
     <!-- Default Categories -->
-    <string name="category_food_drinks">Alimentation et boissons</string>
+    <string name="category_food_drinks">Nourriture et boissons</string>
     <string name="category_housing">Logement</string>
     <string name="category_transportation">Transport</string>
     <string name="category_utilities">Services publics</string>
     <string name="category_healthcare">Santé</string>
     <string name="category_personal_care">Soins personnels</string>
-    <string name="category_shopping">Achats</string>
+    <string name="category_shopping">Shopping</string>
     <string name="category_entertainment">Divertissement</string>
     <string name="category_travel">Voyage</string>
     <string name="category_education">Éducation</string>
@@ -94,19 +95,21 @@
     <string name="add_new_product">Ajouter un nouveau produit : \"%1$s\"</string>
     <string name="add_new_product_short">Nouveau produit</string>
     <string name="unknown">Inconnu</string>
+    <string name="unknown_item">Élément inconnu</string>
 
     <!-- Expenses -->
     <string name="edit_expense_title">Modifier la dépense</string>
     <string name="delete_expense">Supprimer la dépense</string>
-    <string name="no_expenses">Aucune dépense enregistrée pour le moment, ou aucune dépense ne correspond aux filtres actuels.</string>
+    <string name="no_expenses">Aucune dépense enregistrée ou aucune dépense ne correspond aux filtres actuels.</string>
     <string name="total_expenses">Total dépensé</string>
     <string name="from_supplier">de %1$s</string>
     <string name="loading_expense_details">Chargement des détails de la dépense…</string>
-    <string name="error_expense_not_found">Erreur : Dépense introuvable ou ID manquant.</string>
+    <string name="error_expense_not_found">Erreur : Dépense non trouvée ou ID manquant.</string>
 
     <!-- Filters -->
     <string name="active_filters">Filtres actifs :</string>
     <string name="date_range">Date : %1$s - %2$s</string>
+    <string name="from_date">Du : %1$s</string>
     <string name="category_filter">Catégorie : %1$s</string>
     <string name="supplier_filter">Fournisseur : %1$s</string>
     <string name="clear_filters">Effacer les filtres</string>
@@ -118,38 +121,48 @@
     <string name="clear_all_filters">Effacer tous les filtres</string>
     <string name="select_date_range">Sélectionner une plage de dates</string>
     <string name="date_range_label">Période</string>
+    <string name="date_format">dd MMM yyyy</string>
+    <string name="not_available">N/A</string>
+    <string name="date_range_separator"> - </string>
 
     <!-- Time Periods -->
-    <string name="this_month">Ce mois-ci</string>
+    <string name="this_month">Ce mois</string>
     <string name="last_7_days">7 derniers jours</string>
     <string name="last_month">Mois dernier</string>
     <string name="this_year">Cette année</string>
-    <string name="all_time">Tout le temps</string>
+    <string name="all_time">Toutes périodes</string>
+    <string name="this_month_key" translatable="false">ThisMonth</string>
+    <string name="last_7_days_key" translatable="false">Last7Days</string>
+    <string name="last_month_key" translatable="false">LastMonth</string>
+    <string name="this_year_key" translatable="false">ThisYear</string>
+    <string name="all_time_key" translatable="false">All</string>
 
     <!-- Shopping List -->
-    <string name="add_new_item_title">Ajouter un nouvel article</string>
-    <string name="planned_quantity_display">Prévue</string>
-    <string name="delete_item">Supprimer l\'article : %1$s</string>
-    <string name="add_new_shopping_item">Ajouter un nouvel article de course</string>
+    <string name="add_new_item_title">Ajouter un nouvel élément</string>
+    <string name="planned_quantity_display">Prévu</string>
+    <string name="delete_item">Supprimer l\'élément : %1$s</string>
+    <string name="add_new_shopping_item">Ajouter un nouvel article</string>
     <string name="validate_all_purchases">Valider tous les achats</string>
     <string name="validate_purchases_action">Valider les achats</string>
     <string name="confirm_purchases">Confirmer les achats</string>
     <string name="confirm_purchases_message">Êtes-vous sûr de vouloir enregistrer tous les achats saisis comme dépenses ?</string>
-    <string name="complete_shopping_title">Terminer les courses</string>
-    <string name="complete_shopping">Terminer les courses</string>
-    <string name="edit_item_title">Modifier l\'article de course</string>
-    <string name="item_validated_desc">L\'article a été rempli</string>
+    <string name="complete_shopping_title">Finaliser les courses</string>
+    <string name="complete_shopping">Finaliser les courses</string>
+    <string name="edit_item_title">Modifier l\'article</string>
+    <string name="item_validated_desc">Article complété</string>
     <string name="validation_summary_title">Résumé</string>
-    <string name="validation_summary">%1$d sur %2$d articles prêts à valider</string>
+    <string name="validation_summary">%1$d sur %2$d articles prêts à être validés</string>
     <string name="items_to_record">Articles à enregistrer : %d</string>
     <string name="total_amount">Montant total : %s</string>
     <string name="total_cost">Total : %.2f</string>
     <string name="record_expenses">Enregistrer les dépenses</string>
     <string name="processing_purchases">Traitement en cours…</string>
     <string name="no_items_ready">Aucun article prêt</string>
+    <string name="purchase_display">%1$s x %2$s = %3$s</string>
+    <string name="planned_quantity_and_unit_display">%1$s : %2$s %3$s</string>
 
     <!-- Reports -->
-    <string name="report_section_summary">Résumé général</string>
+    <string name="report_section_summary">Résumé global</string>
     <string name="report_average_daily_expense">Dépense quotidienne moyenne</string>
     <string name="report_average_monthly_expense">Dépense mensuelle moyenne</string>
     <string name="report_total_transactions">Total des transactions</string>
@@ -158,10 +171,9 @@
     <string name="report_product_lowest_price">Prix le plus bas payé :</string>
     <string name="report_product_cheapest_supplier">Fournisseur le moins cher (au prix le plus bas) :</string>
     <string name="report_not_available">N/A</string>
-    <string name="report_tab_summary">Résumé</string>
-    <string name="report_tab_product_details">Détails du produit</string>
+    <string name="report_tab_product_details">Détails des produits</string>
     <string name="report_total_expenses_period">Total dépensé</string>
-    <string name="report_lifetime_averages">Moyennes à vie</string>
+    <string name="report_lifetime_averages">Moyennes sur toute la période</string>
     <string name="report_period_averages">Moyennes de la période</string>
     <string name="report_section_spending_by_category_period">Dépenses par catégorie</string>
     <string name="report_section_spending_by_supplier_period">Dépenses par fournisseur</string>
@@ -170,6 +182,16 @@
     <string name="report_period_comparison">Comparaison avec la période précédente</string>
     <string name="report_previous_period_total">Total période précédente</string>
     <string name="report_change">Changement</string>
+    <string name="report_tab_charts">Graphiques</string>
+    <string name="report_monthly_spending_trend">Tendance des dépenses mensuelles</string>
+    <string name="report_daily_spending_trend_for_month">Tendance des dépenses quotidiennes pour %s</string>
+    <string name="report_category_spending">Dépenses par catégorie</string>
+    <string name="report_supplier_spending">Dépenses par fournisseur</string>
+    <string name="report_spending_patterns_over_time">Suivez vos habitudes de dépenses dans le temps.</string>
+    <string name="report_category_spending_breakdown">Répartition des dépenses par catégorie.</string>
+    <string name="report_supplier_spending_comparison">Comparez les dépenses entre différents fournisseurs.</string>
+    <string name="no_data_available" translatable="false">Aucune donnée disponible</string>
+    <string name="report_spending_distribution_by_category">Répartition des dépenses par catégorie</string>
 
     <!-- Settings -->
     <string name="setting_regional_title">Paramètres régionaux</string>
@@ -180,11 +202,12 @@
     <string name="theme_light">Clair</string>
     <string name="theme_dark">Sombre</string>
     <string name="theme_system">Par défaut du système</string>
-    <string name="setting_card_style_label">Style des coins de carte</string>
+    <string name="setting_card_style_label">Style des coins des cartes</string>
     <string name="card_style_rounded">Arrondi</string>
     <string name="card_style_square">Carré</string>
     <string name="select_currency">Sélectionner la devise</string>
     <string name="system_default">Par défaut du système</string>
+    <string name="currency_display_format">%1$s (%2$s)</string>
 
     <!-- About -->
     <string name="developed_by">Développé par FahDev Studio</string>
@@ -193,32 +216,34 @@
     <string name="privacy_policy">Politique de confidentialité</string>
     <string name="rate_the_app">Noter l\'application</string>
     <string name="open_source_licenses">Licences open source</string>
-    <string name="build_label">Version %1$d</string>
+    <string name="about_contact_url" translatable="false">https://expensetrackerwebsite.web.app/#contact</string>
+    <string name="about_privacy_url" translatable="false">https://expensetrackerwebsite.web.app/privacy.html</string>
+    <string name="build_label">Build %1$d</string>
     <string name="contact_us_desc">Contacter le support par email</string>
     <string name="privacy_policy_desc">Voir la politique de confidentialité</string>
-    <string name="rate_the_app_desc">Noter cette app sur le Play Store</string>
+    <string name="rate_the_app_desc">Noter cette application sur le Play Store</string>
     <string name="error_opening_contact">Impossible d\'ouvrir la page de contact</string>
     <string name="error_opening_privacy">Impossible d\'ouvrir la politique de confidentialité</string>
     <string name="error_opening_play_store">Impossible d\'ouvrir le Play Store</string>
 
-
     <!-- Empty States -->
     <string name="no_categories_title">Aucune catégorie trouvée</string>
-    <string name="no_categories_description">Appuyez sur le bouton \'+\' pour ajouter votre première catégorie et commencer à organiser vos dépenses.</string>
+    <string name="no_categories_description">Appuyez sur le bouton + pour ajouter votre première catégorie et commencer à organiser vos dépenses.</string>
     <string name="no_suppliers_title">Aucun fournisseur trouvé</string>
-    <string name="no_suppliers_description">Appuyez sur le bouton \'+\' pour ajouter votre premier fournisseur.</string>
+    <string name="no_suppliers_description">Appuyez sur le bouton + pour ajouter votre premier fournisseur.</string>
     <string name="no_expenses_title">Aucune dépense ici</string>
-    <string name="no_expenses_description">Une fois que vous ajouterez une dépense, elle apparaîtra ici.</string>
+    <string name="no_expenses_description">Une fois que vous ajoutez une dépense, elle apparaîtra ici.</string>
     <string name="no_expenses_match_filter_title">Aucune dépense correspondante</string>
-    <string name="no_expenses_match_filter_description">Essayez d\'ajuster ou d\'effacer vos filtres pour voir plus de résultats.</string>
+    <string name="no_expenses_match_filter_description">Essayez d\'ajuster ou de effacer vos filtres pour voir plus de résultats.</string>
     <string name="no_items_in_list_title">Votre liste de courses est vide</string>
-    <string name="no_items_in_list_description">Sélectionnez un fournisseur et appuyez sur le bouton \'+\' pour ajouter des articles à votre liste.</string>
+    <string name="no_items_in_list_description">Sélectionnez un fournisseur et appuyez sur le bouton + pour ajouter des articles à votre liste.</string>
+    <string name="empty_state_content_description">État vide : %1$s</string>
 
     <!-- Confirmation Dialogs -->
     <string name="confirm_deletion_title">Confirmer la suppression</string>
     <string name="delete_category_confirmation_message">Êtes-vous sûr de vouloir supprimer la catégorie \'%1$s\' ? Cela affectera également les dépenses associées.</string>
     <string name="delete_supplier_confirmation_message">Êtes-vous sûr de vouloir supprimer le fournisseur \'%1$s\' ?</string>
-    <string name="delete_supplier_with_expenses_confirmation">Attention : \'%1$s\' a des dépenses associées. Supprimer le fournisseur supprimera également définitivement tous ses enregistrements de dépenses. Cette action ne peut pas être annulée.</string>
+    <string name="delete_supplier_with_expenses_confirmation">Attention : \'%1$s\' a des dépenses associées. La suppression du fournisseur supprimera également définitivement tous ses enregistrements de dépenses. Cette action ne peut pas être annulée.</string>
     <string name="delete_product_confirmation">Êtes-vous sûr de vouloir supprimer le produit \'%1$s\' ?</string>
     <string name="are_you_sure_delete_expense">Êtes-vous sûr de vouloir supprimer cette dépense ?</string>
 
@@ -230,11 +255,11 @@
     <string name="supplier_updated_successfully">Fournisseur mis à jour !</string>
     <string name="supplier_deleted_successfully">Fournisseur supprimé !</string>
     <string name="product_added_successfully">Produit ajouté !</string>
-    <string name="product_exists">Le produit existe déjà, sélectionné.</string>
+    <string name="product_exists">Produit existe déjà, sélectionné.</string>
     <string name="expense_updated_successfully">Dépense mise à jour avec succès !</string>
     <string name="expense_deleted_successfully">Dépense supprimée avec succès !</string>
     <string name="expense_saved_successfully">Dépense enregistrée !</string>
-    <string name="expenses_recorded_successfully">%d dépenses enregistrées avec succès !</string>
+    <string name="expenses_recorded_successfully">%1$d dépenses enregistrées avec succès !</string>
     <string name="item_added_to_shopping_list">Article ajouté à la liste de courses !</string>
 
     <!-- Error Messages -->
@@ -249,9 +274,8 @@
     <string name="failed_to_add_product">Échec de l\'ajout du produit.</string>
     <string name="failed_to_add_category">Échec de l\'ajout de la catégorie.</string>
     <string name="fill_all_fields">Veuillez remplir tous les champs correctement.</string>
-    <string name="please_fill_amount_product_supplier">Veuillez remplir le montant, sélectionner un produit et un fournisseur</string>
+    <string name="please_fill_amount_product_supplier">Veuillez remplir le Montant, sélectionner un Produit et un Fournisseur</string>
     <string name="select_product_and_enter_quantity">Veuillez sélectionner un produit et entrer une quantité prévue positive valide.</string>
     <string name="no_valid_purchases_to_record">Aucun achat valide à enregistrer.</string>
     <string name="invalid_amount">Montant invalide</string>
-
 </resources>

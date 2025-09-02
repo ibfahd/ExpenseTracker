@@ -182,23 +182,23 @@ fun DateFilterDropdown(
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val dateOptions = listOf(
-        "ThisMonth" to context.getString(R.string.this_month),
-        "Last7Days" to context.getString(R.string.last_7_days),
-        "LastMonth" to context.getString(R.string.last_month),
-        "ThisYear" to context.getString(R.string.this_year),
-        "All" to context.getString(R.string.all_time)
+        context.getString(R.string.this_month) to context.getString(R.string.this_month),
+        context.getString(R.string.last_7_days) to context.getString(R.string.last_7_days),
+        context.getString(R.string.last_month) to context.getString(R.string.last_month),
+        context.getString(R.string.this_year) to context.getString(R.string.this_year),
+        context.getString(R.string.all_time) to context.getString(R.string.all_time)
     )
     val currentSelectionText = remember(selectedStartDate, selectedEndDate) {
         when {
             selectedStartDate == null && selectedEndDate == null -> context.getString(R.string.all_time)
             else -> {
-                val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-                val startStr = selectedStartDate?.let { sdf.format(Date(it)) } ?: "N/A"
-                val endStr = selectedEndDate?.let { sdf.format(Date(it)) } ?: "N/A"
+                val sdf = SimpleDateFormat(context.getString(R.string.date_format_month_day_year), Locale.getDefault())
+                val startStr = selectedStartDate?.let { sdf.format(Date(it)) } ?: context.getString(R.string.not_available)
+                val endStr = selectedEndDate?.let { sdf.format(Date(it)) } ?: context.getString(R.string.not_available)
                 if (selectedStartDate != null && selectedEndDate != null && selectedStartDate == selectedEndDate) {
                     startStr
                 } else if (selectedStartDate != null && selectedEndDate != null) {
-                    "$startStr - $endStr"
+                    "$startStr ${context.getString(R.string.date_range_separator)} $endStr"
                 } else {
                     context.getString(R.string.select_date_range)
                 }

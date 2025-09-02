@@ -1,6 +1,8 @@
 package com.fahdev.expensetracker
 
 import android.util.Log
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fahdev.expensetracker.data.*
@@ -11,6 +13,7 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import javax.inject.Inject
 import kotlin.math.max
+import androidx.compose.ui.graphics.SolidColor
 
 @HiltViewModel
 class ExpenseViewModel @Inject constructor(
@@ -82,7 +85,7 @@ class ExpenseViewModel @Inject constructor(
             0.0
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
-    
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val productReportDetails: StateFlow<List<ProductReportDetail>> = combine(
         _selectedStartDate, _selectedEndDate, _selectedCategoryId, _selectedSupplierId, _refreshTrigger
@@ -152,6 +155,40 @@ class ExpenseViewModel @Inject constructor(
             TrendGrouping.MONTH -> expenseRepository.getSpendingByMonth(startDate, endDate)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // --- Chart-specific data flows for the reporting charts tab ---
+    /**
+     * Monthly spending trend data for line charts
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val spendingByMonth: Flow<List<ExpenseDao.TrendDataPoint>> = combine(
+        _selectedStartDate,
+        _selectedEndDate
+    ) { startDate, endDate ->
+        expenseRepository.getSpendingByMonth(startDate, endDate)
+    }.flatMapLatest { it }
+
+    /**
+     * Weekly spending trend data
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val spendingByWeek: Flow<List<ExpenseDao.TrendDataPoint>> = combine(
+        _selectedStartDate,
+        _selectedEndDate
+    ) { startDate, endDate ->
+        expenseRepository.getSpendingByWeek(startDate, endDate)
+    }.flatMapLatest { it }
+
+    /**
+     * Daily spending trend data
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val spendingByDay: Flow<List<ExpenseDao.TrendDataPoint>> = combine(
+        _selectedStartDate,
+        _selectedEndDate
+    ) { startDate, endDate ->
+        expenseRepository.getSpendingByDay(startDate, endDate)
+    }.flatMapLatest { it }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val previousPeriodTotal: StateFlow<Double> = combine(
@@ -352,4 +389,84 @@ class ExpenseViewModel @Inject constructor(
     suspend fun productHasExpenses(productId: Int): Boolean = expenseRepository.productHasExpenses(productId)
     suspend fun supplierHasExpenses(supplierId: Int): Boolean = expenseRepository.supplierHasExpenses(supplierId)
     fun deleteSupplierAndExpenses(supplier: Supplier) { viewModelScope.launch { expenseRepository.deleteSupplierAndExpenses(supplier); _refreshTrigger.value++ } }
+}
+
+// Extension functions for chart data transformation
+object ChartDataTransformations {
+
+    /**
+     * Transform spending data into chart-friendly format with color assignments
+     */
+    fun transformCategoryDataForPieChart(
+        data: List<CategorySpending>,
+        colors: List<Color>
+    ): List<ir.ehsannarmani.compose_charts.models.Pie> {
+        return data.take(8).mapIndexed { index, spending ->
+            ir.ehsannarmani.compose_charts.models.Pie(
+                label = spending.categoryName,
+                data = spending.totalAmount,
+                color = colors[index % colors.size]
+            )
+        }
+    }
+
+    /**
+     * Transform trend data for line chart with proper time formatting
+     */
+    fun transformTrendDataForLineChart(
+        data: List<ExpenseDao.TrendDataPoint>,
+        color: Color
+    ): ir.ehsannarmani.compose_charts.models.Line {
+        return ir.ehsannarmani.compose_charts.models.Line(
+            label = "Spending Trend",
+            values = data.map { it.amount },
+            color = SolidColor(color),
+            firstGradientFillColor = color.copy(alpha = 0.5f),
+            secondGradientFillColor = Color.Transparent,
+            strokeAnimationSpec = androidx.compose.animation.core.tween(2000),
+            gradientAnimationDelay = 1000,
+            drawStyle = ir.ehsannarmani.compose_charts.models.DrawStyle.Stroke(width = 3.dp)
+        )
+    }
+
+    /**
+     * Get optimal time period for trend analysis based on data range
+     */
+    fun getOptimalTrendPeriod(startDate: Long?, endDate: Long?): TrendPeriod {
+        if (startDate == null || endDate == null) return TrendPeriod.MONTHLY
+
+        val daysDiff = (endDate - startDate) / (24 * 60 * 60 * 1000)
+        return when {
+            daysDiff <= 31 -> TrendPeriod.DAILY
+            daysDiff <= 90 -> TrendPeriod.WEEKLY
+            else -> TrendPeriod.MONTHLY
+        }
+    }
+}
+
+enum class TrendPeriod {
+    DAILY, WEEKLY, MONTHLY
+}
+
+// Chart color palettes
+object ChartColors {
+    val categoryColors = listOf(
+        Color(0xFF6366F1), // Indigo
+        Color(0xFF8B5CF6), // Violet
+        Color(0xFFEC4899), // Pink
+        Color(0xFFF59E0B), // Amber
+        Color(0xFF10B981), // Emerald
+        Color(0xFF3B82F6), // Blue
+        Color(0xFFEF4444), // Red
+        Color(0xFF84CC16)  // Lime
+    )
+
+    val supplierColors = listOf(
+        Color(0xFF3B82F6), // Blue
+        Color(0xFF10B981), // Emerald
+        Color(0xFFF59E0B), // Amber
+        Color(0xFFEF4444), // Red
+        Color(0xFF8B5CF6), // Violet
+        Color(0xFFEC4899)  // Pink
+    )
 }

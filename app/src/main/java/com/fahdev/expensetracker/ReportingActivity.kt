@@ -5,32 +5,43 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ListAlt
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LeadingIconTab
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import com.fahdev.expensetracker.data.*
+import com.fahdev.expensetracker.data.CurrencyHelper
+import com.fahdev.expensetracker.data.UserPreferencesRepository
 import com.fahdev.expensetracker.ui.components.FilterDialog
 import com.fahdev.expensetracker.ui.components.FilterStatusRow
+import com.fahdev.expensetracker.ui.reporting.ChartsReportContent
+import com.fahdev.expensetracker.ui.reporting.ProductDetailsReportContent
 import com.fahdev.expensetracker.ui.theme.ExpenseTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
-import java.text.NumberFormat
 
 @AndroidEntryPoint
 class ReportingActivity : AppCompatActivity() {
@@ -47,7 +58,7 @@ class ReportingActivity : AppCompatActivity() {
 }
 
 enum class ReportTab(val titleResId: Int, val icon: ImageVector) {
-    SUMMARY(R.string.report_tab_summary, Icons.Filled.Info),
+    CHARTS(R.string.report_tab_charts, Icons.Filled.BarChart),
     PRODUCT_DETAILS(R.string.report_tab_product_details, Icons.AutoMirrored.Filled.ListAlt)
 }
 
@@ -106,7 +117,7 @@ fun ReportingScreenWithTabs(expenseViewModel: ExpenseViewModel) {
                 }
             }
             when (tabs[selectedTabIndex]) {
-                ReportTab.SUMMARY -> SummaryReportContent(expenseViewModel, currencyFormatter)
+                ReportTab.CHARTS -> ChartsReportContent(expenseViewModel, currencyFormatter)
                 ReportTab.PRODUCT_DETAILS -> ProductDetailsReportContent(expenseViewModel, currencyFormatter)
             }
         }
@@ -119,216 +130,5 @@ fun ReportingScreenWithTabs(expenseViewModel: ExpenseViewModel) {
                 onDismiss = { showFilterDialog = false }
             )
         }
-    }
-}
-
-@Composable
-fun SummaryReportContent(expenseViewModel: ExpenseViewModel, currencyFormatter: NumberFormat) {
-    val spendingByCategory by expenseViewModel.spendingByCategoryFiltered.collectAsState()
-    val spendingBySupplier by expenseViewModel.spendingBySupplierFiltered.collectAsState()
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        if (spendingByCategory.isNotEmpty()) {
-            item {
-                ReportSectionCard(title = stringResource(R.string.report_section_spending_by_category_period)) {
-                    SimpleBarChart(
-                        data = spendingByCategory.take(5).map { it.categoryName to it.totalAmount },
-                        currencyFormatter = currencyFormatter
-                    )
-                }
-            }
-        }
-        if (spendingBySupplier.isNotEmpty()) {
-            item {
-                ReportSectionCard(title = stringResource(R.string.report_section_spending_by_supplier_period)) {
-                    SimpleBarChart(
-                        data = spendingBySupplier.take(5).map { it.supplierName to it.totalAmount },
-                        currencyFormatter = currencyFormatter
-                    )
-                }
-            }
-        }
-        if (spendingByCategory.isEmpty() && spendingBySupplier.isEmpty()) {
-            item {
-                ReportSectionCard(title = stringResource(R.string.report_section_summary)) {
-                    Text(stringResource(R.string.report_no_data_in_period), modifier = Modifier.padding(vertical = 8.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SimpleBarChart(
-    data: List<Pair<String, Double>>,
-    currencyFormatter: NumberFormat,
-    modifier: Modifier = Modifier
-) {
-    val maxValue = data.maxOfOrNull { it.second } ?: 0.0
-
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        data.forEach { (label, value) ->
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = currencyFormatter.format(value),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-                Spacer(Modifier.height(4.dp))
-                val barWidthFraction = if (maxValue > 0) (value / maxValue).toFloat() else 0f
-                Box(
-                    modifier = Modifier
-                        .height(10.dp)
-                        .fillMaxWidth(fraction = barWidthFraction)
-                        .background(
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = MaterialTheme.shapes.small
-                        )
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ReportSectionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            content()
-        }
-    }
-}
-
-@Composable
-fun ProductDetailsReportContent(expenseViewModel: ExpenseViewModel, currencyFormatter: NumberFormat) {
-    val productReportDetails by expenseViewModel.productReportDetails.collectAsState()
-    val expandedCategories = remember { mutableStateMapOf<String, Boolean>() }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
-    ) {
-        if (productReportDetails.isEmpty()) {
-            item {
-                Card(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                    Text(
-                        stringResource(R.string.report_no_product_data),
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-            }
-        } else {
-            val groupedProducts = productReportDetails.groupBy { it.categoryName }
-            groupedProducts.forEach { (categoryName, productsInCategory) ->
-                item {
-                    CategoryAccordionHeader(
-                        categoryName = categoryName,
-                        isExpanded = expandedCategories[categoryName] == true,
-                        onToggle = {
-                            expandedCategories[categoryName] = expandedCategories[categoryName] != true
-                        }
-                    )
-                }
-                item {
-                    AnimatedVisibility(visible = expandedCategories[categoryName] == true) {
-                        Column(modifier = Modifier.padding(bottom = 8.dp)) {
-                            productsInCategory.forEach { productDetail ->
-                                ProductReportItem(productDetail = productDetail, currencyFormatter = currencyFormatter)
-                                HorizontalDivider(modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-    }
-}
-
-@Composable
-fun ProductReportItem(productDetail: ProductReportDetail, currencyFormatter: NumberFormat) {
-    Column(modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)) {
-        Text(productDetail.productName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        Spacer(Modifier.height(6.dp))
-        ProductStatRow(
-            label = stringResource(R.string.report_product_total_spent),
-            value = currencyFormatter.format(productDetail.totalAmountSpent ?: 0.0)
-        )
-        ProductStatRow(
-            label = stringResource(R.string.report_product_lowest_price),
-            value = currencyFormatter.format(productDetail.lowestTransactionAmount ?: 0.0)
-        )
-        ProductStatRow(
-            label = stringResource(R.string.report_product_cheapest_supplier),
-            value = productDetail.cheapestSupplierName ?: stringResource(R.string.report_not_available)
-        )
-    }
-}
-
-@Composable
-fun ProductStatRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
-        Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-    }
-}
-
-@Composable
-fun CategoryAccordionHeader(
-    categoryName: String,
-    isExpanded: Boolean,
-    onToggle: () -> Unit
-) {
-    val rotationAngle by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "arrowRotation")
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onToggle)
-            .padding(vertical = 12.dp, horizontal = 0.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = categoryName,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Icon(
-            imageVector = Icons.Filled.ArrowDropDown,
-            contentDescription = if (isExpanded) "Collapse $categoryName" else "Expand $categoryName",
-            modifier = Modifier.size(30.dp).rotate(rotationAngle),
-            tint = MaterialTheme.colorScheme.primary
-        )
     }
 }

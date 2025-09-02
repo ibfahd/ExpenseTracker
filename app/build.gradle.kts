@@ -65,10 +65,8 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
 
-    // Charting library
-    implementation(libs.vico.core)
-    implementation(libs.vico.compose)
-    implementation(libs.vico.compose.m3)
+    // ComposeCharts library
+    implementation(libs.compose.charts)
 
     // Splash Screen API
     implementation(libs.androidx.core.splashscreen)
